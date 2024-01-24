@@ -1,0 +1,49 @@
+################################################################################
+##
+## Script to determine the list of species in each surveys of RLS data  
+## (occurrence matrix) and their relative biomass
+##
+## 2a_PA_and_abundance_matrix.R
+##
+## 23/01/2024
+##
+## Ulysse Flandrin
+##
+################################################################################
+
+## cleaning memory
+rm(list=ls())
+
+##------------------- loading datasets-------------------
+#Species traits
+load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
+
+#RLS observations
+load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
+
+
+# ------------------- biomass of species in each survey  -------------------
+surveys_sp_biom <- rls_actino_trop |> 
+  dplyr::select(survey_id, species_name, biomass) |>
+  dplyr::group_by(survey_id, species_name) |>
+  dplyr::summarize( sp_biom = sum(biomass) ) |>
+  tidyr::pivot_wider(names_from = species_name, values_from = sp_biom, values_fill = 0) |>
+  tibble::column_to_rownames(var="survey_id") 
+
+
+dim(surveys_sp_biom) # OK
+
+
+# ------------------- occurrence matrix of species in surveys  -------------------
+surveys_sp_occ <- surveys_sp_biom
+surveys_sp_occ[surveys_sp_occ!=0] <- 1
+
+# ------------------- relative biomass of species in surveys  -------------------
+surveys_sp_pbiom <- surveys_sp_biom / apply(surveys_sp_biom,1,sum)
+
+# ------------------- save matrices  -------------------
+save(surveys_sp_occ, file=here::here("data", "derived_data", "2_occurrence_matrix_sp_survey.Rdata"))
+save(surveys_sp_pbiom, file=here::here("data", "derived_data", "2_relative_biom_matrix_sp_survey.Rdata"))
+save(surveys_sp_biom, file=here::here("data", "derived_data", "2_biom_matrix_sp_survey.Rdata"))
+
+

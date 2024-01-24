@@ -1,0 +1,36 @@
+Package: template
+Type: Package
+Title: RLS data
+Version: 0
+Authors@R: c(
+    person(given   = "Ulysse",
+           family  = "Flandrin",
+           role    = c("aut", "cre", "cph"),
+           email   = "ulysse.flandrin@gmail.com",
+           comment = c(ORCID = "")),
+           
+    person(given   = "Cyril",
+           family  = "Hautecoeur",
+           role    = c("aut", "cre", "cph"),
+           email   = "hautecoeurcyril@gmail.com",
+           comment = c(ORCID = "")))
+           
+Description: A paragraph providing a full description of the project (on 
+    several lines...)
+URL: 
+BugReports: 
+License: GPL (>= 2)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.1
+Imports:
+    data.table,
+    dplyr,
+    ggplot2,
+    here,
+    quarto,
+    renv,
+    sf,
+    tarchetypes,
+    targets,
+    visNetwork
