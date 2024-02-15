@@ -15,12 +15,16 @@
 rm(list=ls())
 
 ##------------------- loading datasets-------------------
-#Species traits
-load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
-
 #RLS observations
 load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
 
+
+# ------------------- total biomass and abundance in each survey  -------------------
+rls_actino_trop <- rls_actino_trop|>
+  dplyr::group_by(survey_id) |>
+  dplyr::mutate(
+    abundance_tot_survey = sum(total), #total abundance in the survey
+    biomass_tot_survey = sum(biomass))  #total biomass in the survey
 
 # ------------------- biomass of species in each survey  -------------------
 surveys_sp_biom <- rls_actino_trop |> 
@@ -42,6 +46,7 @@ surveys_sp_occ[surveys_sp_occ!=0] <- 1
 surveys_sp_pbiom <- surveys_sp_biom / apply(surveys_sp_biom,1,sum)
 
 # ------------------- save matrices  -------------------
+save(rls_actino_trop, file=here::here("data", "derived_data", "2_rls_actino_trop.Rdata"))
 save(surveys_sp_occ, file=here::here("data", "derived_data", "2_occurrence_matrix_sp_survey.Rdata"))
 save(surveys_sp_pbiom, file=here::here("data", "derived_data", "2_relative_biom_matrix_sp_survey.Rdata"))
 save(surveys_sp_biom, file=here::here("data", "derived_data", "2_biom_matrix_sp_survey.Rdata"))

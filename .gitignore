@@ -24,4 +24,5 @@ renv/
 
 #remove large files
 data_rfishbase.RData
+data/raw_data/phylogeny/
 

@@ -23,7 +23,7 @@ library(funbiogeo)
 library(ggplot2)
 
 ##-------------loading data and functions-------------
-#Species matrix
+#Species traits
 load( file = here::here("data", "derived_data", "RLS_species_traits_contrib.Rdata"))
 
 #RLS observations
@@ -36,41 +36,22 @@ load(here::here("data", "raw_data", "environmental_covariates", "final_sst.Rdata
 #coastline shapefile
 worldmap <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
 
+# functions #
+source(here::here("R","evaluation_prediction_model.R"))
+
  ##------------- Filtering tropical fishes -------------
  ### filtering to keep only RLS data for sub-tropical and tropical sites ######
  ##  i.e with min(SST)>=17°C over the 5 years before the survey
 
  sites_upper_17SST <- final_derived_data_joined |>
-   dplyr::filter(min_5year_analysed_sst >= 17)   
-    # dplyr::filter(name_latitude > -32) # Approximatelly the limit of the Allen Atlas
+   dplyr::filter(min_5year_analysed_sst >= 17) |> 
+    dplyr::filter(name_latitude > -30) # Approximatelly the limit of the Allen Atlas
 
  # check filter
- ggplot() +
- geom_sf(data = worldmap, color = NA, fill = "grey70") +
-   geom_point(data=sites_upper_17SST, aes(x=name_longitude, y=name_latitude ))+
-   # geom_jitter(data=sites_upper_17SST, aes(x=name_longitude, y=name_latitude ),
-   #             width = 5, height = 5)+
-  coord_sf(ylim= c(-50,50),expand = FALSE) +
-    # coord_sf(ylim= c(-40,-25), xlim = c(100,180),expand = FALSE) +
-
-   # ggrepel::geom_label_repel(data=sites_upper_17SST, aes(x=name_longitude,
-   #                                                       y=name_latitude ,
-   #                                                       label=name_data_id))+
-   geom_hline(aes(yintercept=c(-30,30)), linetype = "dashed", size=0.3)+
-   theme_bw()+
-   labs(x="Longitude", y= "Latitude") +
-   theme(axis.title.x = element_text(face = "bold",
-                                     size = 15),
-         axis.title.y = element_text(face = "bold",
-                                     size = 15),
-         axis.text = element_text(size=13),
-         panel.grid.major = element_blank(),
-         panel.grid.minor = element_blank(),
-         panel.background = element_rect(fill = "grey95"),
-         legend.position = "none",
-         plot.title = element_text(size=10, face="bold"),
-         plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
-   )
+NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
+                      xlim = c(-180,180),ylim = c(-50,50),
+                      jitter = 0, lat_line = 30, 
+                      priority= "no") #which points are display on the others
 
 
  ### filter observations ###
@@ -78,31 +59,34 @@ worldmap <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
    dplyr::filter(survey_id %in% sites_upper_17SST$name_data_id) 
  
  # diversity remaining
- dplyr::n_distinct(rls_actino_trop$survey_id) # 9046 surveys
- dplyr::n_distinct(rls_actino_trop$site_code) # 2114 sites
- dplyr::n_distinct(rls_actino_trop$species_name) # 1694 taxa
- dplyr::n_distinct(rls_actino_trop$family) # 88 families
+ dplyr::n_distinct(rls_actino_trop$survey_id) # 6002 surveys
+ dplyr::n_distinct(rls_actino_trop$site_code) # 1977 sites
+ dplyr::n_distinct(rls_actino_trop$species_name) # 1609 taxa
+ dplyr::n_distinct(rls_actino_trop$family) # 81 families
 
 
  ### Elasmobranch observations ###
  rls_elasmo_trop <- RLS_elamsobranchii_data |>
    dplyr::filter(survey_id %in% unique(rls_actino_trop$survey_id))
-
+ 
+ dplyr::n_distinct(rls_elasmo_trop$species_name) # 54 taxa
+ dplyr::n_distinct(rls_elasmo_trop$family) # 16 families
+ 
 
 
 ##-------------filter observed species in tropical reefs (Actino + Elasmo) -------------
 observed_species <- dplyr::distinct(
-  rbind(
-     dplyr::select(rls_actino_trop, -raw_biomass),
-     rls_elasmo_trop), 
-  species_name, .keep_all = TRUE)
+ rbind(dplyr::select(rls_actino_trop, -raw_biomass),
+                     rls_elasmo_trop), 
+ species_name, .keep_all = TRUE)
 
 tropical_species_traits <- species_traits_contrib |> 
   dplyr::filter(species_name %in% observed_species$species_name)
 
 # diversity remaining
-dplyr::n_distinct(tropical_species_traits$family) # 104 families (91 actino)
-dplyr::n_distinct(tropical_species_traits$species_name) # 1761 taxa (1712 actino)
+dplyr::n_distinct(tropical_species_traits$family) # 97 families (81 actino)
+dplyr::n_distinct(tropical_species_traits$species_name) # 1663 taxa (1609 actino)
+dplyr::n_distinct(tropical_species_traits$fishbase_name) # 1658 taxa -> 5 duplicates
 
 
 ##-------------Observe data with missing values-------------
@@ -113,7 +97,7 @@ species_traits <- dplyr::rename(tropical_species_traits,
 
 fb_plot_species_traits_completeness(species_traits)
 ggsave(plot= last_plot(), file= here::here("figures", "1_traits_completedness_tropical.png"), width = 15, height = 7)
-fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 0.75)
+fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
 ggsave(plot= last_plot(), file= here::here("figures", "1_percent_species_per_traits_tropical.png"), width = 8, height = 8)
 
 # ### espèces manquantes pour l'esthétique

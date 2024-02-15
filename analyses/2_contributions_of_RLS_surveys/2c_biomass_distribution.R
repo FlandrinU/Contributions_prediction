@@ -112,3 +112,12 @@ phylo_indices_surveys_all <- tibble::rownames_to_column(phylo_indices_surveys_al
 
 
 save(phylo_indices_surveys_all, file = here::here("biodiversity", "outputs", "phylogenetic_indices_surveys.Rdata"))
+
+
+###------------------- 2) functional entropy in surveys -------------------####
+# functional entropy / richness on species relative biomass with q=1
+surveys_biodiversity$funct_entropy<-mFD::alpha.fd.hill(asb_sp_w = surveys_sp_pbiom, 
+                                                       sp_dist = sp_gower,
+                                                       q=1, 
+                                                       tau="mean",
+                                                       details_returned =FALSE)[,1]

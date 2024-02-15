@@ -469,8 +469,8 @@ missforest_applied <- function(data_to_infer,
                                traits_data_num,
                                var_to_infer= c("Length", "K", "IUCN_category", "trophic_guild"),
                                confidence_threshold = 0.8,
-                               model_iteration = 100,
-                               maxiter_mf=3, #missforest parameter #10
+                               model_iteration = 2,
+                               maxiter_mf=1, #missforest parameter #10
                                ntree_mf=10){ #missforest parameter #10
                                       
   
@@ -524,7 +524,7 @@ missforest_applied <- function(data_to_infer,
     return(result)
     
   }) ## END OF MCLAPPLY ON MISSFOREST
-  # save(res_missforest, file = here::here("outputs", "Missforest_application_raw_resulst.Rdata"))
+  save(res_missforest, file = here::here("outputs", "Missforest_application_raw_resulst.Rdata"))
   # load( file = here::here("outputs", "Missforest_application_raw_resulst.Rdata"))
   
   ### Extract infered data ###
@@ -573,6 +573,8 @@ missforest_applied <- function(data_to_infer,
   
   
   ### Insert imputed data into initial data frame ###
+  Dims <- colnames(data_to_infer)[grep("Dim",colnames(data_to_infer))]
+  
   final_imputation <- rbind(final_estimation_factors, final_estimation_num)
   infered_data <- data_to_infer[, !colnames(data_to_infer) %in% Dims]
   

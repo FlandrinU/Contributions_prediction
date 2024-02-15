@@ -8,7 +8,7 @@
 ##
 ## Ulysse Flandrin
 ##
-################################################################################
+###############################################################################"
 
 ## cleaning memory
 rm(list=ls())
@@ -18,7 +18,7 @@ rm(list=ls())
 load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
 
 #RLS observations
-load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
+load(file = here::here("data/derived_data/2_rls_actino_trop.Rdata"))
 
 #Elasmobranch presence (RLS observations)
 load(file = here::here("data/derived_data/rls_elasmo_trop.Rdata"))
@@ -28,14 +28,28 @@ load( file=here::here("data", "derived_data", "2_occurrence_matrix_sp_survey.Rda
 load( file=here::here("data", "derived_data", "2_relative_biom_matrix_sp_survey.Rdata"))
 
 #Phylogenetic tree
-trees <- ape::read.tree(file = here::here("biodiversity", "data","Code&Data_Siquiera2020",
-                                          "TACT", "Reef_fish_all_combined.trees")) #chronogram of ray-finned fishes, Siquiera 2020 from Rabosky 2018
+# trees <- ape::read.tree(file = here::here("data", "raw_data","Code&Data_Siquiera2020",
+#                                           "TACT", "Reef_fish_all_combined.trees")) #chronogram of ray-finned fishes, Siquiera 2020 from Rabosky 2018
+
+#chronogram of ray-finned fishes from Rabosky 2018
+# distribution of 100 all-taxon assembled (ATA) time-calibrated trees with 31,526 taxa
+trees <- lapply(list.files(
+  here::here("data/raw_data/phylogeny/dryad_Rabosky_2018/trees/full_trees/"), full.names = T),
+  FUN = function(i){ape::read.tree(i)})
+                
+
 #Coastline map
 coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
 
+#Survey metadata
+load(file = here::here("data", "raw_data", "environmental_covariates", "RLS_surveys_covariates.Rdata"))
 
 
-### -------------------1) taxonomic diversity in surveys -------------------####
+##------------------- loading functions-------------------
+source(here::here("R", "check_scientific_names.R"))
+
+
+## -------------------1) taxonomic diversity in surveys -------------------####
 
 # taxo richness of actinopterygii
 taxo_richness = apply(surveys_sp_occ, 1,  sum)
@@ -45,42 +59,49 @@ elasmo_by_surveys <- rls_elasmo_trop |>
   dplyr::mutate( number = 1) |>
   dplyr::group_by(survey_id) |>
   dplyr::distinct(species_name, .keep_all=TRUE) |> #keep only one size class per species
-  dplyr::summarise(elasmobranch_diversity = sum(number))
+  dplyr::summarise(elasmobranch_richness = sum(number))
 
-table(elasmo_by_surveys$elasmobranch_diversity)
+table(elasmo_by_surveys$elasmobranch_richness)
 # nb of elasmobranch species: 1   2   3   4 
-# nb of surveys             576  92  17   1 
+# nb of surveys             946 122  21   3 
 
 
 #merge richness data
 surveys_richness <- data.frame(survey_id = names(taxo_richness), 
-                               taxo_richness = taxo_richness) |> 
+                               actino_richness = taxo_richness) |> 
   dplyr::left_join(elasmo_by_surveys)
-surveys_richness$elasmobranch_diversity[is.na(surveys_richness$elasmobranch_diversity)] <- 0
+surveys_richness$elasmobranch_richness[is.na(surveys_richness$elasmobranch_richness)] <- 0
+
+summary(surveys_richness) #Actino:2-123, Elasmo: 0-4
 
 
 
-######################################################################################
-##------------------- 2) functional diversity in surveys -------------------####
 
-# dataframe with species as row names and traits as variables
-sp_traits <- infered_data
-sp_traits <- sp_traits |> 
-  dplyr::select(Length, trophic_guild, Position, Activity)
 
-# type of traits
-traits_cat<-data.frame(trait_name=c("Size", "Diet", "DemersPelag", "Activity"),
-                       trait_type=c("Q", "N", "O", "N")
-)
+##------------------- 2) functional distinctiveness and richness in surveys -------------------####
 
-# Gower distance between species ----
-sp_gower <- mFD::funct.dist(sp_tr = sp_traits, tr_cat = traits_cat, metric = "gower")
-summary(as.numeric(sp_gower)) # most distances are small (Q3=0.32) 
+# dataframe with species as row names and traits as variables: select traits
+sp_traits <- inferred_species_traits|> 
+  dplyr::filter(class != "Elasmobranchii") |> 
+  dplyr::select(Length, trophic_guild, Troph, DemersPelag, K, Schooling)
+#Choice for traits: cf McLean 2024, Mouillot 2014, Auber 2022
+
+
+# type of traits (for mFD package)
+traits_cat<-data.frame(trait_name=c("Length", "trophic_guild", "Troph", "DemersPelag", "K", "Schooling"),
+                       trait_type=c("Q", "N", "Q", "N", "Q", "N"))
+
+
+# Gower distance between species ---
+sp_gower <- mFD::funct.dist(sp_tr = sp_traits, tr_cat = traits_cat, metric = "gower",
+                            stop_if_NA = F)
+summary(as.numeric(sp_gower)) # most distances are small (Q3=0.40) 
 # warning message means some species have same trait values
 # => not an issue for computation of Chao et al 2019 indices
+save(sp_gower, file = here::here("data/derived_data/2_funct_gower_distance_species.Rdata"))
 
 
-# computing functional distinctiveness
+## COMPUTING FUNCTIONNAL DISTINCTIVENESS ---
 funct_distinctiveness_sp <- apply( as.matrix(sp_gower), 1, sum) / (ncol(as.matrix(sp_gower))-1) #Grenié et al. 2018
 
 funct_distinct_surveys_raw <- lapply(1:nrow(surveys_sp_occ),function(i){
@@ -88,130 +109,112 @@ funct_distinct_surveys_raw <- lapply(1:nrow(surveys_sp_occ),function(i){
   mean(funct_distinctiveness_sp[Sp])
 })
 
-surveys_biodiversity$funct_distinctiveness <-  do.call(rbind,funct_distinct_surveys_raw)[,1]
+surveys_funct_distinctiveness <-  do.call(rbind,funct_distinct_surveys_raw)[,1]
 
-# computing functional richness and functional entropy ----
+
+## COMPUTING FUNCTIONAL RICHNESS ---
+
 # applying Chao 2019 framework with package mFD
-
 # richness on species occurrences with q=0
-surveys_biodiversity$funct_richness<-mFD::alpha.fd.hill(asb_sp_w = surveys_sp_occ, 
-                                                        sp_dist = sp_gower,
-                                                        q=0, 
-                                                        tau="mean",
-                                                        details_returned =FALSE)[,1]
-
-# richness on species relative biomass with q=1
-surveys_biodiversity$funct_entropy<-mFD::alpha.fd.hill(asb_sp_w = surveys_sp_pbiom, 
-                                                       sp_dist = sp_gower,
-                                                       q=1, 
-                                                       tau="mean",
-                                                       details_returned =FALSE)[,1]
-
-summary(surveys_biodiversity)
+surveys_funct_richness<-mFD::alpha.fd.hill(asb_sp_w = as.matrix(surveys_sp_occ), 
+                                           sp_dist = sp_gower,
+                                           q=0, 
+                                           tau="mean",
+                                           details_returned =FALSE)[,1]
 
 
 
+## MERGING
+surveys_functional <- data.frame(
+  survey_id = names(surveys_funct_richness), 
+  functional_richness = surveys_funct_richness) |> 
+  dplyr::bind_cols(functional_distinctiveness =surveys_funct_distinctiveness)
 
-
-
-
-
-# merging 
-surveys_biodiversity <- surveys_biodiversity |>
-  tibble::rownames_to_column("SurveyID")  |>
-  dplyr::left_join(surveys_size) |>
-  dplyr::left_join(surveys_biomTL)
-summary(surveys_biodiversity)
+summary(surveys_functional)
 
 
 
 
 
 
-##------------------- 3) IUCN index -------------------####
+##------------------- 3) IUCN index (Actino + Elasmo) -------------------####
+## Merge all rls observations (only the presence of species matter, not their abundance)
+rls_trop <- rls_actino_trop |> dplyr::select(-raw_biomass) |> 
+  dplyr::bind_rows(rls_elasmo_trop)
+
+## IUCN data: IUCN categories, completed by inference by Loiseau et al. (2023)
+iucn <- inferred_species_traits |> 
+  dplyr::select(class, fishbase_name,
+                iucn_inferred = IUCN_inferred_Loiseau23, 
+                iucn_redlist = IUCN_category) 
+
+missing_values <- dplyr::filter(iucn, is.na(iucn$iucn_inferred)) |>
+  dplyr::mutate(iucn_redlist = dplyr::recode(iucn_redlist,  
+                                             "NE" = "No Status",
+                                             "DD" = "No Status",
+                                             "LC" = "Non Threatened",
+                                             "NT" = "Non Threatened",
+                                             "VU" = "Threatened",
+                                             "EN" = "Threatened",
+                                             "CR" = "Threatened")) 
+
+iucn[rownames(missing_values), "iucn_inferred"] <- missing_values$iucn_redlist
+
+## remaining NAs -> recode them into "No Status" to fit with Loiseau 2023.
+iucn[is.na(iucn$iucn_inferred),] #27 species including 8 elasmobranchs
+
+iucn$iucn_inferred[is.na(iucn$iucn_inferred)] <- "No Status"
 
 
-## merge data
-all_sp <- rbind( dplyr::select(data_species, species, species_corrected),
-                 dplyr::select(data_species_elasmo, species, species_corrected))
+## Merge survey data and iucn category
+rls_trop_iucn <- tibble::rownames_to_column(iucn, "species_name") |> 
+  dplyr::right_join(rls_trop) 
 
-names <- questionr::na.rm(all_sp$species_corrected) # 3 elasmobranch species identifies only at the genus level
+summary(rls_trop_iucn$iucn_inferred)
+summary(rls_trop_iucn$iucn_inferred[rls_trop_iucn$class == "Elasmobranchii"])
+#Most of Elasmobranches are Threathned
 
-## IUCN redlist data
-iucn_name <- gsub("_", " ", names)
-iucn_data_raw <- parallel::mclapply(iucn_name, mc.cores = parallel::detectCores()-5,
-                                    function(i){rredlist ::rl_search(name = i,  key= IUCN_KEY)}) #/!\ long time to run
-iucn_data <- do.call(rbind, lapply(iucn_data_raw, "[[", "result"))
-
-table(iucn_data$category) # 3 CR, 35 DD, 10 EN, 819 LC, 18 NT, 34 VU
-
-save(iucn_data, file = here::here("biodiversity", "outputs", "iucn_data_all_species.Rdata"))
-# load(file = here::here("biodiversity", "outputs", "iucn_data_all_species.Rdata"))
-
-#keep the iucn category
-iucn_category <- iucn_data |>
-  dplyr::mutate(scientific_name = gsub(" ", "_", iucn_data$scientific_name)) |>
-  dplyr::select( species_corrected = scientific_name, category) |>
-  dplyr::right_join(all_sp)
-
-table(iucn_category$category, useNA = "always") # 3 CR, 35 DD, 10 EN, 818 LC, 18 NT, 34 VU, 166 <NA>
-
-
-#Complete category by random forrest and deep learning (cf N.Loiseau)
-dat_network$IUCN_final <- as.character(dat_network$IUCN_final)
-
-for(i in which(is.na(iucn_category$category))){
-  name <- iucn_category$species[i]
-  name_corrected <- iucn_category$species_corrected[i]
-  
-  if(length(which(dat_network$species == name))==1){
-    iucn_category$category[i] <- dat_network$IUCN_final[which(dat_network$species == name)] 
-  }else{ if(length(which(dat_network$species == name_corrected))==1){
-    iucn_category$category[i] <- dat_network$IUCN_final[which(dat_network$species == name_corrected)]
-  }}
-}
-
-table(iucn_category$category, useNA = "always") 
-# 3 CR, 34 DD,  10 EN, 755 LC,  6 No Status, 202 Non Threatened, 18 NT, 17 Threatened, 32 VU, 7 NA
-
-
-
-#merge survey data and iucn category
-all_surveys_iucn <- rbind( dplyr::select(data_surveys, SurveyID, species, size_class, number, biomass),
-                           dplyr::select(data_surveys_elasmo, SurveyID, species, size_class, number, biomass)) |>
-  dplyr::left_join(iucn_category) 
-
-
-#remove species without iucn category
-all_surveys_iucn <- all_surveys_iucn |>
-  dplyr::filter(is.na(all_surveys_iucn$category) == F,
-                category != "No Status")
 
 ## Number of IUCN species per surveys
-iucn_category_surveys <- all_surveys_iucn |>
-  dplyr::mutate(category = forcats::fct_recode(category, 
-                                               "0" = "LC",
-                                               "0" = "NE",
-                                               "0" = "DD",
-                                               "0" = "NT",
-                                               "0" = "Non Threatened",
-                                               "1" = "VU",
-                                               "1" = "EN",
-                                               "1" = "CR",
-                                               "1" = "Threatened")) 
-
-
-iucn_by_surveys <- iucn_category_surveys|>
-  dplyr::mutate(category = as.numeric(as.character(category))) |>
-  dplyr::group_by(SurveyID) |>
-  dplyr::distinct(species, .keep_all=TRUE) |> #keep only one size class per species
-  dplyr::summarise(iucn_species = sum(category))
+iucn_by_surveys <- rls_trop_iucn|>
+  dplyr::group_by(survey_id) |>
+  dplyr::distinct(fishbase_name, .keep_all=TRUE) |> #keep only one size class per species
+  dplyr::summarise(iucn_species = sum(iucn_inferred == "Threatened"),
+                   elasmobranch = sum(class == "Elasmobranchii"))
 
 table(iucn_by_surveys$iucn_species)
-#nb of iucn species:   0    1    2    3    4    5    6 
-# nb of surveys     2244  979  304   78   18    3    1  
+#nb of iucn species:   0    1    2    3    4    5    6    7 
+# nb of surveys     3295 1814  624  202   49   14    3    1 
 
 
+
+## Check the importance of NA (i.e. No Status)
+NA_prop <- rls_trop_iucn|>
+  dplyr::group_by(survey_id) |>
+  dplyr::mutate(
+    abund_tot = sum(total), #total abundance in the survey, including elasmobranchii
+    biom_tot = sum(biomass)) |>  #total biomass in the survey, including elasmobranchii
+  dplyr::group_by(survey_id, iucn_inferred) |> 
+  dplyr::mutate(
+    abund_per_iucn = sum(total),  #total abundance of TH, NT, and NS 
+    biom_per_iucn = sum(biomass), #total biomass of TH, NT, and NS 
+    prop_abund_per_iucn = abund_per_iucn / abund_tot, #proportion of TH, NT, and NS 
+    prop_biom_per_iucn = biom_per_iucn / biom_tot) |> 
+  dplyr::filter(iucn_inferred == "No Status",
+                prop_abund_per_iucn > 0.2 | prop_biom_per_iucn  > 0.2) 
+#SELECT WHEN "NO STATUS" SPECIES REPRESENT MORE THAN 20% OF THE SURVEY, IN ABUNDANCE OR BIOMASS:
+na_survey <- unique(NA_prop$survey_id)
+  
+
+
+## REMOVE NON REPRESENTATIVE ESTIMATIONS:
+iucn_by_surveys[iucn_by_surveys$survey_id %in% na_survey,c("iucn_species")] <- NA
+
+table(iucn_by_surveys$iucn_species)
+#nb of iucn species:   0    1    2    3    4    5    6    7 
+# nb of surveys     3196 1726  602  196   47   13    3    1 
+plot(c(iucn_by_surveys$iucn_species + rnorm(nrow(iucn_by_surveys), sd=0.1))~
+       c(iucn_by_surveys$elasmobranch+rnorm(nrow(iucn_by_surveys), sd=0.1)))
 
 
 
@@ -219,218 +222,251 @@ table(iucn_by_surveys$iucn_species)
 
 ##------------------- 4) Endemism -------------------####
 
+## Species endemism
+
+endemism_sp <- inferred_species_traits |>
+  tibble::rownames_to_column("species_name") |> 
+  dplyr::select(species_name, log_range = `log(geographic_range_Albouy19)`) |> 
+  dplyr::mutate(range = 10^(log_range)) |> 
+  dplyr::mutate(endemism_log = (max(log_range, na.rm=T) - log_range)/
+                  (max(log_range, na.rm=T) - min(log_range, na.rm=T)),
+                
+                endemism_raw = (max(range, na.rm=T) - range)/
+                  (max(range, na.rm=T) - min(range, na.rm=T))) #observe without logging the ranges
+
+hist(endemism_sp$log_range, breaks = 20) 
+hist(endemism_sp$range, breaks = 20) #highly right-skewed
+
+hist(endemism_sp$endemism_log, breaks = 20) #good
+hist(endemism_sp$endemism_raw, breaks = 20) #highly influenced by 'max(range)'
+
+plot(endemism_sp$endemism_log~endemism_sp$endemism_raw)
+#KEEP ENDEMISM ASSESSED FROM LOG-TRANSFORMED RANGE SIZE
 
 
-##-------------compute species endemism-------------
-# Deal with species names
-names <- gsub(" ", "_", colnames(mat_PA_teleo[, -c(1,2)]))
 
-for( i in 1:length(names)){
-  if(names[i] %in% data_species$species){
-    names[i] <- data_species$species_corrected[which(data_species$species == names[i])]
-  }
-}
+## Survey endemic scores
+endemism_survey <- as.data.frame(apply(surveys_sp_occ, 1,  sum))
+colnames(endemism_survey) <- "sp_richness"
 
-colnames(mat_PA_teleo) <- c("Longitude", "Latitude", names)
-mat_PA_rls <- mat_PA_teleo[, which(colnames(mat_PA_teleo) %in% data_species$species_corrected)]
-
-
-## species range
-range_sp <- as.data.frame(colSums(mat_PA_rls)) 
-colnames(range_sp) <- "range"
-
-
-## Endemism
-endemism_sp <- range_sp |>
-  dplyr::mutate(endemism = (max(range) - range)/(max(range) - min(range)))
-hist(endemism_sp$endemism, breaks = 20)
+occ_endem <- surveys_sp_occ |>
+  tibble::rownames_to_column("survey_id") |> 
+  tidyr::pivot_longer( cols=2:last_col(),
+                                names_to = "species_name", values_to = "occ") |> 
+  dplyr::filter(occ == 1) |> #remove useless rows: when the species is absent
+  dplyr::left_join(endemism_sp) |> 
+  dplyr::select(survey_id, species_name, endemism_log)
+  
+endemism_survey <- occ_endem |> 
+  dplyr::group_by(survey_id) |> 
+  dplyr::summarise(sp_richness = dplyr::n(),
+                   mean_endemism = mean(endemism_log, na.rm = T),
+                   sum_endemism = sum(endemism_log, na.rm = T),
+                   Q3_endemism = quantile(endemism_log, probs = 0.75, na.rm = T)) |> 
+  dplyr::mutate(residuals_endemism_richness = lm(sum_endemism~sp_richness)[["residuals"]])
 
 
-##-------------survey endemic score------------- = mean of species endemism in a given survey
-endemism_survey <- rep(NA, nrow(surveys_sp_occ))
+#check and plot survey endemism
+hist(endemism_survey$mean_endemism, breaks = 20)
+hist(endemism_survey$sum_endemism, breaks = 20)
+hist(endemism_survey$Q3_endemism, breaks = 20)
+hist(endemism_survey$residuals_endemism_richness, breaks = 20)
 
-for(i in 1:nrow(surveys_sp_occ)){
-  Names <- names(surveys_sp_occ[i,which(surveys_sp_occ[i,] == 1)])
-  corrected_names <- dplyr::filter(data_species, species %in% Names)$species_corrected
-  endemism_survey[i] <- mean(endemism_sp[corrected_names, "endemism"], na.rm=T)
-}
+endem_metadata <- dplyr::mutate(endemism_survey, survey_id = as.numeric(survey_id)) |> 
+  dplyr::left_join(all_covariates)
 
-endemism_survey_rls <- data.frame(SurveyID = rownames(surveys_sp_occ), Endemism = endemism_survey)
-save(endemism_survey_rls, file = here::here("biodiversity", "outputs", "survey_endemism_score.Rdata"))
+library(ggplot2)
+ggplot(endem_metadata) + geom_point(aes(sp_richness,sum_endemism, color = realm ))
+ggplot(endem_metadata) + geom_point(aes(sp_richness,mean_endemism, color = realm ))
+ggplot(endem_metadata) + geom_point(aes(sp_richness,residuals_endemism_richness, color = realm ))
+ggplot(endem_metadata) + geom_point(aes(sp_richness,Q3_endemism, color = realm ))
+ggplot(endem_metadata) + geom_point(aes(mean_endemism,residuals_endemism_richness, color = realm ))
+#KEEP THE MEAN ENDEMISM: LESS CORRELATED WITH SP RICHNESS, AND MORE CONSISTENT
+# WITH OTHER VARIABLES
 
 
-# #check and plot survey endemism
-# hist(endemism_survey_rls$Endemism, breaks = 20)
-# endemism_survey_map <- endemism_survey_rls |>
-#   dplyr::left_join( dplyr::select(metadata_surveys, SurveyID, SiteLongitude, SiteLatitude))
-# 
-# ggplot(endemism_survey_map) +
-#   geom_sf(data = coast, color = "grey30", fill = "lightgrey",
-#           aes(size=0.1)) +
-#   geom_point(data=endemism_survey_map,
-#              size = 4, shape = 20,
-#              aes(x = SiteLongitude, y = SiteLatitude,
-#                  colour= Endemism)) +
-#   scale_colour_gradient(low = "dodgerblue", high="darkred",
-#                         na.value="black") +
-#   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1))) +
-#   theme_minimal()+
-#   labs(title = paste0("Endemism", " geographic distribution"),
-#        x="", y= "") +
-#   theme(legend.position = "right",
-#         plot.title = element_text(size=10, face="bold"),
-#         axis.text.x = element_blank(),
-#         axis.ticks.x = element_blank(),
-#         plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
-#   )
-# 
-# ggsave(plot = last_plot(), filename = here::here("biodiversity", "figures", "endemism_on_world_map.jpg"),
-#        width = 15, height = 10)
+## Check the importance of NA 
+NA_prop <- occ_endem |> 
+  dplyr::filter(is.na(endemism_log)) |> 
+  dplyr::left_join(rls_actino_trop) |> 
+  dplyr::group_by(survey_id, abundance_tot_survey, biomass_tot_survey) |> #keep totals at the survey scale
+  dplyr::summarise(total = sum(total),
+                biomass = sum(biomass)) |> 
+  dplyr::mutate(prop_abund = total / abundance_tot_survey,
+                prop_biom = biomass / biomass_tot_survey)|> #proportion of species with NA
+  dplyr::filter(prop_abund > 0.2 | prop_biom  > 0.2) 
+#SELECT WHEN "NAs" SPECIES REPRESENT MORE THAN 20% OF THE SURVEY, IN ABUNDANCE OR BIOMASS:
+na_survey <- unique(NA_prop$survey_id)
+
+
+## REMOVE NON REPRESENTATIVE ESTIMATIONS:
+endemism <- endemism_survey |> 
+  dplyr::select(survey_id, mean_endemism) |> 
+  dplyr::mutate(mean_endemism = as.numeric(ifelse(survey_id %in% na_survey, NA, mean_endemism)))
 
 
 
 
 ##------------------- 5) Evolutionnary distinctiveness -------------------####
 
+## extract trees with RLS reef species
 
-## -------------extract trees with RLS reef species-------------
-## Change names in matrix to fit with names in phylogeny
+#Check names in phylogeny
 treesp <- trees[[1]][["tip.label"]]
+names_phylogeny <- data.frame(species_name =gsub("_", " ", treesp),
+                              tree = 1)
+
+# /!\ very long time to run
+# subset1 <- code_sp_check(names_phylogeny[c(1:10000),], mc_cores = 12) 
+# subset2 <- code_sp_check(names_phylogeny[c(10001:20000),], mc_cores = 12) 
+# subset3 <- code_sp_check(names_phylogeny[c(20001:nrow(names_phylogeny)),], mc_cores = 15) 
+# 
+# names_phylogeny_fishbase <- rbind(subset1, subset2, subset3)
+# summary(names_phylogeny_fishbase$check) #should be only 1, few mistakes
+# names_phylogeny_fishbase[is.na(names_phylogeny_fishbase$fishbase_name),] #freshwater fishes, wrong names, ...
+# save(names_phylogeny_fishbase, file = here::here("outputs", "2b_names_phylogeny_fishbase.Rdata"))
+load(file = here::here("outputs", "2b_names_phylogeny_fishbase.Rdata"))
+
+#Check NA
+NA_fishbase <- names_phylogeny_fishbase[is.na(names_phylogeny_fishbase$fishbase_name)|
+                names_phylogeny_fishbase$check == 2,] #mainly sub-species
+
+
+#Extract names in the trees
 names <- rep(NA, ncol(surveys_sp_occ))
 sp_wrong_name <- c()
+
 for( i in 1:ncol(surveys_sp_occ)){
-  if(colnames(surveys_sp_occ)[i] %in% treesp){
-    names[i] <- colnames(surveys_sp_occ)[i]
-    
-  }else if(data_species$species_corrected[
-    which(data_species$species == colnames(surveys_sp_occ)[i])] %in% treesp){
-    names[i] <- data_species$species_corrected[which(data_species$species == colnames(surveys_sp_occ)[i])]
-    
-  }else{
-    sp_wrong_name <- c(sp_wrong_name, colnames(surveys_sp_occ)[i])
-    cat(colnames(surveys_sp_occ)[i], " not in phylogeny \n")
-  }
+  
+  rls_name <- colnames(surveys_sp_occ)[i]
+  fb_name <- inferred_species_traits[rls_name, "fishbase_name"]
+  tree_name <- names_phylogeny_fishbase[
+    which(names_phylogeny_fishbase$fishbase_name == fb_name), "species_name"]
+  
+  if (length(tree_name) == 1) {
+    names[i] <- tree_name
+  } else if (length(tree_name) == 2) {
+    names[i] <- tree_name[1] #choose one of the accepted name, we suppose they are very close in the phylogeny
+    cat("Replace ", rls_name, " by ", tree_name[1], "\n")
+    } else {
+    sp_wrong_name <- c(sp_wrong_name, rls_name)
+      }
 }
+  
+ 
+length(sp_wrong_name) #11 species are still missing
+#none of these species are in NA_fishbase
 
-#Is there a synonym names in the tree?
-for( sp in sp_wrong_name){
-  sp <- stringr::str_replace(sp, "_", " ")
-  tab_syn <- taxize::synonyms(sp , db="worms")
-  if( nrow(tab_syn[[sp]]) > 0){
-    sp_syn <- stringr::str_replace(tab_syn[[sp]][["scientificname"]], " ", "_")
-    cat(length(sp_syn), "synonyms", "\n" )
-    cat( "new name : ", sp_syn[which(is.element(sp_syn, treesp)==T)], "\n" )
-  }
-} #No synonyms found in the tree
 
-colnames(surveys_sp_occ) <- colnames(surveys_sp_pbiom) <- names
+#SOME SPECIES ARE ABSENT FROM THE PHYLOGENY, AND SOME NALES ARE DUPLICATED:
+sp_occ_phylogeny <- as.data.frame(t(surveys_sp_occ)) |> 
+  dplyr::mutate(species_tree = gsub(" ", "_", names)) |> 
+  dplyr::filter(!is.na(species_tree)) |> #remove the 11 species not in the phylogeny
+  dplyr::group_by(species_tree) |>
+  dplyr::summarise(across(everything(), max)) |>  #merge identical species by keeping all occurrences
+  tibble::column_to_rownames("species_tree") |> 
+  t() |> 
+  as.data.frame()
 
-surveys_sp_occ <- as.data.frame(surveys_sp_occ) |>
-  dplyr::select( dplyr::contains( "_")) #Remove species absent form phylogeny
+sp_pbiom_phylogeny <- as.data.frame(t(surveys_sp_pbiom)) |> 
+  dplyr::mutate(species_tree = gsub(" ", "_", names)) |> 
+  dplyr::filter(!is.na(species_tree)) |> 
+  dplyr::group_by(species_tree) |>
+  dplyr::summarise(across(everything(), max)) |> 
+  tibble::column_to_rownames("species_tree") |> 
+  t() |> 
+  as.data.frame()
 
-surveys_sp_pbiom <- as.data.frame(surveys_sp_pbiom) |>
-  dplyr::select( dplyr::contains( "_")) |> #Remove species absent form phylogeny
-  as.matrix()
 
 
 #Extract trees
-phylo_100<-list()
+phylo_100 <- list()
 for (i in 1:100) {
-  phylo_100[[i]]<-picante::match.phylo.comm(trees[[i]], surveys_sp_occ)
+  phylo_100[[i]] <- picante::match.phylo.comm(trees[[i]], sp_occ_phylogeny)
 }
 
 #Occurrence matrix in RLS surveys
 occ_matrix <- as.matrix(phylo_100[[1]][["comm"]])
 
 
-##-------------Compute phylogenetic indices-------------
+## Compute Evolutionary distinctivness: ED  Isaac et al. method
 
-## Evolutionary distinctivness: ED  Isaac et al. method
-#by species
-ED_species_raw<-parallel::mclapply(phylo_100, mc.cores=parallel::detectCores()-5, function(x) {
+# by species
+ED_species_raw <- parallel::mclapply(phylo_100, mc.cores=parallel::detectCores()-15, function(x) {
   picante::evol.distinct(x$phy, type = c("fair.proportion"), scale = FALSE, use.branch.lengths = TRUE)})
+
+save(ED_species_raw, file = here::here("outputs", "2b_evolutionary_distinctivness_species.Rdata"))
 
 ED_species <- as.data.frame(do.call(cbind, lapply(ED_species_raw,function(y){y[,2]})))
 rownames(ED_species) <- phylo_100[[1]]$phy$tip.label
 
 ED_species_summary <- t(apply(ED_species, 1, summary))
 ED_species_summary <- cbind( ED_species_summary, sd = apply(ED_species, 1, sd))
-colnames(ED_species_summary) <- paste0("ED_", colnames(ED_species_summary))
 
-save(ED_species_summary, file = here::here("biodiversity", "outputs", "evolutionary_distinctivness_species.Rdata"))
 
 #by surveys
-mean_ED_sp <- apply(ED_species, 1, mean)
+median_ED_sp <- ED_species_summary[,"Median"]
 ED_surveys_raw <- parallel::mclapply(1:nrow(occ_matrix), mc.cores=parallel::detectCores()-5 ,function(i){
   if(sum(occ_matrix[i,])==0){
     rep(0,6)
   }else{
     Sp <- colnames(occ_matrix) [which(occ_matrix[i,]==1)]
-    summary(mean_ED_sp[Sp])
+    c(rownames(occ_matrix)[i], summary(median_ED_sp[Sp]))
   }
 })
 
 ED_surveys <- do.call(rbind,ED_surveys_raw)
-row.names(ED_surveys) <- row.names(occ_matrix)
-colnames(ED_surveys) <- paste0("ED_", colnames(ED_surveys))
-
-save(ED_surveys, file = here::here("biodiversity", "outputs", "evolutionary_distinctivness_surveys.Rdata"))
+colnames(ED_surveys) <- c("survey_id", "ED_min", "ED_Q1", "ED_median", "ED_mean",
+                          "ED_Q3", "ED_max")
 
 
 
-## PD and SES.PD quantification with Phyloregion
-#PD
-sparse_occ_matrix <- methods::as( as.matrix(occ_matrix), "sparseMatrix")
-PD_surveys_raw <- lapply(phylo_100, function (x){ phyloregion::PD(sparse_occ_matrix, x$phy) })
-PD_surveys_100 <- t( do.call(rbind, PD_surveys_raw ) )
-
-PD_surveys_summary <- t(apply(PD_surveys_100, 1, summary))
-colnames(PD_surveys_summary) <- paste0("PD_", colnames(PD_surveys_summary))
-
-
-#Residuals of PD ~ taxonomic richness
-Mean_PD <- apply(PD_surveys_100,1,mean)
-taxo_richness <- apply(occ_matrix, 1, sum)
-residuals_PD_richness <- residuals(lm(Mean_PD ~ taxo_richness)) # Approach using residuals
-
-# #SES.PD
-# SES_PD_raw <- parallel::mclapply(phylo_100, mc.cores= parallel::detectCores()-5, function (x){
-#   phyloregion::PD_ses(sparse_occ_matrix, x$phy, model = c("tipshuffle"), reps= 1000)$zscore #Change reps for a quickier analyse
-# }) # Approach using SES.PD based on a null model shuffling tip labels                        
-# 
-# SES_PD_surveys_100 <- do.call(cbind, SES_PD_raw)
-# SES_PD_surveys_summary <- t(apply(SES_PD_surveys_100, 1, summary))
-# colnames(SES_PD_surveys_summary) <- paste0("SES_PD_", colnames(SES_PD_surveys_summary))
-# 
-
-PD_surveys <- cbind( PD_surveys_summary, residuals_PD_richness = residuals_PD_richness)#, SES_PD_surveys_summary)
-save(PD_surveys, file = here::here("biodiversity", "outputs", "phylogenetic_diversity_surveys.Rdata"))
+## Check the importance of NA 
+NA_prop <- rls_actino_trop|> 
+  dplyr::filter(species_name %in% sp_wrong_name) |> 
+  dplyr::group_by(survey_id, abundance_tot_survey, biomass_tot_survey) |> #keep totals at the survey scale
+  dplyr::summarise(total = sum(total),
+                   biomass = sum(biomass)) |> 
+  dplyr::mutate(prop_abund = total / abundance_tot_survey,
+                prop_biom = biomass / biomass_tot_survey)|> #proportion of species with NA
+  dplyr::filter(prop_abund > 0.2 | prop_biom  > 0.2) 
+#SELECT WHEN "NAs" SPECIES REPRESENT MORE THAN 20% OF THE SURVEY, IN ABUNDANCE OR BIOMASS:
+na_survey <- unique(NA_prop$survey_id)
 
 
-## PE: Phylogenetic endemism (pkg Pyloregion)
-PE_surveys_raw <- parallel::mclapply(phylo_100, mc.cores=parallel::detectCores()-5, function(x) {
-  phyloregion::phylo_endemism(sparse_occ_matrix, x$phy, weighted = TRUE)
-})
+## REMOVE NON REPRESENTATIVE ESTIMATIONS:
+evol_distinct <- as.data.frame(ED_surveys) |> 
+  dplyr::select(survey_id, ED_mean) |> 
+  dplyr::mutate(ED_mean = as.numeric(ifelse(survey_id %in% na_survey, NA, ED_mean)))
 
-PE_surveys_100 <- do.call(cbind, PE_surveys_raw)
-PE_surveys_summary <- t(apply(PE_surveys_100, 1, summary))
-colnames(PE_surveys_summary) <- paste0("PE_", colnames(PE_surveys_summary))
-
-save(PE_surveys_summary, file = here::here("biodiversity", "outputs", "phylogenetic_endemism_surveys.Rdata"))
+hist(evol_distinct$ED_mean)
 
 
 
 
 
+##------------- Merge and save all biodiversity indices -------------####
 
-##-------------Save phylogenetic indices-------------
-phylo_indices_surveys_all <- cbind(ED_surveys, PD_surveys, PE_surveys_summary, phylo_entropy_summary )
-phylo_indices_surveys_all <- as.data.frame(phylo_indices_surveys_all)
-phylo_indices_surveys_all <- tibble::rownames_to_column(phylo_indices_surveys_all,var="SurveyID")
+biodiv_indices_surveys <- surveys_richness |> 
+  dplyr::full_join(surveys_functional) |> 
+  dplyr::full_join(iucn_by_surveys) |> 
+  dplyr::full_join(endemism) |> 
+  dplyr::full_join(evol_distinct) |> 
+  dplyr::select(-elasmobranch, -functional_richness)
 
+# Check indices measures #
+library(funbiogeo)
+fb_plot_species_traits_completeness(dplyr::rename(biodiv_indices_surveys, species = survey_id))
 
+pca <- FactoMineR::PCA(biodiv_indices_surveys[,-1], scale = T, graph=F, ncp=30)
+factoextra::fviz_screeplot(pca, ncp = 20)
+factoextra::fviz_pca_var(pca, col.var = "contrib", repel = TRUE)
+factoextra::fviz_pca_var(pca, col.var = "contrib", axes=c(3,4), repel = TRUE)
+#
 
-
-
-##-------------merge and save all biodiversity indices-------------
-surveys_richness
+save(biodiv_indices_surveys, file = here::here("outputs", "2b_biodiv_indices_surveys.Rdata" ))
+  
+  
+  
+  
+  

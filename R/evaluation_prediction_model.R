@@ -579,138 +579,52 @@ estimates_according_NA_sp <- function(order_performance = order_performance,
   P1+P2
   } # END of estimates_according_NA_sp (6)
 
-##-------------??) Influence of traits on phylogeny estimates-------------
-phylogenyVStraits <- function(data = model_eval_missforest){
-  #taxa = "Beloniformes"
-  
-  #data
-  flat_list <- unlist(data, recursive = F)
-  factor_estimates_missforest <- do.call(rbind,flat_list[seq(2,length(flat_list),3)])
-  num_estimates_missforest <- do.call(rbind,flat_list[seq(3,length(flat_list),3)])
-  
-    # Numeric traits
-    temp_taxa_num <- num_estimates_missforest |>
-      dplyr::group_by(order, variable) |> 
-      dplyr::mutate(error = (abs(observed - imputed)/(max(observed)-min(observed)) )*100) |> 
-      dplyr::select(species_name, order, variable, error)
-    
-    #Categorical traits
-    temp_taxa_fact <- factor_estimates_missforest |>
-      dplyr::filter(order == taxa) |>
-      dplyr::mutate(accuracy = (observed == imputed)) |> 
-      dplyr::group_by(order, variable) |>
-      dplyr::summarise(error = (1-mean(accuracy))*100)
-    # ,n_sp = dplyr::n_distinct(species_name))
-    
-    #Merge data
-    temp_taxa <- rbind(temp_taxa_num, temp_taxa_fact)
-    
-    #order boxplot
-    ord <- temp_taxa |>
-      dplyr::group_by(variable) |>
-      dplyr::summarise(median_error = median(error))
-    
-    order_boxplot <- ord[order(ord$median_error, decreasing = T),1]$variable
-    temp_taxa$variable <- factor(temp_taxa$variable, levels = order_boxplot)
-    
-    plot <- ggplot(temp_taxa)+
-      geom_boxplot(aes(x = variable, y= error),
-                   color = col[taxa][[1]], alpha = 0.6, linewidth = 1)+
-      theme_bw() +
-      labs(x = "", y = "Imputation error (%)", title = taxa) +
-      theme(panel.grid.minor = element_blank(),
-            axis.text = element_text(color = "black"),
-            axis.title = element_text(size = 10),
-            axis.text.x = element_text(angle = 45, hjust = 1,
-                                       size = 10))+
-      
-      scale_y_continuous(limits = c(0,100))
-    
-    plot
-  # } #END OF FUNCTION boxplot_error_traits
-  
-  plots <- lapply(taxa_list[order(taxa_list)], FUN = boxplot_error_traits)
-  
-  vect_plots <- c()
-  for(i in c(1:length(plots))){ vect_plots <- c(vect_plots, paste0("plots[[", i, "]]")) }
-  code_expr <- paste(vect_plots, collapse = "+")
-  
-  all_plot <- eval(parse(text=code_expr)) +
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  return(all_plot)
-} # END of estimates_phylogeny (3)
-##-------------??) Influence of traits on phylogeny estimates-------------
-phylogenyVStraits <- function(data = model_eval_missforest,
-                              taxa_list = c("Beloniformes", "Perciformes"),
-                              traits = colnames(t(eval_missforest_df)) ){
-  #color
-  col <- fishualize::fish(n = length(taxa_list), option = "Ostracion_whitleyi", begin = 0.2, end = 0.9)
-  names(col) <- taxa_list[order(taxa_list)]
-  
-  #data
-  flat_list <- unlist(data, recursive = F)
-  factor_estimates_missforest <- do.call(rbind,flat_list[seq(2,length(flat_list),3)])
-  num_estimates_missforest <- do.call(rbind,flat_list[seq(3,length(flat_list),3)])
-  
-  
-  boxplot_error_traits <- function(taxa){ 
-    #taxa = "Beloniformes"
-    
-    # Numeric traits
-    temp_taxa_num <- num_estimates_missforest |>
-      dplyr::filter(order == taxa) |>
-      dplyr::mutate(error = (abs(observed - imputed)/(max(observed)-min(observed)) )*100) |> 
-      dplyr::select(order, variable, error)
-    
-    #Categorical traits
-    temp_taxa_fact <- factor_estimates_missforest |>
-      dplyr::filter(order == taxa) |>
-      dplyr::mutate(accuracy = (observed == imputed)) |> 
-      dplyr::group_by(order, variable) |>
-      dplyr::summarise(error = (1-mean(accuracy))*100)
-                       # ,n_sp = dplyr::n_distinct(species_name))
-    
-    #Merge data
-    temp_taxa <- rbind(temp_taxa_num, temp_taxa_fact)
-    
-    #order boxplot
-    ord <- temp_taxa |>
-      dplyr::group_by(variable) |>
-      dplyr::summarise(median_error = median(error))
-    
-    order_boxplot <- ord[order(ord$median_error, decreasing = T),1]$variable
-    temp_taxa$variable <- factor(temp_taxa$variable, levels = order_boxplot)
-    
-    plot <- ggplot(temp_taxa)+
-      geom_boxplot(aes(x = variable, y= error),
-                   color = col[taxa][[1]], alpha = 0.6, linewidth = 1)+
-      theme_bw() +
-      labs(x = "", y = "Imputation error (%)", title = taxa) +
-      theme(panel.grid.minor = element_blank(),
-            axis.text = element_text(color = "black"),
-            axis.title = element_text(size = 10),
-            axis.text.x = element_text(angle = 45, hjust = 1,
-                                       size = 10))+
-      
-      scale_y_continuous(limits = c(0,100))
-    
-    plot
-  } #END OF FUNCTION boxplot_error_traits
-  
-  plots <- lapply(taxa_list[order(taxa_list)], FUN = boxplot_error_traits)
-  
-  vect_plots <- c()
-  for(i in c(1:length(plots))){ vect_plots <- c(vect_plots, paste0("plots[[", i, "]]")) }
-  code_expr <- paste(vect_plots, collapse = "+")
-  
-  all_plot <- eval(parse(text=code_expr)) +
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  return(all_plot)
-} # END of estimates_phylogeny (3)
 
+
+
+
+
+#-------------7) Check NA on map-------------
+
+NA_on_map <- function(data=covariates,
+                      variable = "coral_algae_10km",
+                      xlim = c(-180,180),
+                      ylim = c(-60,60),
+                      jitter = 1,
+                      lat_line = 30,
+                      priority= "no"){
+  
+  worldmap <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
+  not_priority <- ifelse(priority=="no", "yes", "no") #set the order of the points in ggplot
+  
+  df <- data |> 
+    dplyr::select(longitude, latitude, all_of(variable)) |> 
+    dplyr::mutate(presence_of_data = ifelse(!is.na(data[,variable]), "yes", "no"))
+  
+  ggplot() +
+    geom_sf(data = worldmap, color = NA, fill = "grey70") +
+    geom_jitter(data=df[df$presence_of_data == not_priority,], 
+                aes(x=longitude, y=latitude, color= presence_of_data),
+                width = jitter, height = jitter)+
+    geom_jitter(data=df[df$presence_of_data == priority,], 
+                aes(x=longitude, y=latitude, color= presence_of_data),
+                width = jitter, height = jitter)+
+    scale_color_brewer(palette = "PuOr")+
+    coord_sf(ylim= ylim, xlim =xlim ,expand = FALSE) +
+    
+    geom_hline(aes(yintercept=c(-lat_line,lat_line)), linetype = "dashed", linewidth=0.3)+
+    theme_bw()+
+    labs(x="Longitude", y= "Latitude", title = variable) +
+    theme(axis.title.x = element_text(face = "bold",
+                                      size = 15),
+          axis.title.y = element_text(face = "bold",
+                                      size = 15),
+          axis.text = element_text(size=13),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_rect(fill = "grey95"),
+          plot.title = element_text(size=10, face="bold"),
+          plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
+    )
+  
+}
