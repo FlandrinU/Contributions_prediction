@@ -28,11 +28,8 @@ load( file=here::here("data", "derived_data", "2_occurrence_matrix_sp_survey.Rda
 load( file=here::here("data", "derived_data", "2_relative_biom_matrix_sp_survey.Rdata"))
 
 #Phylogenetic tree
-# trees <- ape::read.tree(file = here::here("data", "raw_data","Code&Data_Siquiera2020",
-#                                           "TACT", "Reef_fish_all_combined.trees")) #chronogram of ray-finned fishes, Siquiera 2020 from Rabosky 2018
-
-#chronogram of ray-finned fishes from Rabosky 2018
-# distribution of 100 all-taxon assembled (ATA) time-calibrated trees with 31,526 taxa
+  #chronogram of ray-finned fishes from Rabosky 2018
+  # distribution of 100 all-taxon assembled (ATA) time-calibrated trees with 31,526 taxa
 trees <- lapply(list.files(
   here::here("data/raw_data/phylogeny/dryad_Rabosky_2018/trees/full_trees/"), full.names = T),
   FUN = function(i){ape::read.tree(i)})
@@ -377,7 +374,8 @@ sp_pbiom_phylogeny <- as.data.frame(t(surveys_sp_pbiom)) |>
   t() |> 
   as.data.frame()
 
-
+save(sp_occ_phylogeny, file = here::here("outputs", "2b_sp_occ_phylogeny_matrix.Rdata"))
+save(sp_pbiom_phylogeny, file = here::here("outputs", "2b_sp_pbiom_phylogeny_matrix.Rdata"))
 
 #Extract trees
 phylo_100 <- list()
@@ -454,7 +452,9 @@ biodiv_indices_surveys <- surveys_richness |>
   dplyr::full_join(evol_distinct) |> 
   dplyr::select(-elasmobranch, -functional_richness)
 
-# Check indices measures #
+## Check indices measures
+summary(biodiv_indices_surveys)
+
 library(funbiogeo)
 fb_plot_species_traits_completeness(dplyr::rename(biodiv_indices_surveys, species = survey_id))
 
@@ -462,10 +462,28 @@ pca <- FactoMineR::PCA(biodiv_indices_surveys[,-1], scale = T, graph=F, ncp=30)
 factoextra::fviz_screeplot(pca, ncp = 20)
 factoextra::fviz_pca_var(pca, col.var = "contrib", repel = TRUE)
 factoextra::fviz_pca_var(pca, col.var = "contrib", axes=c(3,4), repel = TRUE)
+
+# Check distributions
+ggplot(data=tidyr::pivot_longer(biodiv_indices_surveys,
+                                cols = -survey_id,
+                                names_to = "index", values_to = "values"), 
+       aes(x=values, group=index, fill=index)) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "grey40", fill ="white") +
+  geom_density(aes(fill = index), alpha = 0.2) +
+  hrbrthemes::theme_ipsum() +
+  facet_wrap(~index, scales = "free") +
+  theme(
+    legend.position="none",
+    panel.spacing = unit(0.1, "lines"),
+    axis.ticks.x=element_blank()
+  )
 #
 
+
+
 save(biodiv_indices_surveys, file = here::here("outputs", "2b_biodiv_indices_surveys.Rdata" ))
-  
+# load(file = here::here("outputs", "2b_biodiv_indices_surveys.Rdata" ))
+
   
   
   
