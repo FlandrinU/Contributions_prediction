@@ -394,6 +394,7 @@ ED_species_raw <- parallel::mclapply(phylo_100, mc.cores=parallel::detectCores()
   picante::evol.distinct(x$phy, type = c("fair.proportion"), scale = FALSE, use.branch.lengths = TRUE)})
 
 save(ED_species_raw, file = here::here("outputs", "2b_evolutionary_distinctivness_species.Rdata"))
+# load(file = here::here("outputs", "2b_evolutionary_distinctivness_species.Rdata"))
 
 ED_species <- as.data.frame(do.call(cbind, lapply(ED_species_raw,function(y){y[,2]})))
 rownames(ED_species) <- phylo_100[[1]]$phy$tip.label

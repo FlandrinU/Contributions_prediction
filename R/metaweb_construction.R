@@ -17,7 +17,7 @@
 # nip <- lapply(nip, install.packages, dependencies = TRUE)
 # ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
-rm(list=ls())
+# rm(list=ls())
 
 ##-------------loading data-------------
 #interaction data from barnes et al. 2008
@@ -167,7 +167,8 @@ diet_corrected_MW <- initial_metaweb
 # sp_herb_guild <- rownames(actino_traits)[
 #   which(actino_traits$trophic_guild == "Herbivores Microvores Detritivores")]
 sp_herb <- rownames(actino_traits[
-  which(actino_traits$Troph <= 2.4 | actino_traits$trophic_guild == "Herbivores Microvores Detritivores"),])
+  which(actino_traits$Troph <= 2.4 | 
+          actino_traits$trophic_guild == "Herbivores Microvores Detritivores"),])
 
 
 for(herb in sp_herb){
@@ -223,6 +224,22 @@ PS_predator <- c(rep(0,nrow(small_corrected_MW)),1,1)
 
 producers_MW <- rbind(small_corrected_MW, primary_producers=PP_prey, secondary_producers=PS_prey)
 producers_MW <- cbind(producers_MW ,primary_producers =PP_predator, secondary_producers=PS_predator)
+
+
+
+
+### Remains some exceptions: Big Secondary consummers
+sp_eps <- rownames(actino_traits[which(actino_traits$Troph<3.7 & 
+                                         !rownames(actino_traits) %in% sp_invertivores & 
+                                         !rownames(actino_traits) %in% sp_herb),])
+big_basal_sp <- sp_eps[actino_traits[sp_eps,"Length"]>100]
+big_basal_sp
+planktivores_interact <- c(rep(0,nrow(producers_MW)-2),0,1) #eat only secondary producers
+
+
+# Mw_herb_distri_corrected_PP_PS[, "Arothron stellatus"] <- planktivores_interact
+producers_MW[, "Mola mola"] <- planktivores_interact
+# Mw_herb_distri_corrected_PP_PS[, "Fistularia tabacaria"] <- planktivores_interact
 
 
 ##------------- Save corrected metaweb -------------

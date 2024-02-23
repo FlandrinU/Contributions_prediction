@@ -35,8 +35,8 @@ trees <- lapply(list.files(
   FUN = function(i){ape::read.tree(i)})
 
 #Occurence and biomass matrices for phylogenetic tree (cf 2b_biodiversity_indices)
-save(sp_occ_phylogeny, file = here::here("outputs", "2b_sp_occ_phylogeny_matrix.Rdata"))
-save(sp_pbiom_phylogeny, file = here::here("outputs", "2b_sp_pbiom_phylogeny_matrix.Rdata"))
+load(file = here::here("outputs", "2b_sp_occ_phylogeny_matrix.Rdata"))
+load(file = here::here("outputs", "2b_sp_pbiom_phylogeny_matrix.Rdata"))
 
 #Biodiversity indices
 load(file = here::here("outputs", "2b_biodiv_indices_surveys.Rdata" ))
@@ -89,7 +89,7 @@ all_actino <- c(species_lowTL, species_mediumTL, species_highTL, species_NA)
 length(all_actino) #1609 -> All actino species have been taken.
 
 total_biomass <- rowSums(surveys_sp_biom[,all_actino])
-summary(biom_tot) # from 10.7 to 498916.0, median=35424.5
+summary(total_biomass) # from 10.7 to 498916.0, median=35424.5
 
 
 
