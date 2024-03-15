@@ -84,8 +84,8 @@ species_cultural_contrib <- species_nutrients |>
 
 
 ##---------------------------Recycling data----------------------------
-recycling <- flux_sp |> dplyr::rename(species_name = species)
-recycling$species_name <- gsub("_", " ", recycling$species_name)
+recycling <- flux_sp |> dplyr::rename(rls_species_name = species)
+recycling$rls_species_name <- gsub("_", " ", recycling$rls_species_name)
 
 # Merge data
 species_traits_contrib <- species_cultural_contrib |> 
@@ -96,7 +96,7 @@ species_traits_contrib <- species_cultural_contrib |>
 ##---------------------------Explore data----------------------------
 library(funbiogeo)
 species_traits <- dplyr::rename(species_traits_contrib,
-                                species = species_name) |> 
+                                species = rls_species_name) |> 
   dplyr::select(-phylum, -class, -order, -family, -spec_code, -worms_id)
 
 fb_plot_species_traits_completeness(species_traits)

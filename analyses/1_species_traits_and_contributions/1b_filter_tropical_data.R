@@ -30,8 +30,9 @@ load( file = here::here("data", "derived_data", "RLS_species_traits_contrib.Rdat
 load( file = here::here("data", "raw_data", "RLS_actinopterygii_data.Rdata"))
 load( file = here::here("data", "raw_data", "RLS_elasmobranchii_data.Rdata"))
 
-#SST
-load(here::here("data", "raw_data", "environmental_covariates", "final_sst.Rdata"))
+#survey metadata
+load(here::here("data", "raw_data", "environmental_covariates", 
+                "all_covariates_benthos_inferred_tropical_surveys.Rdata"))
 
 #coastline shapefile
 worldmap <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
@@ -43,9 +44,9 @@ source(here::here("R","evaluation_prediction_model.R"))
  ### filtering to keep only RLS data for sub-tropical and tropical sites ######
  ##  i.e with min(SST)>=17°C over the 5 years before the survey
 
- sites_upper_17SST <- final_derived_data_joined |>
+ sites_upper_17SST <- all_covariates_benthos_inferred |>
    dplyr::filter(min_5year_analysed_sst >= 17) |> 
-    dplyr::filter(name_latitude > -30) # Approximatelly the limit of the Allen Atlas
+    dplyr::filter(latitude > -30) # Approximatelly the limit of the Allen Atlas
 
  # check filter
 NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
@@ -56,12 +57,12 @@ NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
 
  ### filter observations ###
  rls_actino_trop <- RLS_actinopterygii_data |>
-   dplyr::filter(survey_id %in% sites_upper_17SST$name_data_id) 
+   dplyr::filter(survey_id %in% sites_upper_17SST$survey_id) 
  
  # diversity remaining
  dplyr::n_distinct(rls_actino_trop$survey_id) # 6002 surveys
  dplyr::n_distinct(rls_actino_trop$site_code) # 1977 sites
- dplyr::n_distinct(rls_actino_trop$species_name) # 1609 taxa
+ dplyr::n_distinct(rls_actino_trop$rls_species_name) # 1609 taxa
  dplyr::n_distinct(rls_actino_trop$family) # 81 families
 
 
@@ -69,7 +70,7 @@ NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
  rls_elasmo_trop <- RLS_elamsobranchii_data |>
    dplyr::filter(survey_id %in% unique(rls_actino_trop$survey_id))
  
- dplyr::n_distinct(rls_elasmo_trop$species_name) # 54 taxa
+ dplyr::n_distinct(rls_elasmo_trop$rls_species_name) # 54 taxa
  dplyr::n_distinct(rls_elasmo_trop$family) # 16 families
  
 
@@ -78,21 +79,21 @@ NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
 observed_species <- dplyr::distinct(
  rbind(dplyr::select(rls_actino_trop, -raw_biomass),
                      rls_elasmo_trop), 
- species_name, .keep_all = TRUE)
+ rls_species_name, .keep_all = TRUE)
 
 tropical_species_traits <- species_traits_contrib |> 
-  dplyr::filter(species_name %in% observed_species$species_name)
+  dplyr::filter(rls_species_name %in% observed_species$rls_species_name)
 
 # diversity remaining
 dplyr::n_distinct(tropical_species_traits$family) # 97 families (81 actino)
-dplyr::n_distinct(tropical_species_traits$species_name) # 1663 taxa (1609 actino)
+dplyr::n_distinct(tropical_species_traits$rls_species_name) # 1663 taxa (1609 actino)
 dplyr::n_distinct(tropical_species_traits$fishbase_name) # 1658 taxa -> 5 duplicates
 
 
 ##-------------Observe data with missing values-------------
 # Explore data
 species_traits <- dplyr::rename(tropical_species_traits,
-                                species = species_name) |> 
+                                species = rls_species_name) |> 
   dplyr::select(-phylum, -class, -order, -family, -spec_code, -worms_id)
 
 fb_plot_species_traits_completeness(species_traits)

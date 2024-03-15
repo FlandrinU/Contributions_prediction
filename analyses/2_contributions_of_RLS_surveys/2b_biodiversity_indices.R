@@ -39,7 +39,8 @@ trees <- lapply(list.files(
 coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
 
 #Survey metadata
-load(file = here::here("data", "raw_data", "environmental_covariates", "RLS_surveys_covariates.Rdata"))
+load(file = here::here("data", "raw_data", "environmental_covariates",
+                       "all_covariates_benthos_inferred_tropical_surveys.Rdata"))
 
 
 ##------------------- loading functions-------------------
@@ -55,7 +56,7 @@ taxo_richness = apply(surveys_sp_occ, 1,  sum)
 elasmo_by_surveys <- rls_elasmo_trop |>
   dplyr::mutate( number = 1) |>
   dplyr::group_by(survey_id) |>
-  dplyr::distinct(species_name, .keep_all=TRUE) |> #keep only one size class per species
+  dplyr::distinct(rls_species_name, .keep_all=TRUE) |> #keep only one size class per species
   dplyr::summarise(elasmobranch_richness = sum(number))
 
 table(elasmo_by_surveys$elasmobranch_richness)
@@ -96,6 +97,7 @@ summary(as.numeric(sp_gower)) # most distances are small (Q3=0.40)
 # warning message means some species have same trait values
 # => not an issue for computation of Chao et al 2019 indices
 save(sp_gower, file = here::here("data/derived_data/2_funct_gower_distance_species.Rdata"))
+# load(file = here::here("data/derived_data/2_funct_gower_distance_species.Rdata"))
 
 
 ## COMPUTING FUNCTIONNAL DISTINCTIVENESS ---
@@ -145,17 +147,17 @@ iucn <- inferred_species_traits |>
                 iucn_inferred = IUCN_inferred_Loiseau23, 
                 iucn_redlist = IUCN_category) 
 
-missing_values <- dplyr::filter(iucn, is.na(iucn$iucn_inferred)) |>
-  dplyr::mutate(iucn_redlist = dplyr::recode(iucn_redlist,  
-                                             "NE" = "No Status",
-                                             "DD" = "No Status",
-                                             "LC" = "Non Threatened",
-                                             "NT" = "Non Threatened",
-                                             "VU" = "Threatened",
-                                             "EN" = "Threatened",
-                                             "CR" = "Threatened")) 
-
-iucn[rownames(missing_values), "iucn_inferred"] <- missing_values$iucn_redlist
+# missing_values <- dplyr::filter(iucn, is.na(iucn$iucn_inferred)) |>
+#   dplyr::mutate(iucn_redlist = dplyr::recode(iucn_redlist,  
+#                                              "NE" = "No Status",
+#                                              "DD" = "No Status",
+#                                              "LC" = "Non Threatened",
+#                                              "NT" = "Non Threatened",
+#                                              "VU" = "Threatened",
+#                                              "EN" = "Threatened",
+#                                              "CR" = "Threatened")) 
+# 
+# iucn[rownames(missing_values), "iucn_inferred"] <- missing_values$iucn_redlist
 
 ## remaining NAs -> recode them into "No Status" to fit with Loiseau 2023.
 iucn[is.na(iucn$iucn_inferred),] #27 species including 8 elasmobranchs
@@ -164,7 +166,7 @@ iucn$iucn_inferred[is.na(iucn$iucn_inferred)] <- "No Status"
 
 
 ## Merge survey data and iucn category
-rls_trop_iucn <- tibble::rownames_to_column(iucn, "species_name") |> 
+rls_trop_iucn <- tibble::rownames_to_column(iucn, "rls_species_name") |> 
   dplyr::right_join(rls_trop) 
 
 summary(rls_trop_iucn$iucn_inferred)
@@ -222,8 +224,8 @@ plot(c(iucn_by_surveys$iucn_species + rnorm(nrow(iucn_by_surveys), sd=0.1))~
 ## Species endemism
 
 endemism_sp <- inferred_species_traits |>
-  tibble::rownames_to_column("species_name") |> 
-  dplyr::select(species_name, log_range = `log(geographic_range_Albouy19)`) |> 
+  tibble::rownames_to_column("rls_species_name") |> 
+  dplyr::select(rls_species_name, log_range = `log(geographic_range_Albouy19)`) |> 
   dplyr::mutate(range = 10^(log_range)) |> 
   dplyr::mutate(endemism_log = (max(log_range, na.rm=T) - log_range)/
                   (max(log_range, na.rm=T) - min(log_range, na.rm=T)),
@@ -249,10 +251,10 @@ colnames(endemism_survey) <- "sp_richness"
 occ_endem <- surveys_sp_occ |>
   tibble::rownames_to_column("survey_id") |> 
   tidyr::pivot_longer( cols=2:last_col(),
-                                names_to = "species_name", values_to = "occ") |> 
+                                names_to = "rls_species_name", values_to = "occ") |> 
   dplyr::filter(occ == 1) |> #remove useless rows: when the species is absent
   dplyr::left_join(endemism_sp) |> 
-  dplyr::select(survey_id, species_name, endemism_log)
+  dplyr::select(survey_id, rls_species_name, endemism_log)
   
 endemism_survey <- occ_endem |> 
   dplyr::group_by(survey_id) |> 
@@ -269,8 +271,8 @@ hist(endemism_survey$sum_endemism, breaks = 20)
 hist(endemism_survey$Q3_endemism, breaks = 20)
 hist(endemism_survey$residuals_endemism_richness, breaks = 20)
 
-endem_metadata <- dplyr::mutate(endemism_survey, survey_id = as.numeric(survey_id)) |> 
-  dplyr::left_join(all_covariates)
+endem_metadata <- endemism_survey |> 
+  dplyr::left_join(all_covariates_benthos_inferred)
 
 library(ggplot2)
 ggplot(endem_metadata) + geom_point(aes(sp_richness,sum_endemism, color = realm ))
@@ -310,13 +312,13 @@ endemism <- endemism_survey |>
 
 #Check names in phylogeny
 treesp <- trees[[1]][["tip.label"]]
-names_phylogeny <- data.frame(species_name =gsub("_", " ", treesp),
+names_phylogeny <- data.frame(rls_species_name =gsub("_", " ", treesp),
                               tree = 1)
 
 # /!\ very long time to run
-# subset1 <- code_sp_check(names_phylogeny[c(1:10000),], mc_cores = 12) 
-# subset2 <- code_sp_check(names_phylogeny[c(10001:20000),], mc_cores = 12) 
-# subset3 <- code_sp_check(names_phylogeny[c(20001:nrow(names_phylogeny)),], mc_cores = 15) 
+# subset1 <- code_sp_check(names_phylogeny[c(1:10000),], original_name = "rls_species_name", mc_cores = 12) 
+# subset2 <- code_sp_check(names_phylogeny[c(10001:20000),], original_name = "rls_species_name", mc_cores = 12) 
+# subset3 <- code_sp_check(names_phylogeny[c(20001:nrow(names_phylogeny)),], original_name = "rls_species_name", mc_cores = 15) 
 # 
 # names_phylogeny_fishbase <- rbind(subset1, subset2, subset3)
 # summary(names_phylogeny_fishbase$check) #should be only 1, few mistakes
@@ -338,7 +340,7 @@ for( i in 1:ncol(surveys_sp_occ)){
   rls_name <- colnames(surveys_sp_occ)[i]
   fb_name <- inferred_species_traits[rls_name, "fishbase_name"]
   tree_name <- names_phylogeny_fishbase[
-    which(names_phylogeny_fishbase$fishbase_name == fb_name), "species_name"]
+    which(names_phylogeny_fishbase$fishbase_name == fb_name), "rls_species_name"]
   
   if (length(tree_name) == 1) {
     names[i] <- tree_name
@@ -355,7 +357,7 @@ length(sp_wrong_name) #11 species are still missing
 #none of these species are in NA_fishbase
 
 
-#SOME SPECIES ARE ABSENT FROM THE PHYLOGENY, AND SOME NALES ARE DUPLICATED:
+#SOME SPECIES ARE ABSENT FROM THE PHYLOGENY, AND SOME NAMES ARE DUPLICATED:
 sp_occ_phylogeny <- as.data.frame(t(surveys_sp_occ)) |> 
   dplyr::mutate(species_tree = gsub(" ", "_", names)) |> 
   dplyr::filter(!is.na(species_tree)) |> #remove the 11 species not in the phylogeny
@@ -389,8 +391,8 @@ occ_matrix <- as.matrix(phylo_100[[1]][["comm"]])
 
 ## Compute Evolutionary distinctivness: ED  Isaac et al. method
 
-# by species
-ED_species_raw <- parallel::mclapply(phylo_100, mc.cores=parallel::detectCores()-15, function(x) {
+# by species -> long time to run
+ED_species_raw <- parallel::mclapply(phylo_100, mc.cores=10, function(x) {
   picante::evol.distinct(x$phy, type = c("fair.proportion"), scale = FALSE, use.branch.lengths = TRUE)})
 
 save(ED_species_raw, file = here::here("outputs", "2b_evolutionary_distinctivness_species.Rdata"))
@@ -422,7 +424,7 @@ colnames(ED_surveys) <- c("survey_id", "ED_min", "ED_Q1", "ED_median", "ED_mean"
 
 ## Check the importance of NA 
 NA_prop <- rls_actino_trop|> 
-  dplyr::filter(species_name %in% sp_wrong_name) |> 
+  dplyr::filter(rls_species_name %in% sp_wrong_name) |> 
   dplyr::group_by(survey_id, abundance_tot_survey, biomass_tot_survey) |> #keep totals at the survey scale
   dplyr::summarise(total = sum(total),
                    biomass = sum(biomass)) |> 

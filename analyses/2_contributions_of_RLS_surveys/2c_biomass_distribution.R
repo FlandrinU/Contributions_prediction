@@ -102,7 +102,7 @@ summary(surveys_biomTL) #OK
 
 ## Check the importance of NA 
 NA_prop <- rls_actino_trop|> 
-  dplyr::filter(species_name %in% species_NA) |> 
+  dplyr::filter(rls_species_name %in% species_NA) |> 
   dplyr::group_by(survey_id, abundance_tot_survey, biomass_tot_survey) |> #keep totals at the survey scale
   dplyr::summarise(total = sum(total),
                    biomass = sum(biomass)) |> 
@@ -117,7 +117,8 @@ na_survey <- unique(NA_prop$survey_id)
 
 ## REMOVE NON REPRESENTATIVE ESTIMATIONS:
 surveys_biomTL <- surveys_biomTL |> 
-  dplyr::mutate(across(-survey_id, ~ifelse(survey_id %in% na_survey, NA, .)))
+  dplyr::mutate(across(all_of(c("biom_lowTL", "biom_mediumTL", "biom_highTL")),
+                       ~ifelse(survey_id %in% na_survey, NA, .)))
 
 
 
@@ -162,8 +163,8 @@ phylo_entropy_raw <- lapply( phylo_100[1:10], function(x) {
     
   cat("Start computation for one tree... \n")
   
-  list <- parallel::mclapply(rownames(sp_pbiom_phylogeny), 
-                             mc.cores = parallel::detectCores()-5,
+  list <- pbmcapply::pbmclapply(rownames(sp_pbiom_phylogeny), 
+                             mc.cores = parallel::detectCores()-10,
                              function(survey){
                                
     community_biom <- entropart::as.ProbaVector(sp_pbiom_phylogeny[survey,])
@@ -227,6 +228,7 @@ biomass_indices_surveys <- as.data.frame(funct_entropy) |>
 summary(biomass_indices_surveys)
 
 library(funbiogeo)
+library(ggplot2)
 fb_plot_species_traits_completeness(dplyr::rename(biomass_indices_surveys, species = survey_id))
 
 pca <- FactoMineR::PCA(biomass_indices_surveys[,-1], scale = T, graph=F, ncp=30)

@@ -358,7 +358,7 @@ estimates_phylogeny <- function(data = model_eval_missforest,                   
         dplyr::mutate(accuracy = (observed == imputed)) |> 
         dplyr::group_by(order, missForest) |>
         dplyr::summarise(prop_accuracy = mean(accuracy)*100,
-                         n_sp = dplyr::n_distinct(species_name))
+                         n_sp = dplyr::n_distinct(rls_species_name))
       
       #order boxplot
       order_taxa <- temp_trait |>
@@ -411,7 +411,7 @@ estimates_phylogeny <- function(data = model_eval_missforest,                   
         dplyr::mutate(accuracy = 1 - abs(observed - imputed)/(max(observed)-min(observed)) ) |> 
         dplyr::group_by(order, missForest) |>
         dplyr::summarise(prop_accuracy = mean(accuracy)*100,
-                         n_sp = dplyr::n_distinct(species_name))
+                         n_sp = dplyr::n_distinct(rls_species_name))
       
       #order boxplot
       order_taxa <- temp_trait |>
@@ -521,7 +521,7 @@ estimates_according_NA_sp <- function(order_performance = order_performance,
   
   for(i in order){
     temp <- dplyr::filter(original_data, order == i) |> 
-      dplyr::select(-c(species_name:fishbase_name))
+      dplyr::select(-c(rls_species_name:fishbase_name))
     prop_NA <- mean(is.na(temp))
     nb_species <- nrow(temp)
     
@@ -609,8 +609,9 @@ NA_on_map <- function(data=covariates,
     geom_jitter(data=df[df$presence_of_data == priority,], 
                 aes(x=longitude, y=latitude, color= presence_of_data),
                 width = jitter, height = jitter)+
-    scale_color_brewer(palette = "PuOr")+
-    coord_sf(ylim= ylim, xlim =xlim ,expand = FALSE) +
+    scale_color_manual(values = RColorBrewer::brewer.pal(3, "PuOr")[c(1,3)]) +  # Change colors here
+    
+    coord_sf(ylim= ylim, xlim =xlim , expand = FALSE) +
     
     geom_hline(aes(yintercept=c(-lat_line,lat_line)), linetype = "dashed", linewidth=0.3)+
     theme_bw()+
@@ -628,3 +629,41 @@ NA_on_map <- function(data=covariates,
     )
   
 }
+
+
+##-------------8) Extract result contributions model -------------
+
+extract_result_contrib <- function(raw_result = cross_val){
+
+  ### Extract evaluation measure per traits ###
+  traits_perf = list()
+  
+  for(i in 1:length(raw_result)){ 
+    model_i <- list()
+    temp <- raw_result[[i]]
+    
+    for( var in unique(temp$variable)){
+      temp_trait <- temp |> dplyr::filter(variable == var)
+      model_number <- unique(temp_trait$model)
+      
+      # lm_test = cor(temp_num_trait$observed, temp_num_trait$imputed) # Pearson correlation between observed and inferred
+      lm_test = summary(lm(temp_trait$observed ~ temp_trait$imputed))[["r.squared"]] #R-squared evaluation
+      
+      #Saving accuracy measure into list
+      model_i[[var]] <- c(lm_test, model_number)
+    }
+    
+    res <- as.data.frame(do.call(rbind,model_i)) |> 
+      dplyr::rename(estimate = V1, model = V2) |> 
+      dplyr::mutate(method = "r_squared") |> 
+      tibble::rownames_to_column(var = "variable")
+    
+    traits_perf[[i]] <- res
+  } #End num estimates per trait
+  
+  traits_performance = as.data.frame(do.call(rbind,traits_perf))
+  
+  return(traits_performance)
+  
+} # END of function extract_model_perf
+

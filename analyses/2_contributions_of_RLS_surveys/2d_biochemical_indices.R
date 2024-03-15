@@ -25,14 +25,14 @@ load(file = here::here("data", "raw_data", "environmental_covariates",
                        "all_covariates_benthos_inferred_tropical_surveys.Rdata"))
 
 # Metabolic parameters
-parameters <- readr::read_csv(here::here("data", "raw_data", "recycling data",
+parameters <- utils::read.csv(here::here("data", "raw_data", "recycling data",
                                          "species_parameters_metabolic.csv") )
-metpar <- read.csv(here::here("data", "raw_data", "recycling data",
+metpar <- utils::read.csv(here::here("data", "raw_data", "recycling data",
                               "metpar_fam_smr.csv") )  |>
   dplyr::rename(family = Family)
 
 # combined data of reef services and renato's extraction of fishbase
-kmax <- readr::read_csv( here::here("data", "raw_data", "recycling data",
+kmax <- utils::read.csv( here::here("data", "raw_data", "recycling data",
                                     "kmax_combined.csv") ) |>
   dplyr::mutate(species = gsub(" ", "_", Species), sst = sstmean, linf_m = sizemax) 
 
@@ -46,16 +46,18 @@ load( here::here("data", "raw_data", "recycling data", "fishtree_glob.RData") )
 spcombo <- all_covariates_benthos_inferred  |> 
   dplyr::select(survey_id, sst = mean_5year_analysed_sst) |>
   dplyr::right_join(rls_actino_trop, by="survey_id") |>
-  dplyr::select(sst, species=species_name, size_class) |>
+  dplyr::select(sst, species=rls_species_name, size_class) |>
   dplyr::mutate(sst = round(sst),
                 species = gsub(" ", "_", species)) |>
   unique()
 
 
 nrow(spcombo) # 27 162
+length(unique(spcombo$species)) #1609 OK
 
 # Get all parameters that are independent from sst
-length(which(parameters$species %in% rownames(inferred_species_traits))) #1034 species out of 1609
+length(which(parameters$species %in% 
+               gsub(" ", "_", rownames(inferred_species_traits)))) #1034 species out of 1609
 sp_par <- dplyr::left_join(spcombo, parameters)
 
 
@@ -90,10 +92,10 @@ sp_par <- dplyr::rename(sp_par, alpha_m = alpha,
 # k parameter
 
 # get fishtree
-fishtree <- fishtree::fishtree_complete_phylogeny(kmax$species)
+sub_fishtree <- fishtree::fishtree_complete_phylogeny(kmax$species, mc.cores = 15)
 # just use one tree
 set.seed(1)
-tree <- fishtree[[sample(1:100, 1)]]
+tree <- sub_fishtree[[sample(1:100, 1)]]
 # correlation matrix
 A <- ape::vcv(tree, cor = TRUE)
 
@@ -164,14 +166,17 @@ kpred <- lapply(1:nrow(sp_par), function(i){
   )
 }) |> plyr::ldply()
 
-sp_par <- dplyr::left_join(sp_par, kpred)
+sp_par <- dplyr::left_join(sp_par, unique(kpred))
 
 # Add values for AE
-ae <- readr::read_csv(here::here("data", "raw_data", "recycling data", "ae_dietcat.csv")) |>
+ae <- utils::read.csv(here::here("data", "raw_data", "recycling data", "ae_dietcat.csv"),
+                      sep = ",") |>
   dplyr::mutate(diet_cat = as.character(diet_cat)) |>
-  dplyr::mutate(an_sd = dplyr::case_when(an_sd>0.2 ~ 0.2, TRUE ~ an_sd),
-                ap_sd = dplyr::case_when(ap_sd>0.2 ~ 0.2, TRUE ~ ap_sd),
-                ac_sd = dplyr::case_when(ac_sd>0.2 ~ 0.2, TRUE ~ ac_sd)) |>
+  dplyr::mutate(
+    an_sd = dplyr::case_when(an_sd > 0.2 ~ 0.2, TRUE ~ an_sd),
+    ap_sd = dplyr::case_when(ap_sd > 0.2 ~ 0.2, TRUE ~ ap_sd),
+    ac_sd = dplyr::case_when(ac_sd > 0.2 ~ 0.2, TRUE ~ ac_sd)
+  ) |>
   dplyr::mutate(diet_cat = as.character(diet_cat))
 
 # mean for missing diet category
@@ -196,13 +201,13 @@ readr::write_csv(sp_par, file=here::here("data", "derived_data","2d_parameters_s
 
 ##------------------- 2) Run fishflux  -------------------####
 
-sp_par <- readr::read_csv( here::here("data", "derived_data","2d_parameters_sp_sst.csv")  )
+sp_par <- utils::read.csv( here::here("data", "derived_data","2d_parameters_sp_sst.csv")  )
 
 data <- sp_par |> tidyr::drop_na()
 length(unique(data$species)) #1034 species
 #data <- data[1:100,]
-cnpflux <- parallel::mclapply(1:nrow(data), function(x){
-  print(x)
+cnpflux <- pbmcapply::pbmclapply(1:nrow(data), function(x){
+  cat(x, "\n")
   
   dt <- data[x,] 
   par <- dt |> dplyr::select(-species, - sst, - size_class, -family, -diet_cat) |> as.list()
@@ -217,7 +222,7 @@ cnpflux <- parallel::mclapply(1:nrow(data), function(x){
   extr$limitation <- dplyr::first(lim[lim$prop_lim == max(lim$prop_lim), "nutrient"])
   
   return(extr)
-}, mc.cores = 15) |> plyr::ldply()
+}, mc.cores = parallel::detectCores()-5) |> plyr::ldply()
 
 
 cnpflux <- dplyr::select(cnpflux, - Qc_m, - TL)
@@ -231,20 +236,20 @@ readr::write_csv(cnpflux, here::here("outputs", "2d_cnpflux_sp_size_sst.csv"))
 
 ##------------------- 3) Assess flows at the survey scale  -------------------####
 # details about species: length-weight, age, nutrient contents, diet cat
-species_par <- readr::read_csv(here::here("data", "derived_data","2d_parameters_sp_sst.csv")) |>
+species_par <- utils::read.csv(here::here("data", "derived_data","2d_parameters_sp_sst.csv")) |>
   dplyr::select(family, species, lwa_m, lwb_m, k_m, linf_m, sst, Qc_m, Qn_m, Qp_m, diet_cat) 
 
 
 
 # fluxes from fishes
-data_fishflux <- readr::read_csv(here::here("outputs", "2d_cnpflux_sp_size_sst.csv")) |> unique()
+data_fishflux <- utils::read.csv(here::here("outputs", "2d_cnpflux_sp_size_sst.csv")) |> unique()
 head(data_fishflux)
 names(data_fishflux)
 
 # merging datasets and computing fluxes for each species*size_class given abundance and sst
 data_surveys_fluxes <- rls_actino_trop |> 
-  dplyr::mutate(species = gsub(" ", "_", species_name)) |> 
-  dplyr::select(-species_name) |> 
+  dplyr::mutate(species = gsub(" ", "_", rls_species_name)) |> 
+  dplyr::select(-rls_species_name) |> 
   dplyr::left_join(dplyr::select(all_covariates_benthos_inferred, survey_id, 
                                  sst = mean_5year_analysed_sst )) |>
   dplyr::mutate(sst = round(sst)) |>
@@ -302,7 +307,7 @@ for (k in fluxes_var ) {
 # lapply(surveys_species_fluxes, dim)
 
 # total of fluxes per survey --
-surveys_fluxes<-unlist( sapply(surveys_species_fluxes, function(x) rowSums(x, na.rm = TRUE)) ) |> 
+surveys_fluxes <- unlist( sapply(surveys_species_fluxes, function(x) rowSums(x, na.rm = TRUE)) ) |> 
   as.data.frame() |>
   tibble::rownames_to_column("survey_id")
 head(surveys_fluxes)
@@ -397,6 +402,6 @@ surveys_fluxes_final[na_rows, c("excretion_N", "excretion_P",
 
 
 
-# saving
+### saving data ###
 save(surveys_species_fluxes, file=here::here("outputs", "2d_surveys_species_fluxes.Rdata") )
 save(surveys_fluxes_final, file=here::here( "outputs", "2d_surveys_fluxes.Rdata") )

@@ -22,7 +22,7 @@ preping_data <- function(species_traits_df = tropical_species_traits){
   
   traits_data <- species_traits_df |>  
     dplyr::select(-fishbase_name,-spec_code, -worms_id) |> 
-    tibble::column_to_rownames("species_name") |> 
+    tibble::column_to_rownames("rls_species_name") |> 
     dplyr::mutate(across(where(is.character), as.factor)) 
   
   ## Check data
@@ -58,7 +58,7 @@ preping_data <- function(species_traits_df = tropical_species_traits){
   traits_data_factors <- traits_data  |>
     #extract only categorial variables 
     dplyr::select(all_of(factor_length$id)) |>
-    tibble::rownames_to_column("species_name")  |> 
+    tibble::rownames_to_column("rls_species_name")  |> 
     #long format table
     tidyr::pivot_longer(cols = IUCN_category:last_col(),
                         names_to = "variable",
@@ -67,7 +67,7 @@ preping_data <- function(species_traits_df = tropical_species_traits){
   traits_data_num <- traits_data  |>
     #extract only categorial variables 
     dplyr::select(-all_of(unique(traits_data_factors$variable))) |>
-    tibble::rownames_to_column("species_name")  |> 
+    tibble::rownames_to_column("rls_species_name")  |> 
     #long format table
     tidyr::pivot_longer(cols = c(Length:last_col()),
                         names_to = "variable",
@@ -104,14 +104,14 @@ fct_missforest_evaluation <- function(data_to_infer,
       #long format Data frame with NA
       data_withNA_factors <- data_withNA  |>
         dplyr::select(all_of(dplyr::filter(factor_length,length<53)$id)) |>
-        tibble::rownames_to_column("species_name")  |> 
+        tibble::rownames_to_column("rls_species_name")  |> 
         tidyr::pivot_longer(cols = c(IUCN_category:last_col()),
                             names_to = "variable",
                             values_to = "obs_NA")
       
       data_withNA_num <- data_withNA  |>
         dplyr::select(-all_of(unique(data_withNA_factors$variable))) |>
-        tibble::rownames_to_column("species_name")  |> 
+        tibble::rownames_to_column("rls_species_name")  |> 
         tidyr::pivot_longer(cols = c(Length:last_col()),
                             names_to = "variable",
                             values_to = "obs_NA") 
@@ -127,14 +127,14 @@ fct_missforest_evaluation <- function(data_to_infer,
       #long format Data frame with imputed values 
       imputed_factors <- impute$ximp  |>
         dplyr::select(all_of(dplyr::filter(factor_length,length<53)$id)) |>
-        tibble::rownames_to_column("species_name")  |> 
+        tibble::rownames_to_column("rls_species_name")  |> 
         tidyr::pivot_longer(cols = c(IUCN_category:last_col()),
                             names_to = "variable",
                             values_to = "imputed")
       
       imputed_num <- impute$ximp  |>
         dplyr::select(-all_of(unique(imputed_factors$variable))) |>
-        tibble::rownames_to_column("species_name")  |> 
+        tibble::rownames_to_column("rls_species_name")  |> 
         tidyr::pivot_longer(cols = c(Length:last_col()),
                             names_to = "variable",
                             values_to = "imputed") 
@@ -206,14 +206,14 @@ fct_missforest_evaluation_MCA <- function(data_to_infer,
    #long format Data frame with NA
    data_withNA_factors <- data_withNA  |>
      dplyr::select(all_of(categorials)) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(IUCN_category:last_col()),
                          names_to = "variable",
                          values_to = "obs_NA")
    
    data_withNA_num <- data_withNA  |>
      dplyr::select(-all_of(c(unique(data_withNA_factors$variable), Dims))) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(Length:last_col()),
                          names_to = "variable",
                          values_to = "obs_NA") 
@@ -228,14 +228,14 @@ fct_missforest_evaluation_MCA <- function(data_to_infer,
    #long format Data frame with imputed values 
    imputed_factors <- impute$ximp  |>
      dplyr::select(all_of(categorials)) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(IUCN_category:last_col()),
                          names_to = "variable",
                          values_to = "imputed")
    
    imputed_num <- impute$ximp  |>
      dplyr::select(-all_of(c(unique(data_withNA_factors$variable), Dims))) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(Length:last_col()),
                          names_to = "variable",
                          values_to = "imputed") 
@@ -283,13 +283,13 @@ fct_missforest_evaluation_with_family <- function(data_to_infer){
     
     #test with families
     phylo <- data_to_infer |> dplyr::select(phylum, class, order, family) |> 
-      tibble::rownames_to_column( var = "species_name")
+      tibble::rownames_to_column( var = "rls_species_name")
     
-    families <- maditr::dcast(phylo, species_name~family, length)
+    families <- maditr::dcast(phylo, rls_species_name~family, length)
     family_list <- colnames(families)[-1]
     phylo_wide <- dplyr::left_join(phylo, families) |> 
       dplyr::select(-family) |> 
-      tibble::column_to_rownames(var = "species_name")
+      tibble::column_to_rownames(var = "rls_species_name")
   
     
     # data_withNA <- traits |> 
@@ -304,14 +304,14 @@ fct_missforest_evaluation_with_family <- function(data_to_infer){
     data_withNA_factors <- data_withNA  |>
      dplyr::select(all_of(c(dplyr::filter(factor_length,length<53)$id,
                             family_list))) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(IUCN_category:last_col()),
                          names_to = "variable",
                          values_to = "obs_NA")
     
     data_withNA_num <- data_withNA  |>
      dplyr::select(-all_of(unique(data_withNA_factors$variable))) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(Length:last_col()),
                          names_to = "variable",
                          values_to = "obs_NA") 
@@ -326,14 +326,14 @@ fct_missforest_evaluation_with_family <- function(data_to_infer){
     #long format Data frame with imputed values 
     imputed_factors <- impute$ximp  |>
      dplyr::select(all_of(dplyr::filter(factor_length,length<53)$id)) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(IUCN_category:last_col()),
                          names_to = "variable",
                          values_to = "imputed")
     
     imputed_num <- impute$ximp  |>
      dplyr::select(-all_of(c(unique(imputed_factors$variable), family_list))) |>
-     tibble::rownames_to_column("species_name")  |> 
+     tibble::rownames_to_column("rls_species_name")  |> 
      tidyr::pivot_longer(cols = c(Length:range_n_cells_01),
                          names_to = "variable",
                          values_to = "imputed") 
@@ -490,14 +490,14 @@ missforest_applied <- function(data_to_infer,
     #long format Data frame with imputed values 
     imputed_factors <- impute$ximp  |>
       dplyr::select(all_of(dplyr::filter(factor_length,length<53)$id)) |>
-      tibble::rownames_to_column("species_name")  |> 
+      tibble::rownames_to_column("rls_species_name")  |> 
       tidyr::pivot_longer(cols = c(IUCN_category:last_col()),
                           names_to = "variable",
                           values_to = "imputed")
     
     imputed_num <- impute$ximp  |>
       dplyr::select(-all_of(c(unique(imputed_factors$variable),Dims))) |>
-      tibble::rownames_to_column("species_name")  |> 
+      tibble::rownames_to_column("rls_species_name")  |> 
       tidyr::pivot_longer(cols = c(Length:last_col()),
                           names_to = "variable",
                           values_to = "imputed") 
@@ -535,7 +535,7 @@ missforest_applied <- function(data_to_infer,
   for(i in seq(3,length(flat_list),2)){
     estimates_factors <- estimates_factors |> 
       dplyr::left_join(flat_list[[i]],
-                       by=c("species_name","phylum","class","order","family","variable"),
+                       by=c("rls_species_name","phylum","class","order","family","variable"),
                        suffix = c("", paste(".",i)))
   }
   
@@ -544,7 +544,7 @@ missforest_applied <- function(data_to_infer,
   for(i in seq(4,length(flat_list),2)){
     estimates_num <- estimates_num |> 
       dplyr::left_join(flat_list[[i]],
-                       by=c("species_name","phylum","class","order","family","variable"),
+                       by=c("rls_species_name","phylum","class","order","family","variable"),
                        suffix = c("", paste(".",i)))
   }
   
@@ -580,7 +580,7 @@ missforest_applied <- function(data_to_infer,
   
   for( i in 1:nrow(final_imputation)){
     if(final_imputation$confidence[i] > confidence_threshold){ # if most of missforest converged into the same result
-      sp <- final_imputation$species_name[i]
+      sp <- final_imputation$rls_species_name[i]
       var <- final_imputation$variable[i]
       infered_data[sp, var] <- final_imputation$norm[i]
     }

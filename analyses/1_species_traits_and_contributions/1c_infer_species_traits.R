@@ -56,6 +56,33 @@ tropical_species_traits[,cols] <- log10(tropical_species_traits[,cols] +1) # log
 colnames(tropical_species_traits)[colnames(tropical_species_traits) %in% cols] <- 
   c("log(depth_min)", "log(depth_max)", "log(geographic_range_Albouy19)")
 
+
+##-------------Complete IUCN data from known categories-------------
+## IUCN data: IUCN categories used to complete inference by Loiseau et al. (2023)
+## mainly for Elasmobranch (that are not taken in Loiseau's study)
+iucn <- tropical_species_traits |> 
+  tibble::column_to_rownames("rls_species_name") |> 
+  dplyr::select(class, fishbase_name,
+                iucn_inferred = IUCN_inferred_Loiseau23, 
+                iucn_redlist = IUCN_category) 
+
+missing_values <- dplyr::filter(iucn, is.na(iucn$iucn_inferred)) |>
+  dplyr::mutate(iucn_redlist = dplyr::recode(iucn_redlist,  
+                                             "NE" = "No Status",
+                                             "DD" = "No Status",
+                                             "LC" = "Non Threatened",
+                                             "NT" = "Non Threatened",
+                                             "VU" = "Threatened",
+                                             "EN" = "Threatened",
+                                             "CR" = "Threatened")) 
+
+iucn[rownames(missing_values), "iucn_inferred"] <- missing_values$iucn_redlist
+
+tropical_species_traits[, "IUCN_inferred_Loiseau23"] <- 
+  iucn[tropical_species_traits$rls_species_name, "iucn_inferred"]
+
+
+
 ################################################################################
 ##
 ##   Try missforest without all taxonomical data (only Phylum, class, order)
@@ -247,9 +274,9 @@ colnames(tropical_species_traits)[colnames(tropical_species_traits) %in% cols] <
 
 ##-------------Choose the number of dimensions-------------
 phylogeny <- tropical_species_traits |> 
-  dplyr::select(species_name, phylum, class, order, family) |> 
-  dplyr::mutate(genus = stringr::word(species_name,1)) |> 
-  tibble::column_to_rownames(var="species_name") |> 
+  dplyr::select(rls_species_name, phylum, class, order, family) |> 
+  dplyr::mutate(genus = stringr::word(rls_species_name,1)) |> 
+  tibble::column_to_rownames(var="rls_species_name") |> 
   as.matrix()
 
 #Integrate phylogeny with MCA
@@ -375,9 +402,9 @@ dim = 45
 
 ## Preping data
 phylogeny <- tropical_species_traits |> 
-  dplyr::select(species_name, phylum, class, order, family) |> 
-  dplyr::mutate(genus = stringr::word(species_name,1)) |> 
-  tibble::column_to_rownames(var="species_name") |> 
+  dplyr::select(rls_species_name, phylum, class, order, family) |> 
+  dplyr::mutate(genus = stringr::word(rls_species_name,1)) |> 
+  tibble::column_to_rownames(var="rls_species_name") |> 
   as.matrix()
 
 dimensionality <- FactoMineR::MCA(phylogeny,ncp=dim) 
@@ -488,9 +515,9 @@ dim = 45
 
 #Preping data
 phylogeny <- tropical_species_traits |> 
-  dplyr::select(species_name, phylum, class, order, family) |> 
-  dplyr::mutate(genus = stringr::word(species_name,1)) |> 
-  tibble::column_to_rownames(var="species_name") |> 
+  dplyr::select(rls_species_name, phylum, class, order, family) |> 
+  dplyr::mutate(genus = stringr::word(rls_species_name,1)) |> 
+  tibble::column_to_rownames(var="rls_species_name") |> 
   as.matrix()
 
 dimensionality <- FactoMineR::MCA(phylogeny,ncp=dim) 
@@ -555,11 +582,11 @@ ggsave(filename = here::here("figures", "1_trophic_guild_inference_VS_troph.jpg"
 
 ##-------------save data-------------
 inferred_species_traits <- inferred_data |> 
-  tibble::rownames_to_column("species_name") |> 
+  tibble::rownames_to_column("rls_species_name") |> 
   dplyr::left_join(
     dplyr::select(tropical_species_traits, 
-                  species_name, family, spec_code, worms_id, fishbase_name)) |> 
-  tibble::column_to_rownames("species_name")
+                  rls_species_name, family, spec_code, worms_id, fishbase_name)) |> 
+  tibble::column_to_rownames("rls_species_name")
   
 
 save(inferred_species_traits, file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))

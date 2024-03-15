@@ -28,10 +28,10 @@ rls_actino_trop <- rls_actino_trop|>
 
 # ------------------- biomass of species in each survey  -------------------
 surveys_sp_biom <- rls_actino_trop |> 
-  dplyr::select(survey_id, species_name, biomass) |>
-  dplyr::group_by(survey_id, species_name) |>
+  dplyr::select(survey_id, rls_species_name, biomass) |>
+  dplyr::group_by(survey_id, rls_species_name) |>
   dplyr::summarize( sp_biom = sum(biomass) ) |>
-  tidyr::pivot_wider(names_from = species_name, values_from = sp_biom, values_fill = 0) |>
+  tidyr::pivot_wider(names_from = rls_species_name, values_from = sp_biom, values_fill = 0) |>
   tibble::column_to_rownames(var="survey_id") 
 
 

@@ -14,10 +14,10 @@
 # rm(list=ls())
 
 #data
-load(here::here("data/raw_data/environmental_covariates/RLS_surveys_covariates.Rdata"))
-load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
+load(here::here("data/raw_data/environmental_covariates/all_covariates_benthos_inferred_tropical_surveys.Rdata"))
+load(file = here::here("outputs", "RLS_species_traits_inferred.Rdata"))
 load(file = here::here("outputs", "2e_final_metaweb.Rdata"))
-load(file=here::here("data/derived_data/2_occurrence_matrix_sp_survey.Rdata"))
+load(file = here::here("data/derived_data/2_occurrence_matrix_sp_survey.Rdata"))
 
 Traits <- inferred_species_traits |> 
   tibble::rownames_to_column("species") |> 
@@ -26,11 +26,12 @@ Traits <- inferred_species_traits |>
 MW <- data.frame(final_metaweb)
 colnames(MW) <- gsub("\\.", " ", colnames(MW))
 
-all_covariates$survey_id <- as.character(all_covariates$survey_id)
+all_covariates_benthos_inferred$survey_id <-
+  as.character(all_covariates_benthos_inferred$survey_id)
 
 PA_matrix_site <- as.data.frame(surveys_sp_occ) |>
   tibble::rownames_to_column(var= "survey_id") |>
-  dplyr::left_join( dplyr::select(all_covariates, site_code, survey_id )) |>
+  dplyr::left_join( dplyr::select(all_covariates_benthos_inferred, site_code, survey_id )) |>
   dplyr::select(-survey_id) |>
   dplyr::group_by( site_code) |>
   dplyr::summarise(across(.cols = everything(), .fns = max, .names = "{.col}")) |>

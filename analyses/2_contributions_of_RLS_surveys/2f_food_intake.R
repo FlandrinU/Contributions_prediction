@@ -16,13 +16,14 @@ rm(list=ls())
 ##------------------- loading datasets-------------------
 #Species traits
 load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
-species_traits <- tibble::rownames_to_column(inferred_species_traits, "species_name")
+species_traits <- tibble::rownames_to_column(inferred_species_traits, "rls_species_name")
   
 #RLS observations
 load(file = here::here("data/derived_data/2_rls_actino_trop.Rdata"))
 
 #Survey metadata
-load(file = here::here("data", "raw_data", "environmental_covariates", "RLS_surveys_covariates.Rdata"))
+load(file = here::here("data", "raw_data", "environmental_covariates", 
+                       "all_covariates_benthos_inferred_tropical_surveys.Rdata"))
 
 
 ##------------------- loading functions-------------------
@@ -38,7 +39,8 @@ source(here::here("R", "calc_prod_transect.R"))
 #  (expert opinion, Cinner et al. 2020)
 
 max_size <- species_traits |> 
-  dplyr::select(species_name, max_length=Length)
+  dplyr::select(rls_species_name, max_length=Length, Importance, PriceCateg, 
+                UsedforAquaculture )
 
 data_surveys_fishery <- rls_actino_trop |>
   dplyr::left_join(max_size)
@@ -57,25 +59,27 @@ target_larger_20cm <- c("Balistidae", "Holocentridae", "Pomacanthidae", "Priacan
 untargeted_fam <- c("Chaetodontidae","Cirrhitidae", "Diodontidae", "Grammatidae", 
                     "Monacanthidae", "Pempheridae", "Pinguipedidae", "Pseudochromidae", 
                     "Synodontidae", "Tetraodontidae", "Zanclidae","Fistulariidae",
-                    "Ostraciidae", "Pomacentridae")
+                    "Ostraciidae", "Pomacentridae") # + Anthiinae, cf Cinner 2016
 
 unclassified_fam <- setdiff(unique(data_surveys_fishery$family), 
                             c(all_sp, target_larger_20cm, untargeted_fam))
 unclassified_fam #OK
-
-
+unclass_data <- dplyr::filter(data_surveys_fishery, family %in% unclassified_fam)
+unique(unclass_data$rls_species_name)
+ 
 #keep only targeted fishes
 data_surveys_fishery <- data_surveys_fishery |> 
-  dplyr::filter(family %in% all_sp | (family %in% target_larger_20cm & max_length > 20))
+  dplyr::filter(family %in% all_sp | (family %in% target_larger_20cm & max_length > 20)) 
+# A CHANGER ? FILTRER LES INDIVIDUS <20CM ?
 
 
 
 
 ### biomass of fishery species in each survey ###
 surveys_fishery_sp_biom <- data_surveys_fishery |> 
-  dplyr::group_by(survey_id, species_name) |>
+  dplyr::group_by(survey_id, rls_species_name) |>
   dplyr:: summarize( available_biomass = sum(biomass) ) |>
-  tidyr::pivot_wider(names_from = species_name, values_from = available_biomass, 
+  tidyr::pivot_wider(names_from = rls_species_name, values_from = available_biomass, 
                      values_fill = 0) |>
   tibble::column_to_rownames(var="survey_id") 
 
@@ -93,16 +97,16 @@ surveys_fishery_biom <- data.frame(
 #aggregate by species in each transect
 # (keep only species targeted by fisheries)
 data_surveys_nutrient <- rls_actino_trop |>
-  dplyr::group_by(survey_id, species_name) |>
+  dplyr::group_by(survey_id, rls_species_name) |>
   dplyr::summarise(biomass_sp = sum(biomass)) |> 
-  dplyr::filter(species_name %in% unique(data_surveys_fishery$species_name)) 
+  dplyr::filter(rls_species_name %in% unique(data_surveys_fishery$rls_species_name)) 
 
 
 #nutrients per species per transect
 RLS_nut_sp_surv <- data_surveys_nutrient |>
   dplyr::left_join(
     dplyr::select(species_traits,
-                  species_name, Calcium, Iron, Omega3, Selenium, VitaminA, Zinc)) |>
+                  rls_species_name, Calcium, Iron, Omega3, Selenium, VitaminA, Zinc)) |>
   dplyr::mutate(Selenium_tot  = Selenium  * biomass_sp,
                 Zinc_tot      = Zinc      * biomass_sp,
                 Omega3_tot   = Omega3     * biomass_sp,
@@ -130,13 +134,13 @@ RLS_nut_surv <- RLS_nut_sp_surv |>
 cols <- c("Calcium", "Iron", "Omega3", "Selenium", "VitaminA", "Zinc")
 rows_with_na <- which(!complete.cases(species_traits[, cols]))
 cols_with_na <- apply(is.na(species_traits[rows_with_na, cols]), 1, function(x) cols[x])
-sp_na <- species_traits$species_name[rows_with_na]
+sp_na <- species_traits$rls_species_name[rows_with_na]
 
 NA_prop <- rls_actino_trop |>
   dplyr::group_by(survey_id) |>
   dplyr::mutate(abundance_tot_survey = sum(total),
                    biomass_tot_survey = sum(biomass)) |> 
-  dplyr::filter(species_name %in% sp_na) |> 
+  dplyr::filter(rls_species_name %in% sp_na) |> 
   dplyr::group_by(survey_id, abundance_tot_survey, biomass_tot_survey) |> 
   dplyr::summarise(total = sum(total),
                    biomass = sum(biomass)) |> 
@@ -149,7 +153,8 @@ na_survey <- unique(NA_prop$survey_id)
 
 
 ## REMOVE NON REPRESENTATIVE ESTIMATIONS:
-RLS_nut_surv[RLS_nut_surv$survey_id == na_survey, -1] <- NA
+RLS_nut_surv[RLS_nut_surv$survey_id == na_survey, 
+             paste0(unique(unlist(cols_with_na)), "_C")] <- NA
 
 
 ## -------------------3) Turnover of biomass -------------------####
@@ -157,14 +162,14 @@ RLS_nut_surv[RLS_nut_surv$survey_id == na_survey, -1] <- NA
 ##--- Prepping RLS data ---
 #rename variables
 surveys <- dplyr::select(rls_actino_trop,
-                         survey_id, Species = species_name, Num = total, 
+                         survey_id, Species = rls_species_name, Num = total, 
                          Sizeclass = size_class, Biomass = biomass)
 
 sp <- dplyr::select(species_traits,
-                    Species = species_name, Family = family,
+                    Species = rls_species_name, Family = family,
                     MaxLength = Length, lwa = a, lwb = b)
 
-metadata <- dplyr::select(all_covariates,
+metadata <- dplyr::select(all_covariates_benthos_inferred,
                           survey_id, Temperature = mean_5year_analysed_sst) |> 
   dplyr::mutate(survey_id= as.character(survey_id))
 
@@ -195,7 +200,7 @@ unique(data_final_fishery$Family)
 RLS_prod_indiv = calc_prod_rfishprod(data_final_fishery)
 
 #transect level#
-RLS_prod_transect = calc_prod_transect(RLS_prod_indiv, all_covariates)
+RLS_prod_transect = calc_prod_transect(RLS_prod_indiv, all_covariates_benthos_inferred)
 #columns: 'Prod' = biomass producted in one day on the surface of the survey
 #         'Productivity' = percent of biomass producted in a day
 

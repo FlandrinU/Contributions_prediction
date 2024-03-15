@@ -40,7 +40,7 @@ source(here::here("R", "metaweb_construction.R"))
 
 ##----------------- cross validation niche model ---------------------####
 # Test the confidence of the allometric niche model with a Boyce index
-source(here::here("R", "cross_validation_niche_model.R")) 
+# source(here::here("R", "cross_validation_niche_model.R")) #OK but long time to run
 
 
 ##----------------- Metaweb analysis ---------------------####
@@ -81,6 +81,7 @@ food_web_indices <- trophic_indicators_survey |>
 
 
 # Check distributions
+library(ggplot2)
 ggplot(data=tidyr::pivot_longer(food_web_indices,
                                 cols = -survey_id,
                                 names_to = "index", values_to = "values"), 
