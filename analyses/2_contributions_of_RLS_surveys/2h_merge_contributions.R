@@ -384,3 +384,54 @@ parallel::mclapply(colnames(contributions), function(NCP){
   plot_Contrib_on_world_map(NCP, xlim=c(-180,180), ylim = c(-36, 31), 
                             title="world_map_with_", jitter=1.5, pt_size=2)
 },mc.cores=parallel::detectCores()-5)
+
+
+
+#-------------Compute weighted mean of Contributions: NN and NP scores-------------
+scaled_contrib <- scale(contributions)
+
+## Nature to Nature (NN) score ##
+NN_names <- names(grp_NN_NP)[ grp_NN_NP=="NN" ]
+contrib_NN <- scaled_contrib[,NN_names]
+
+colnames(contrib_NN)
+weighting_par <- c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6,
+                   1/5, 1/5, 1/5, 1/5, 1/5,
+                   1/2,1/2,
+                   1/2,1/2)
+names(weighting_par) <- colnames(contrib_NN)
+weighting_par
+
+mean_NN <- c()
+for( site in 1:nrow(contrib_NN)){
+  EDS_site <- sum(weighting_par * contrib_NN[site,], na.rm=T) / sum(weighting_par)
+  mean_NN <- c(mean_NN, EDS_site) }
+
+summary(mean_NN)
+
+
+## Nature to People (NP) score ##
+NP_names <- names(grp_NN_NP)[ grp_NN_NP=="NP" ]
+contrib_NP <- scaled_contrib[,NP_names]
+
+colnames(contrib_NP)
+weighting_par <- c(1/2, 1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 1/2)
+names(weighting_par) <- colnames(contrib_NP)
+weighting_par
+
+mean_NP <- c()
+for( site in 1:nrow(contrib_NP)){
+  EDS_site <- sum(weighting_par * contrib_NN[site,], na.rm=T) / sum(weighting_par)
+  mean_NP <- c(mean_NP, EDS_site) }
+
+summary(mean_NP)
+
+
+contributions_with_synthetic_score <- as.data.frame(scaled_contrib) |> 
+  dplyr::mutate(NN_score = mean_NN,
+                NP_score = mean_NP)
+
+
+# Save #
+save(contributions_with_synthetic_score, 
+     file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))

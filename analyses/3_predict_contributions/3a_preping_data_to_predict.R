@@ -20,46 +20,103 @@ load(file = here::here("data", "raw_data", "environmental_covariates",
 
 # Contributions matrix
 load(file = here::here("outputs", "2_all_contributions.Rdata"))
+load(file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))
 
 
 ##------------------- Clean observations and covariates-------------------
 # FILTER OBSERVATIONS
-colnames(contributions)
 
-observations <- contributions |> 
+# colnames(contributions)
+# 
+# observations <- contributions |> 
+#   dplyr::select(-N_recycling, -P_recycling) |> 
+#   tidyr::drop_na() |> 
+#   dplyr::mutate(across(everything(), scale))|> 
+#   dplyr::mutate(across(everything(), as.numeric))
+
+colnames(contributions_with_synthetic_score)
+
+observations <- contributions_with_synthetic_score |> 
   dplyr::select(-N_recycling, -P_recycling) |> 
-  tidyr::drop_na()
+  tidyr::drop_na() |> 
+  dplyr::mutate(across(everything(), scale)) |> 
+  dplyr::mutate(across(everything(), as.numeric))
+
+# observations <- observations[sample(1:4000, 2000), ] ############################################### TO REMOVE
 
 
 # FILTER COVARIATES
 colnames(all_covariates_benthos_inferred)
+colnames(all_covariates_benthos_inferred) <- gsub(" ", "_", colnames(all_covariates_benthos_inferred))
 
-df <- all_covariates_benthos_inferred[,-c(1:8,11,13,14,15,16,176)]
-pca <- FactoMineR::PCA(df, scale = T, graph=F, ncp=30)
-factoextra::fviz_screeplot(pca, ncp = 20)
+## Too many variables -> look at correlations:
+sapply(all_covariates_benthos_inferred, class) 
+metadata_col <- c("survey_id", "country", "area", "ecoregion", "realm", "location",
+                  "site_code", "site_name", "latitude", "longitude", "survey_date",
+                  "program", "hour", "effectiveness")
+
+data_to_filter <- all_covariates_benthos_inferred[,-which(names(
+  all_covariates_benthos_inferred) %in% metadata_col)] |> 
+  tidyr::drop_na() |> 
+  scale()
+
+## Correlation matrix
+cor_matrix <- cor(data_to_filter, method = "pearson")
+pairwise_corr <- cor_matrix[upper.tri(cor_matrix)]
+summary(pairwise_corr) 
+high_correlation_indices <- which(cor_matrix > 0.7 & cor_matrix < 1, arr.ind = TRUE)
+correlated_pairs <- cbind(rownames(cor_matrix)[high_correlation_indices[, "row"]],
+                          colnames(cor_matrix)[high_correlation_indices[, "col"]])
+unique(correlated_pairs[,1])
+
+#Observe the highly correlated pairs:
+network_graph <- igraph::graph_from_edgelist(correlated_pairs, directed = FALSE)
+plot(network_graph, layout = igraph::layout_with_fr(network_graph),
+     edge.arrow.size = 1, vertex.label.cex = 0.8)
+
+### REMOVE OBVIOUS CORRELATIONS AND RE-RUN LINES 61 to 73
+data_to_filter <- as.data.frame(data_to_filter) |> 
+  dplyr::select(-grep("q95", colnames(data_to_filter)),
+                -grep("q05", colnames(data_to_filter)),
+                -grep("mean", colnames(data_to_filter)),
+                -grep("max", colnames(data_to_filter)),
+                -grep("min", colnames(data_to_filter))
+  ) |> as.matrix()
+
+
+#SELECT VARIABLES
+colnames(data_to_filter)
+pca <- FactoMineR::PCA(data_to_filter, scale = T, graph=F, ncp=30)
 factoextra::fviz_pca_var(pca, col.var = "contrib",repel = TRUE)
 factoextra::fviz_pca_var(pca, col.var = "contrib", axes=c(3,4), repel = TRUE)
 
 covariates <- all_covariates_benthos_inferred |> 
   dplyr::select(survey_id, latitude, longitude, depth, year,
                 
-                median_7days_chl, median_5year_chl, median_7days_degree_heating_week,
-                median_5year_degree_heating_week, median_7days_nppv, median_5year_nppv,
-                median_7days_o2, median_5year_o2, median_5year_ph, median_7days_so_mean,
-                median_5year_so_mean, median_7days_analysed_sst, median_5year_analysed_sst,
+                median_7days_chl, median_5year_chl,
+                median_7days_degree_heating_week, median_5year_degree_heating_week,
+                median_7days_nppv, median_5year_nppv,
+                median_7days_o2, median_5year_o2, 
+                median_5year_ph,
+                median_7days_so_mean, median_5year_so_mean, 
+                median_7days_analysed_sst, median_5year_analysed_sst,
                 
                 coral_algae_500m, Rock_500m, Sand_500m, Seagrass_500m, Plateau_500m,
-                algae, coral, Sand, seagrass, microalgal_mats, "other sessile invert",
-                Rock, "coralline algae", "coral rubble",
+                algae, coral, Sand, seagrass, microalgal_mats, other_sessile_invert,
+                Rock, coralline_algae, coral_rubble,
                 
                 control_of_corruption, gdp, gravtot2, hdi, marine_ecosystem_dependency,
                 effectiveness, natural_ressource_rent, neartt, ngo, no_violence,
                 voice, n_fishing_vessels, 
   ) 
-
+# |> 
+#   dplyr::select(-grep("7days", colnames(data_to_filter)), -grep("500m", colnames(data_to_filter))) # REDUCE DATA TO TEST MODELS######################################################"
+  
+  
+  
 funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates, species = survey_id))
            
-#PREPING COVARIATES                                       
+#PREPING FINAL COVARIATES                                       
 covariates_final <- covariates |> 
   dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
                                               "out" = 0,
@@ -73,6 +130,7 @@ covariates_final <- covariates |>
   dplyr::mutate(across(everything(), as.numeric))
   # dplyr::mutate(across(-c(longitude, latitude, effectiveness), scale)) |> #SCALE ALL COVARIATES
   # dplyr::mutate(across(-effectiveness, as.numeric))
+
 
 #Distribution of covariates
 library(ggplot2)
@@ -90,7 +148,7 @@ ggplot(data=tidyr::pivot_longer(covariates_final,
 
 #COMMON SURVEYS FOR COVARIATES AND OBSERVATIONS
 observations_final <- observations[rownames(covariates_final),]
-dim(observations_final) #4427 SURVEYS, 21 CONTRIBUTIONS
+dim(observations_final) #4427 SURVEYS, 21 CONTRIBUTIONS + 2 SCORES
 
 
 
