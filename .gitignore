@@ -26,3 +26,6 @@ renv/
 data_rfishbase.RData
 data/raw_data/phylogeny/
 
+#png files of species for new aesthetic scores
+data/raw_data/aesthetic_deep_model_Langlois_2022/png/
+

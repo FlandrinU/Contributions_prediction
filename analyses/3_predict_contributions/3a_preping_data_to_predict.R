@@ -42,8 +42,6 @@ observations <- contributions_with_synthetic_score |>
   dplyr::mutate(across(everything(), scale)) |> 
   dplyr::mutate(across(everything(), as.numeric))
 
-# observations <- observations[sample(1:4000, 2000), ] ############################################### TO REMOVE
-
 
 # FILTER COVARIATES
 colnames(all_covariates_benthos_inferred)

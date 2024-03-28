@@ -667,3 +667,48 @@ extract_result_contrib <- function(raw_result = cross_val){
   
 } # END of function extract_model_perf
 
+
+##-------------9) Density plot predictive models -------------
+
+density_prediction <- function(raw_result = all_res){
+  
+  #rescale the data between 0 and 1
+  res_scaled <- raw_result |> 
+  dplyr::group_by(variable) |> 
+  dplyr::mutate(min_obs = min(observed), max_obs = max(observed),
+                min_imp = min(imputed), max_imp = max(imputed)) |> 
+  dplyr::mutate(observed = (observed - min_obs)/(max_obs - min_obs),
+                imputed = (imputed - min_imp)/(max_imp- min_imp))
+  
+  #density plot
+  ggplot(res_scaled, aes(x = observed, y = imputed)) +
+    geom_density_2d_filled(aes(x = observed, y = imputed),
+                           contour_var = 'ndensity',
+                           contour = F, n = 100, bins= 10, colour = 'transparent') +
+    scale_fill_viridis_d(option = 'viridis', begin = 0.2, end = 0.9,
+                         name = 'Count') +
+    # geom_point(aes(x = observed, y = predicted), alpha = 0.2)
+    theme_bw()+ 
+    theme(panel.grid = element_blank(), 
+          strip.background = element_rect(fill = 'grey90', colour = 'grey90'), 
+          aspect.ratio = 1) + 
+    facet_wrap(~variable, scales = "free") +
+    geom_abline() +
+    labs(x = "Observed", y = "Predicted") +
+    # geom_text(label = paste0("r² = ", round(r2,3), "\nestimate = ", round(a,2)),
+    #           x= 0.3, y=0.9, size = 5)+
+    theme(
+      axis.text=element_text(size=10),
+      axis.title=element_text(size=15),
+      legend.text=element_text(size=8), 
+      legend.title=element_text(size=8),
+      strip.text.x = element_text(size = 10),
+      strip.text.y = element_text(size = 10),
+      strip.background = element_blank(),
+      panel.background = element_rect(fill = "white", colour = "grey50",
+                                      size = 1, linetype = "solid"),
+      panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank())
+
+} # END of density_prediction
+

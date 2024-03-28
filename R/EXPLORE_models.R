@@ -257,7 +257,7 @@ preds = predict(model, newdata = newdata, SP = SP[, 1:20])
 
 
 ##------------- SPA MM-------------
-install.packages("/home/u_flandrin/Téléchargements/spaMM_3.13.0.tar.gz", repos = NULL, type = "source")
+# install.packages("/home/u_flandrin/Téléchargements/spaMM_3.13.0.tar.gz", repos = NULL, type = "source")
 require(spaMM)
 
 # Data preparation
@@ -298,3 +298,39 @@ climv$np2 <- simulate(fitClinics, type="residual")
 #                  mod2=list(formula=np2~treatment+(1|clinic2),family=poisson(),
 #                            fixed=list(lambda=c('1'=0.5)))),              # '2': (1|clinic2) 
 #   data=climv))
+
+
+
+### Multivariates
+library("spaMM")
+data("Gryphon")
+gry_GE <- fitmv(
+  submodels=list(
+    BWT ~ 1 + corrMatrix(0+mv(1,2)|ID) + (0+mv(1,2)|ID),
+    TARSUS ~ 1 + corrMatrix(0+mv(1,2)|ID) + (0+mv(1,2)|ID)
+  ),
+  fixed=list(phi=c(1e-6,1e-6)),
+  corrMatrix = as_precision(Gryphon_A),
+  data = Gryphon_df, method = "REML")
+
+
+## Intro spaMM
+data("birds", package="jSDM")
+redstart <- data.frame(
+  x=birds$coordx/1000, y=birds$coordy/1000,
+  count=birds$`Phoenicurus phoenicurus`,
+  forest=birds$forest, elev=birds$elev, rlength=birds$rlength)
+redstart$pres <- redstart$count>0
+Tobs <- redstart$count
+Tobs[Tobs==0L] <- NA
+redstart$Tobs <- Tobs
+
+hurdle <- fitmv(
+  submodels=list(
+    list(pres ~forest+elev+rlength + Matern(1|x+y), family=binomial()),
+    list(Tobs ~forest+elev+rlength + Matern(+1|x+y), family=Tpoisson())),
+  data=redstart)
+preds <- predict(hurdle, newdata = redstart)
+plot(preds[1:266,] ~ redstart$pres)
+plot(preds[266:532,] ~ redstart$Tobs)
+
