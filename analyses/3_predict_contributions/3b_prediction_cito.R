@@ -17,14 +17,19 @@ rm(list=ls())
 
 
 ##-------------loading data and functions-------------
-#full data
-load(file = here::here("data", "derived_data", "3_all_contributions_to_predict.Rdata"))
+# #full data
+# load(file = here::here("data", "derived_data", "3_all_contributions_to_predict.Rdata"))
+# 
+# #datasets to predict
+# load( file = here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
+# 
+# #covariates
+# load(file = here::here("data", "derived_data", "3_all_covariates_to_predict.Rdata"))
 
-#datasets to predict
-load( file = here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
-
-#covariates
-load(file = here::here("data", "derived_data", "3_all_covariates_to_predict.Rdata"))
+## SITE SCALE
+load(file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
+load( file = here::here("data", "derived_data", "3_sites_datasets_for_predict_CV_80_20.Rdata"))
+load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
 
 #load functions
 source("R/evaluation_prediction_model.R")
@@ -51,6 +56,16 @@ source("R/evaluation_prediction_model.R")
 # devtools::install_github('citoverse/cito')
 # Sys.unsetenv("GITHUB_PAT")
 
+# ## CUDA 11.8 installation: run in bash terminal
+# wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-ubuntu2204.pin
+# sudo mv cuda-ubuntu2204.pin /etc/apt/preferences.d/cuda-repository-pin-600
+# wget https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb
+# sudo dpkg -i cuda-repo-ubuntu2204-11-8-local_11.8.0-520.61.05-1_amd64.deb
+# sudo cp /var/cuda-repo-ubuntu2204-11-8-local/cuda-*-keyring.gpg /usr/share/keyrings/
+#   sudo apt-get update
+# sudo apt-get -y install cuda
+
+
 
 ###  IF PROBLEM: ###
 # -> run cito::dnn(...)
@@ -59,6 +74,20 @@ source("R/evaluation_prediction_model.R")
 # => cito should work, but is in conflict with sjSDM
 ###
 
+
+
+## parameters ##
+hidden =  c(50,50,50)
+epochs =100
+lr = 0.01
+loss = "mse"
+validation = 0.3
+batch_prop = 0.3
+
+early_stopping = 10
+lambda = 0.001
+alpha = 0.2
+## end of parameters ##
 
 # cross_val <- lapply(1:length(datasets),FUN = function(i){
    cross_val <- lapply(1:2,FUN = function(i){
@@ -76,21 +105,22 @@ source("R/evaluation_prediction_model.R")
   
   #Fit model
   model <- cito::dnn(X = X_train, Y = Y_train,
-                     hidden = c(50L,50L,50L),
-                     #hidden = round(mean(ncol(X_train), ncol(Y_train))),
-                     epochs =100,
-                     lr = 0.01, #learning rate
-                     # loss = "gaussian",
-                     activation = "selu",
+                     hidden = hidden,
+                     # hidden=cito::tune(1, 10, fixed='width'),
+                     epochs = epochs,
+                     lr = lr, #learning rate
+                     # lr = cito::tune(),
+                     loss = loss,
                      lr_scheduler = cito::config_lr_scheduler("reduce_on_plateau", 
                                                               patience = 5,
                                                               factor = 0.5), #divide by 2 lr if the loss is constant over 5 epochs
-                     validation = 0.2, #take 20% of the data to test the model
-                     early_stopping = 10,
-                     lambda = 0.001,
-                     alpha = 0.2
-                     # ,
-                     # batchsize = round(nrow(X_train) * 0.1)
+                     validation = validation, #take 20% of the data to test the model
+                     early_stopping = early_stopping,
+                     lambda = lambda,
+                     # lambda = cito::tune(0.0001, 0.1),
+                     alpha = alpha
+                     ,
+                     batchsize = round(nrow(X_train) * batch_prop)
                      # ,
                      # bootstrap = 10
                      
@@ -128,6 +158,11 @@ source("R/evaluation_prediction_model.R")
     dplyr::full_join(preds_long) |> 
     dplyr::mutate(model = i)
   
+  # ##obs
+  # eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
+  # eval_act <- dplyr::filter(eval, variable == "actino_richness")
+  # plot(eval_act$imputed ~ eval_act$observed)
+  # cor.test(eval_act$imputed, eval_act$observed)
   eval
 }) #END OF LAPPLY ON CROSSVALIDATION
 
@@ -136,12 +171,20 @@ source("R/evaluation_prediction_model.R")
 all_res <- do.call(rbind, cross_val)
 result <- extract_result_contrib(cross_val)
 estimates_boxplot(result)
-ggsave(filename = here::here("figures", "models", "Pred_cito_multivariate_3x50hiddens.jpg"),
+ggsave(filename = here::here("figures", "models", 
+                             paste0("Pred_cito_multivariate_", 
+                                    paste(hidden, collapse = "-"), "_lr", lr, 
+                             "_", loss, "_batch", batch_prop, "_val" , validation,
+                             ".jpg")),
        width = 12, height = 7)
 
 
 density_prediction(all_res)
-ggsave(filename = here::here("figures", "models", ".jpg"),
+ggsave(filename = here::here("figures", "models", 
+                             paste0("Pred_density_cito_multivariate_", 
+                                    paste(hidden, collapse = "-"), "_lr", lr, 
+                                    "_", loss, "_batch", batch_prop, "_val" , validation,
+                                    ".jpg")),
        width = 20, height = 10)
 
 
@@ -227,6 +270,17 @@ ggsave(filename = here::here("figures", "models", ".jpg"),
 
 
 ##------------- cito univariate-------------
+## parameters ##
+hidden =  c(50,50,50)
+epochs =100
+lr = 0.01
+validation = 0.2
+batch_prop = 0.2
+
+early_stopping = 10
+lambda = 0.001
+alpha = 0.2
+## end of parameters ##
 
 # cross_val <- lapply(1:length(datasets),FUN = function(i){
 cross_val <- lapply(1:2,FUN = function(i){
@@ -247,14 +301,16 @@ cross_val <- lapply(1:2,FUN = function(i){
     
     #Fit model
     model <- cito::dnn(X = X_train, Y = Y_train,
-                       hidden = c(25L),
-                       epochs = 100,
-                       lr = 0.01,
+                       hidden = hidden,
+                       epochs = epochs,
+                       lr = lr,
                        lr_scheduler = cito::config_lr_scheduler("reduce_on_plateau", 
                                                                 patience = 10,
                                                                 factor = 0.5),
-                       validation = 0.2,
-                       early_stopping = 20, lambda = 0.001, alpha = 0.2
+                       validation = validation,
+                       early_stopping = early_stopping, lambda = lambda, alpha = alpha,
+                       batchsize = round(nrow(X_train) * batch_prop)
+                       
                        
                         )
     
@@ -303,11 +359,21 @@ cross_val <- lapply(1:2,FUN = function(i){
 all_res <- do.call(rbind, cross_val)
 result <- extract_result_contrib(cross_val)
 estimates_boxplot(result)
-ggsave(filename = here::here("figures", "models", "Pred_cito_univariates_25hidden.jpg"),
+ggsave(filename = 
+         here::here("figures", "models", 
+                    paste0("Pred_cito_UNIvariates_", 
+                           paste(hidden, collapse = "-"), "_lr", lr, 
+                           "_", loss, "_batch", batch_prop, "_val" , validation,
+                           ".jpg")),
        width = 12, height = 7)
 
 
 density_prediction(all_res)
-ggsave(filename = here::here("figures", "models", ".jpg"),
+ggsave(filename =
+         here::here("figures", "models", 
+                    paste0("Pred_cito_UNIvariates_", 
+                           paste(hidden, collapse = "-"), "_lr", lr, 
+                           "_", loss, "_batch", batch_prop, "_val" , validation,
+                           ".jpg")),
        width = 20, height = 10)
 

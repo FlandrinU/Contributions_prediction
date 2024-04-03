@@ -172,6 +172,9 @@ estimates_boxplot <- function(df_estimates = traits_performance){
   col <- rev(fishualize::fish(n = length(unique(df_estimates$variable)), 
                           option = "Ostracion_whitleyi", begin = 0.2, end = 0.9))
   
+  #Mean estimate
+  mean_estimate <- mean(data$estimate)
+  
   #order boxplot
   order_trait <- df_estimates |>
     dplyr::group_by(variable) |>
@@ -186,9 +189,25 @@ estimates_boxplot <- function(df_estimates = traits_performance){
   ggplot(data) +
     aes(x= variable, y= estimate, fill = variable, col = method)+
     geom_boxplot() +
+    ylim(0,1)+
+    
+    # Add the mean above each boxplot
+    stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "text", 
+                 aes(label = paste(round(..y.., 2))), 
+                 position = position_dodge(width = 0.75), vjust = -2, size = 3,
+                 color = "grey50") + 
+    
+    #Add the mean prediction
+    geom_hline(yintercept = mean_estimate, linetype = "dashed", 
+               color = "coral3") +
+    annotate("text", x = length(unique(data$variable)), y = mean_estimate, 
+             label = paste("Mean:", round(mean_estimate, 2)), vjust = -1,
+             color = "coral3") +
+    
+    #Set ggplot theme
     scale_color_manual(values = c("grey", "black"))+
     scale_fill_manual(values = col)+
-    xlab("") + ylab("Assessement quality (R-squared, or Accuracy)") +
+    xlab("") + ylab("Assessement quality (R-squared, or Accuracy, mean in digit above)") +
     theme_minimal() +
     theme(legend.position = "none",
           panel.grid.minor = element_blank(),
@@ -647,7 +666,7 @@ extract_result_contrib <- function(raw_result = cross_val){
       model_number <- unique(temp_trait$model)
       
       # lm_test = cor(temp_num_trait$observed, temp_num_trait$imputed) # Pearson correlation between observed and inferred
-      lm_test = summary(lm(temp_trait$observed ~ temp_trait$imputed))[["r.squared"]] #R-squared evaluation
+      lm_test = base::summary(lm(temp_trait$observed ~ temp_trait$imputed))[["r.squared"]] #R-squared evaluation
       
       #Saving accuracy measure into list
       model_i[[var]] <- c(lm_test, model_number)
