@@ -173,7 +173,7 @@ estimates_boxplot <- function(df_estimates = traits_performance){
                           option = "Ostracion_whitleyi", begin = 0.2, end = 0.9))
   
   #Mean estimate
-  mean_estimate <- mean(data$estimate)
+  mean_estimate <- mean(df_estimates$estimate)
   
   #order boxplot
   order_trait <- df_estimates |>
@@ -193,14 +193,14 @@ estimates_boxplot <- function(df_estimates = traits_performance){
     
     # Add the mean above each boxplot
     stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "text", 
-                 aes(label = paste(round(..y.., 2))), 
+                 aes(label = paste(round(after_stat(y), 2))), 
                  position = position_dodge(width = 0.75), vjust = -2, size = 3,
                  color = "grey50") + 
     
     #Add the mean prediction
     geom_hline(yintercept = mean_estimate, linetype = "dashed", 
                color = "coral3") +
-    annotate("text", x = length(unique(data$variable)), y = mean_estimate, 
+    annotate("text", x = length(unique(data$variable))-1, y = mean_estimate, 
              label = paste("Mean:", round(mean_estimate, 2)), vjust = -1,
              color = "coral3") +
     
@@ -665,7 +665,7 @@ extract_result_contrib <- function(raw_result = cross_val){
       temp_trait <- temp |> dplyr::filter(variable == var)
       model_number <- unique(temp_trait$model)
       
-      # lm_test = cor(temp_num_trait$observed, temp_num_trait$imputed) # Pearson correlation between observed and inferred
+      # lm_test = cor(temp_trait$observed, temp_trait$imputed) # Pearson correlation between observed and inferred
       lm_test = base::summary(lm(temp_trait$observed ~ temp_trait$imputed))[["r.squared"]] #R-squared evaluation
       
       #Saving accuracy measure into list
@@ -725,7 +725,7 @@ density_prediction <- function(raw_result = all_res){
       strip.text.y = element_text(size = 10),
       strip.background = element_blank(),
       panel.background = element_rect(fill = "white", colour = "grey50",
-                                      size = 1, linetype = "solid"),
+                                      linewidth = 1, linetype = "solid"),
       panel.grid.major = element_blank(), 
       panel.grid.minor = element_blank())
 

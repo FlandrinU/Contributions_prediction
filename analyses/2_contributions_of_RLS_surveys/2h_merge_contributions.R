@@ -122,12 +122,15 @@ max <- apply(dplyr::select(contributions_surveys,
                            actino_richness:available_biomass_turnover),2,
              function(x) max(x, na.rm=T))
 max/median
-which(max/median > 10)
+which(max/median > 5)
 
 # IDENTIFICATION OF RIGHT-SKEWED DISTRIBUTIONS:
 to_log <- c("herbivores_biomass", "invertivores_biomass", "piscivores_biomass",
             "total_biomass", "N_recycling" , "P_recycling", "available_biomass",
-            "available_biomass_turnover")
+            "available_biomass_turnover",
+            
+            "vitamin_A", "omega_3", "iron", "calcium")
+
 zero_values <- c("herbivores_biomass", "piscivores_biomass")
 
 
@@ -156,7 +159,7 @@ ggsave(plot = last_plot(), width=15, height= 10,
 
 
 
-##------------------- Save transformed contributions -------------------####
+##------------------- Save log-transformed contributions -------------------####
 #remove total biomass (redundant information)
 contributions <- contributions_surveys_log |> 
   tibble::column_to_rownames("survey_id") |> 
@@ -164,68 +167,6 @@ contributions <- contributions_surveys_log |>
 
 # Save #
 save(contributions, file = here::here("outputs", "2_all_contributions.Rdata"))
-
-
-
-##------------------- Mean values at the site scale -------------------####
-#TO REDUCE NOISES IN DATA, WE MEANS THE CONTRIBUTIONS VALUES OF SURVEYS, 
-# IN A GIVEN SITE, OBSERVED IN THE SAME DATE
-
-# Mean the contribution at the site scale, for a given date: all surveys in the
-# same place, observed at the same date are merged
-contributions_sites <- contributions_surveys |> 
-  dplyr::select(-survey_id) |> 
-  dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
-                  survey_date, year, effectiveness) |> 
-  dplyr::summarise(across(.cols = everything(),
-                          .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
-  dplyr::mutate(id = paste0(site_code, "_", survey_date)) |> 
-  dplyr::ungroup()
-
-nrow(contributions_sites) # 3325 mean_surveys
-
-# Log transformation
-contributions_sites_log <- contributions_sites |>
-  dplyr::mutate(across(.cols = all_of(zero_values),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>
-  dplyr::mutate(across(.cols = all_of(to_log),
-                       .fns = log10 , .names = "{.col}")) # log(x+1) to avoid -Inf values
-
-#remove total biomass (redundant information)
-contributions_sites_date <- contributions_sites_log |> 
-  tibble::column_to_rownames("id") |> 
-  dplyr::select(-total_biomass, -any_of(var_metadata))
-
-# Save #
-save(contributions_sites_date, file = here::here("outputs", "2_contributions_site&date.Rdata"))
-
-
-# Mean the contribution at the site scale, whatever the date:
-#  we offset the temporal information = look only on the spatial patterns.
-contributions_sites_no_date <- contributions_surveys |> 
-  dplyr::select(-survey_id, -survey_date) |> 
-  dplyr::group_by(site_code, latitude, longitude, country, ecoregion,
-                  realm, effectiveness) |> 
-  dplyr::summarise(across(.cols = everything(),
-                          .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
-  dplyr::mutate(id = paste0(site_code, "_", effectiveness)) |> 
-  dplyr::ungroup()
-
-# /!\ SOME SITES HAVE CHANGED PROTECTION STATUS BETWEEN DIFFERENT SURVEYS
-
-nrow(contributions_sites_no_date) # 2128 sites
-
-contributions_sites_no_date <- contributions_sites_no_date |>
-  dplyr::mutate(across(.cols = all_of(zero_values),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>
-  dplyr::mutate(across(.cols = all_of(to_log),
-                       .fns = log10 , .names = "{.col}")) |>  # log(x+1) to avoid -Inf values
-  tibble::column_to_rownames("id") |> 
-  dplyr::select(-total_biomass, -any_of(var_metadata))
-
-# Save #
-save(contributions_sites_no_date, file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
-
 
 
 
@@ -435,3 +376,106 @@ contributions_with_synthetic_score <- as.data.frame(scaled_contrib) |>
 # Save #
 save(contributions_with_synthetic_score, 
      file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))
+
+
+
+
+
+
+
+##------------------- MEAN VALUES AT THE SITE SCALE -------------------####
+
+#TO REDUCE NOISES IN DATA, WE MEANS THE CONTRIBUTIONS VALUES OF SURVEYS, 
+# IN A GIVEN SITE, OBSERVED IN THE SAME DATE
+
+# Mean the contribution at the site scale, for a given date: all surveys in the
+# same place, observed at the same date are merged
+
+synthetic_scores <- dplyr::select(contributions_with_synthetic_score,
+                                  NN_score, NP_score) |> 
+  tibble::rownames_to_column("survey_id")
+
+contributions_sites <- contributions_surveys |> 
+  dplyr::left_join(synthetic_scores) |> 
+  dplyr::select(-survey_id) |> 
+  dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
+                  survey_date, year, effectiveness) |> 
+  dplyr::summarise(across(.cols = everything(),
+                          .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
+  dplyr::mutate(across(.cols = everything(),
+                       .fns = ~ifelse(is.nan(.), NA, .), .names = "{.col}")) |> 
+  dplyr::mutate(id = paste0(site_code, "_", survey_date)) |> 
+  dplyr::ungroup() 
+
+nrow(contributions_sites) # 3325 mean_surveys
+
+# Log transformation
+contributions_sites_log <- contributions_sites |>
+  dplyr::mutate(across(.cols = all_of(zero_values),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>
+  dplyr::mutate(across(.cols = all_of(to_log),
+                       .fns = ~ifelse(is.na(.), NA, log10(.)) , .names = "{.col}")) # log(x+1) to avoid -Inf values
+
+#remove total biomass (redundant information)
+contributions_sites_date <- contributions_sites_log |> 
+  tibble::column_to_rownames("id") |> 
+  dplyr::select(-total_biomass, -any_of(var_metadata))
+
+#Check NA and distributions
+df <- tibble::rownames_to_column(contributions_sites_date, "id") |> 
+  dplyr::rename(species = id)
+fb_plot_species_traits_completeness(df)
+
+ggplot(data=tidyr::pivot_longer(contributions_sites_date,
+                                cols = everything(),
+                                names_to = "index", values_to = "values"))+
+  aes(x=values, group=index, fill=index) +
+  geom_histogram(aes(y = ..density..), bins = 20, color = "grey40", fill ="white") +
+  geom_density(aes(fill = index), alpha = 0.2) +
+  hrbrthemes::theme_ipsum() +
+  facet_wrap(~index, scales = "free") +
+  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
+        axis.ticks.x=element_blank())
+
+
+
+# Save #
+save(contributions_sites_date, file = here::here("outputs", "2_contributions_site&date.Rdata"))
+
+
+
+
+
+# Mean the contribution at the site scale, whatever the date:
+#  we offset the temporal information = look only on the spatial patterns.
+contributions_sites_no_date <-contributions_surveys |> 
+  dplyr::left_join(synthetic_scores) |> 
+  dplyr::select(-survey_id, -survey_date) |> 
+  dplyr::group_by(site_code, latitude, longitude, country, ecoregion,
+                  realm, effectiveness) |> 
+  dplyr::summarise(across(.cols = everything(),
+                          .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
+  dplyr::mutate(across(.cols = everything(),
+                       .fns = ~ifelse(is.nan(.), NA, .), .names = "{.col}")) |> 
+  dplyr::mutate(id = paste0(site_code, "_", effectiveness)) |> 
+  dplyr::ungroup()
+
+# /!\ SOME SITES HAVE CHANGED PROTECTION STATUS BETWEEN DIFFERENT SURVEYS
+
+nrow(contributions_sites_no_date) # 2128 sites
+
+contributions_sites_no_date <- contributions_sites_no_date |>
+  dplyr::mutate(across(.cols = all_of(zero_values),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>
+  dplyr::mutate(across(.cols = all_of(to_log),
+                       .fns = ~ifelse(is.na(.), NA, log10(.)) , .names = "{.col}")) |>  # log(x+1) to avoid -Inf values
+  tibble::column_to_rownames("id") |> 
+  dplyr::select(-total_biomass, -any_of(var_metadata))
+
+# Save #
+save(contributions_sites_no_date, file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
+
+
+
+
+

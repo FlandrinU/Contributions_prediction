@@ -52,7 +52,7 @@ cross_val <- pbmcapply::pbmclapply(1:5, mc.cores = 5,FUN = function(i){
   cat("Crossvalidation ", i,"/", length(datasets), "\n")
   data = datasets[[i]] 
   
-  Y_train <- data[[1]][1:300,] ################################" reduce data
+  Y_train <- data[[1]]#[1:300,] ################################" reduce data
   
   X_train <- covariates_final[rownames(Y_train),]
   
@@ -79,7 +79,7 @@ cross_val <- pbmcapply::pbmclapply(1:5, mc.cores = 5,FUN = function(i){
       # family=gaussian())
     # )
   
-  responses <- colnames(Y_train)[5:7]
+  responses <- colnames(Y_train)[5:12]
   # responses <- c("actino_richness", "mean_endemism", "available_biomass_turnover",
   #                "NN_score", "iron", "available_biomass", "functional_entropy")##############################"
   submodels <- list()
@@ -205,7 +205,7 @@ cross_val <- lapply(1:2,FUN = function(i){
                                  "Matern(1|longitude+latitude)",
                                  "(1|country)" #intercept random effect on country
                                  # , "(1|ecoregion)"
-                                 # , "(1|year)"
+                                 , "(1|year)"
                                  ),
                                collapse = "+")
               )
@@ -277,14 +277,14 @@ all_res <- do.call(rbind, cross_val)
 result <- extract_result_contrib(cross_val)
 estimates_boxplot(result)
 ggsave(filename = here::here("figures", "models",
-  "Pred_spaMM_univariate_methodML_random_effect_country.jpg"),
+  "Pred_spaMM_univariate_methodML_random_effect_year_country.jpg"),
        width = 12, height = 7)
 
 
 #density plot
 density_prediction(all_res)
 ggsave(filename = here::here("figures", "models", 
- "Pred_density_spaMM_univariate_methodML_random_effect_country.jpg"),
+ "Pred_density_spaMM_univariate_methodML_random_effect_year_country.jpg"),
        width = 20, height = 10)
 
 
@@ -431,83 +431,6 @@ density_prediction(all_res)
 ggsave(filename = here::here("figures", "models", 
                              "Pred_density_spaMM_univariate_methodML_random_effect_year_country_ecoregion.jpg"),
        width = 20, height = 10)
-
-
-
-
-##------------- Multivariate RF -> impossible to run on a large matrix -------------
-
-# cross_val <- lapply(1:length(datasets),FUN = function(i){
-cross_val <- lapply(1:4, FUN = function(i){
-  
-  cat("Crossvalidation ", i,"/", length(datasets), "\n")
-  # i=1
-  data = datasets[[i]] 
-  
-  Y_train <- as.matrix(data[[1]][1:100, 1:5])
-  
-  # #Scale Y
-  # Ymeans <- colMeans(data[[1]])
-  # Ysd <- apply(data[[1]], 2, sd)
-  # Y_train <- as.matrix(data[[1]][1:100, 1:5])
-  # for(i in 1:ncol(Y_train)) Y_train[,i] <- (Y_train[,i] - Ymeans[i]) / Ysd[i]
-  
-  X_train <- covariates_final[rownames(Y_train),1:10] |> 
-    dplyr::select(-longitude, -latitude) |> 
-    as.matrix()
-  
-  # XYcoords_train <- covariates_final[rownames(Y_train),] |>
-  #   dplyr::select(longitude, latitude) |> 
-  #   as.matrix()
-  # 
-  # #Moran's eigenvectors map predictors
-  # SPeigen_train <- sjSDM::generateSpatialEV(XYcoords_train)[, 1:30] #reduce the dimension to always have 30 columns
-  
-  
-  #Fit model and predict
-  
-  Y_test <- as.matrix(data[[2]][1:100, 1:5])
-  # for(i in 1:ncol(Y_test)) Y_test[,i] <- (Y_test[,i] - Ymeans[i]) / Ysd[i]
-  
-  X_test <- covariates_final[rownames(Y_test),1:10]|> 
-    dplyr::select(-longitude, -latitude) |> 
-    as.matrix()
-  
-  preds <- MultivariateRandomForest::build_forest_predict(trainX = X_train,
-                                                          trainY = Y_train,
-                                                          n_tree = 100,
-                                                          m_feature = round(ncol(X_train)/3,0),
-                                                          min_leaf = 10,
-                                                          testX = X_test)
-  
-  
-  
-  #Compare prediction
-  colnames(preds) <- colnames(Y_test)
-  rownames(preds) <- rownames(Y_test)
-  
-  preds_long <- as.data.frame(preds) |> 
-    tibble::rownames_to_column("survey_id") |> 
-    tidyr::pivot_longer(cols = -survey_id ,
-                        names_to = "variable",
-                        values_to = "imputed" )
-  
-  eval <- as.data.frame(Y_test) |> 
-    tibble::rownames_to_column("survey_id") |> 
-    tidyr::pivot_longer(cols = -survey_id ,
-                        names_to = "variable",
-                        values_to = "observed" ) |> 
-    dplyr::full_join(preds_long) |> 
-    dplyr::mutate(model = i)
-  
-  eval
-}) #END OF LAPPLY ON CROSSVALIDATION
-
-
-# Observe result
-all_res <- do.call(rbind, cross_val)
-result <- extract_result_contrib(cross_val)
-estimates_boxplot(result)
 
 
 

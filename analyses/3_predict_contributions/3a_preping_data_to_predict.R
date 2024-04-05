@@ -26,24 +26,27 @@ load(file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdat
 load(file = here::here("outputs", "2_contributions_site&date.Rdata"))
 
 
+###############################################################################"
+##
+##                            #### SURVEY SCALE ####
+##
+###############################################################################"
+
 ##------------------- Clean observations and covariates-------------------
+
 # FILTER OBSERVATIONS
 
 # colnames(contributions)
-# 
-# observations <- contributions |> 
-#   dplyr::select(-N_recycling, -P_recycling) |> 
-#   tidyr::drop_na() |> 
-#   dplyr::mutate(across(everything(), scale))|> 
-#   dplyr::mutate(across(everything(), as.numeric))
-
 colnames(contributions_with_synthetic_score)
 
+# observations <- contributions |> 
 observations <- contributions_with_synthetic_score |> 
   dplyr::select(-N_recycling, -P_recycling) |> 
   tidyr::drop_na() |> 
   dplyr::mutate(across(everything(), scale)) |> 
   dplyr::mutate(across(everything(), as.numeric))
+
+
 
 
 # FILTER COVARIATES
@@ -119,18 +122,18 @@ funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates, species
            
 #PREPING FINAL COVARIATES                                       
 covariates_final <- covariates |> 
-  dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
-                                              "out" = 0,
-                                              "Low" = 1,
-                                              "Medium" = 2,
-                                              "High" = 3)) |>  #effectiveness into quantitative values
+  # dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
+  #                                             "out" = 0,
+  #                                             "Low" = 1,
+  #                                             "Medium" = 2,
+  #                                             "High" = 3)) |>  
   tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |> 
-  dplyr::mutate(across(-c(longitude, latitude), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(everything(), as.numeric))
-  # dplyr::mutate(across(-c(longitude, latitude, effectiveness), scale)) |> #SCALE ALL COVARIATES
-  # dplyr::mutate(across(-effectiveness, as.numeric))
+  # dplyr::mutate(across(-c(longitude, latitude), scale)) |> #SCALE ALL COVARIATES
+  # dplyr::mutate(across(everything(), as.numeric))
+  dplyr::mutate(across(-c(longitude, latitude, effectiveness), scale)) |> #SCALE ALL COVARIATES
+  dplyr::mutate(across(-effectiveness, as.numeric))
 
 
 #Distribution of covariates
@@ -194,6 +197,7 @@ observations <- contributions_sites_date |>
   tidyr::drop_na() |> 
   dplyr::mutate(across(everything(), scale)) |> 
   dplyr::mutate(across(everything(), as.numeric))
+
 
 ##------------------- Mean covariates -------------------
 # Mean the covariates at the site scale, for a given date: all surveys in the
@@ -279,6 +283,30 @@ covariates <- covariates_sites |>
 
 funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates, species = survey_id))
 
+
+## SEE DISTRIBUTION
+library(ggplot2)
+ggplot(data=tidyr::pivot_longer(covariates,
+                                cols = -all_of(c("longitude", "latitude", 
+                                                 "effectiveness", "country", 
+                                                 "ecoregion", "survey_id")),
+                                names_to = "index", values_to = "values"))+
+  aes(x=values, group=index, fill=index) +
+  geom_histogram(aes(y = after_stat(density)), bins = 20, color = "grey40", fill ="white") +
+  geom_density(aes(fill = index), alpha = 0.2) +
+  hrbrthemes::theme_ipsum() +
+  facet_wrap(~index, scales = "free") +
+  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
+        axis.ticks.x=element_blank())
+
+# to_log <- c("coral_algae_500m", "coral_rubble","coralline_algae" ,"gdp" ,"gravtot2",
+#             "hdi", "median_5year_chl","median_5year_nppv", "median_7days_chl", 
+#             "median_7days_degree_heating_week", "median_7days_nppv", "microalgal_mats",
+#             "n_fishing_vessels", "neartt", "other_sessile_invert", "Plateau_500m",
+#             "Seagrass_500m", "seagrass")
+
+
+
 #PREPING FINAL COVARIATES                                       
 covariates_final <- covariates |> 
   # dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
@@ -289,10 +317,15 @@ covariates_final <- covariates |>
   tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |> 
+  # # Log transformation
+  # dplyr::mutate(across(.cols = all_of(to_log),
+  #                      .fns = ~ .x +1 , .names = "{.col}")) |>
+  # dplyr::mutate(across(.cols = all_of(to_log),
+  #                      .fns = log10 , .names = "{.col}")) |> 
   # dplyr::mutate(across(-c(longitude, latitude), scale)) |> #SCALE ALL COVARIATES
   # dplyr::mutate(across(everything(), as.numeric))
-dplyr::mutate(across(-c(longitude, latitude, effectiveness, country, ecoregion), scale)) |> #SCALE ALL COVARIATES
-dplyr::mutate(across(-c(effectiveness, country, ecoregion), as.numeric))
+  dplyr::mutate(across(-c(longitude, latitude, effectiveness, country, ecoregion), scale)) |> #SCALE ALL COVARIATES
+  dplyr::mutate(across(-c(effectiveness, country, ecoregion), as.numeric))
 
 
 #Distribution of covariates
@@ -332,7 +365,7 @@ observations_final$elasmobranch_richness <- NULL
 # observations_final <- dplyr::select(observations_final, )
 
 
-dim(observations_final) #2467 SITES, 21 CONTRIBUTIONS
+dim(observations_final) #2467 SITES, 20 CONTRIBUTIONS + 2 SCORES
 
 
 

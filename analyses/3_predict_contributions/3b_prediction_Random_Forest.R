@@ -55,30 +55,30 @@ cross_val <- lapply(1:4,FUN = function(i){
                                      # mc.cores = parallel::detectCores()-10,
                                      mc.cores = 15,
                                      FUN = function(contrib){
-                                       # contrib <- "actino_richness"
-                                       Y_train <- Y[rownames(X_train),contrib]
-                                       
-                                       # train <- cbind(X_train, Y_train)
-                                       # fmla <- as.formula(paste("Y_train", " ~ ", paste(colnames(X_train), collapse= "+")))
-                                       
-                                       Y_test <- as.matrix(data[[2]])[,contrib]
-                                       X_test <- covariates_final[names(Y_test), colnames(X_train)]
-                                       
-                                       #Fit model
-                                       model <- randomForest::randomForest(x = X_train,
-                                                                           y = Y_train,
-                                                                           # formula = fmla,
-                                                                           # data = train,
-                                                                           ntree = 100,
-                                                                           xtest = X_test,
-                                                                           ytest = Y_test
-                                       )
-                                       
-                                       
-                                       # #Predict on new data
-                                       # preds_contrib <- predict(model, new.data = X_test, type = 'response')
-                                       # preds_contrib
-                                       model[["test"]][["predicted"]]
+     # contrib <- "actino_richness"
+     Y_train <- Y[rownames(X_train),contrib]
+     
+     # train <- cbind(X_train, Y_train)
+     # fmla <- as.formula(paste("Y_train", " ~ ", paste(colnames(X_train), collapse= "+")))
+     
+     Y_test <- as.matrix(data[[2]])[,contrib]
+     X_test <- covariates_final[names(Y_test), colnames(X_train)]
+     
+     #Fit model
+     model <- randomForest::randomForest(x = X_train,
+                                         y = Y_train,
+                                         # formula = fmla,
+                                         # data = train,
+                                         ntree = 100,
+                                         xtest = X_test,
+                                         ytest = Y_test
+     )
+     
+     
+     # #Predict on new data
+     # preds_contrib <- predict(model, new.data = X_test, type = 'response')
+     # preds_contrib
+     model[["test"]][["predicted"]]
                                      })
   
   #extract result
@@ -209,13 +209,102 @@ cross_val <- lapply(1:2,FUN = function(i){
 all_res <- do.call(rbind, cross_val)
 result <- extract_result_contrib(cross_val)
 estimates_boxplot(result)
-ggsave(filename = here::here("figures", "models", "Pred_spRF_10tree_0.5_0.5.jpg"),
+ggsave(filename = here::here("figures", "models", "Pred_spRF_100tree_0.25_0.75.jpg"),
        width = 12, height = 7)
 
 
 density_prediction(all_res)
-ggsave(filename = here::here("figures", "models", "Pred_density_spRF_10tree_0.5_0.5.jpg"),
+ggsave(filename = here::here("figures", "models", "Pred_density_spRF_100tree_0.25_0.75.jpg"),
        width = 20, height = 10)
+
+
+
+
+
+##------------- Multivariate RF -> impossible to run on a large matrix -------------
+
+# cross_val <- lapply(1:length(datasets),FUN = function(i){
+cross_val <- lapply(1:2, FUN = function(i){
+  
+  # i=1
+  cat("Crossvalidation ", i,"/", length(datasets), "\n")
+  data = datasets[[i]] 
+  
+  Y_train <- as.matrix(data[[1]][1:300, 1:2])
+  
+  # #Scale Y
+  # Ymeans <- colMeans(data[[1]])
+  # Ysd <- apply(data[[1]], 2, sd)
+  # Y_train <- as.matrix(data[[1]][1:100, 1:5])
+  # for(i in 1:ncol(Y_train)) Y_train[,i] <- (Y_train[,i] - Ymeans[i]) / Ysd[i]
+  
+  X_train <- covariates_final[rownames(Y_train),] |> 
+    dplyr::select(-longitude, -latitude, -country, - ecoregion) |> 
+    dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
+                                                "out" = 0,
+                                                "Low" = 1,
+                                                "Medium" = 2,
+                                                "High" = 3)) |>  #effectiveness into quantitative values
+    as.matrix()
+  
+  # XYcoords_train <- covariates_final[rownames(Y_train),] |>
+  #   dplyr::select(longitude, latitude) |> 
+  #   as.matrix()
+  # 
+  # #Moran's eigenvectors map predictors
+  # SPeigen_train <- sjSDM::generateSpatialEV(XYcoords_train)[, 1:30] #reduce the dimension to always have 30 columns
+  
+  
+  #Fit model and predict
+  
+  Y_test <- as.matrix(data[[2]][1:300, 1:2])
+  # for(i in 1:ncol(Y_test)) Y_test[,i] <- (Y_test[,i] - Ymeans[i]) / Ysd[i]
+  
+  X_test <- covariates_final[rownames(Y_test),] |> 
+    dplyr::select(-longitude, -latitude, -country, - ecoregion) |> 
+    dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
+                                                "out" = 0,
+                                                "Low" = 1,
+                                                "Medium" = 2,
+                                                "High" = 3)) |>  #effectiveness into quantitative values
+    as.matrix()
+  
+  preds <- MultivariateRandomForest::build_forest_predict(trainX = X_train,
+                                                          trainY = Y_train,
+                                                          n_tree = 100,
+                                                          m_feature = round(ncol(X_train)/3,0),
+                                                          min_leaf = 10,
+                                                          testX = X_test)
+  
+  
+  
+  #Compare prediction
+  colnames(preds) <- colnames(Y_test)
+  rownames(preds) <- rownames(Y_test)
+  
+  preds_long <- as.data.frame(preds) |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "imputed" )
+  
+  eval <- as.data.frame(Y_test) |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "observed" ) |> 
+    dplyr::full_join(preds_long) |> 
+    dplyr::mutate(model = i)
+  
+  eval
+}) #END OF LAPPLY ON CROSSVALIDATION
+
+
+# Observe result
+all_res <- do.call(rbind, cross_val)
+result <- extract_result_contrib(cross_val)
+estimates_boxplot(result)
+
 
 
 
