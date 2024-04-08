@@ -40,6 +40,9 @@ kmax <- utils::read.csv( here::here("data", "raw_data", "recycling data",
 load( here::here("data", "raw_data", "recycling data", "fishtree_glob.RData") )
 
 
+## Load functions ##
+source(here::here("R","evaluation_prediction_model.R"))
+
 
 
 ##------------------- 1) get all parameters -------------------####
@@ -374,21 +377,10 @@ colnames(surveys_fluxes_final)
 var <- c("excretion_N", "excretion_P", 
          "recycling_N" , "recycling_P",
          "prop_biom_fishflux", "prop_abund_fishflux")
+
 # Check distributions
-library(ggplot2)
-ggplot(data=tidyr::pivot_longer(surveys_fluxes_final,
-                                cols = all_of(var),
-                                names_to = "index", values_to = "values"), 
-       aes(x=values, group=index, fill=index)) +
-  geom_histogram(aes(y = ..density..), bins = 20, color = "grey40", fill ="white") +
-  geom_density(aes(fill = index), alpha = 0.2) +
-  hrbrthemes::theme_ipsum() +
-  facet_wrap(~index, scales = "free") +
-  theme(
-    legend.position="none",
-    panel.spacing = unit(0.1, "lines"),
-    axis.ticks.x=element_blank()
-  )
+distribution_plot(surveys_fluxes_final, longer = T,
+                  cols_plot = var)
 #
 
 surveys_fluxes_final <- surveys_fluxes_final |> 

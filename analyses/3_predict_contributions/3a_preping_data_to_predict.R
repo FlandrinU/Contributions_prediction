@@ -137,17 +137,8 @@ covariates_final <- covariates |>
 
 
 #Distribution of covariates
-library(ggplot2)
-ggplot(data=tidyr::pivot_longer(covariates_final,
-                                cols = -all_of(c("longitude", "latitude", "effectiveness")),
-                                names_to = "index", values_to = "values"))+
-  aes(x=values, group=index, fill=index) +
-  geom_histogram(aes(y = after_stat(density)), bins = 20, color = "grey40", fill ="white") +
-  geom_density(aes(fill = index), alpha = 0.2) +
-  hrbrthemes::theme_ipsum() +
-  facet_wrap(~index, scales = "free") +
-  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
-        axis.ticks.x=element_blank())
+distribution_plot(covariates_final, longer = T,
+                  cols_not_plot = c("longitude", "latitude", "effectiveness") )
 
 
 #COMMON SURVEYS FOR COVARIATES AND OBSERVATIONS
@@ -285,19 +276,10 @@ funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates, species
 
 
 ## SEE DISTRIBUTION
-library(ggplot2)
-ggplot(data=tidyr::pivot_longer(covariates,
-                                cols = -all_of(c("longitude", "latitude", 
-                                                 "effectiveness", "country", 
-                                                 "ecoregion", "survey_id")),
-                                names_to = "index", values_to = "values"))+
-  aes(x=values, group=index, fill=index) +
-  geom_histogram(aes(y = after_stat(density)), bins = 20, color = "grey40", fill ="white") +
-  geom_density(aes(fill = index), alpha = 0.2) +
-  hrbrthemes::theme_ipsum() +
-  facet_wrap(~index, scales = "free") +
-  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
-        axis.ticks.x=element_blank())
+distribution_plot(covariates, longer = T,
+                  cols_not_plot = c("longitude", "latitude", 
+                                     "effectiveness", "country", 
+                                     "ecoregion", "survey_id") )
 
 # to_log <- c("coral_algae_500m", "coral_rubble","coralline_algae" ,"gdp" ,"gravtot2",
 #             "hdi", "median_5year_chl","median_5year_nppv", "median_7days_chl", 
@@ -329,19 +311,10 @@ covariates_final <- covariates |>
 
 
 #Distribution of covariates
-library(ggplot2)
-ggplot(data=tidyr::pivot_longer(covariates_final,
-                                cols = -all_of(c("longitude", "latitude", 
-                                                 "effectiveness","country",
-                                                 "ecoregion")),
-                                names_to = "index", values_to = "values"))+
-  aes(x=values, group=index, fill=index) +
-  geom_histogram(aes(y = after_stat(density)), bins = 20, color = "grey40", fill ="white") +
-  geom_density(aes(fill = index), alpha = 0.2) +
-  hrbrthemes::theme_ipsum() +
-  facet_wrap(~index, scales = "free") +
-  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
-        axis.ticks.x=element_blank())
+distribution_plot(covariates_final, longer = T,
+                  cols_not_plot = c("longitude", "latitude", 
+                                    "effectiveness", "country", "ecoregion") )
+
 
 
 #COMMON SURVEYS FOR COVARIATES AND OBSERVATIONS

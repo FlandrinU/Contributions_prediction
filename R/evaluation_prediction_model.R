@@ -168,6 +168,7 @@ extract_model_perf <- function(raw_result = model_eval_missforest){
 
 ## BOXPLOT BY TRAITS
 estimates_boxplot <- function(df_estimates = traits_performance){
+  library(ggplot2)
   #Colors
   col <- rev(fishualize::fish(n = length(unique(df_estimates$variable)), 
                           option = "Ostracion_whitleyi", begin = 0.2, end = 0.9))
@@ -603,7 +604,7 @@ estimates_according_NA_sp <- function(order_performance = order_performance,
 
 
 
-#-------------7) Check NA on map-------------
+##-------------7) Check NA on map-------------
 
 NA_on_map <- function(data=covariates,
                       variable = "coral_algae_10km",
@@ -731,3 +732,47 @@ density_prediction <- function(raw_result = all_res){
 
 } # END of density_prediction
 
+
+
+
+##-------------10) plot distributions of variables -------------
+
+distribution_plot <- function(dataframe = covariates_final,
+                              longer = TRUE,
+                              cols_plot = c("depth", "gdp"),
+                              cols_not_plot = NULL){
+  
+  library(ggplot2)
+  
+  if(longer){
+    
+    if(!is.null(cols_not_plot)){
+      
+      data <- tidyr::pivot_longer(dataframe,
+                               cols = -all_of(cols_not_plot),
+                               names_to = "index",
+                               values_to = "values")
+    }else{
+      
+      data <- tidyr::pivot_longer(dataframe,
+                                  cols = all_of(cols_plot),
+                                  names_to = "index",
+                                  values_to = "values")
+    }
+    
+  }else{
+    data <- dataframe
+  }
+  
+  
+  #plot distributions
+  ggplot(data)+
+    aes(x=values, group=index, fill=index) +
+    geom_histogram(aes(y = after_stat(density)), bins = 20, color = "grey40", fill ="white") +
+    geom_density(aes(fill = index), alpha = 0.2) +
+    hrbrthemes::theme_ipsum() +
+    facet_wrap(~index, scales = "free") +
+    theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
+          axis.ticks.x=element_blank())
+  
+} #END OF FUNCTION 'distribution_plot'

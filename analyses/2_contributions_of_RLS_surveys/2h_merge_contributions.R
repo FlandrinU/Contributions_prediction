@@ -98,17 +98,8 @@ dplyr::n_distinct(contributions_surveys$country) # 41 countries
 summary(contributions_surveys)
 
 # distributions
-library(ggplot2)
-ggplot(data=tidyr::pivot_longer(contributions_surveys,
-                                cols = -all_of(var_metadata),
-                                names_to = "index", values_to = "values"))+
-  aes(x=values, group=index, fill=index) +
-  geom_histogram(aes(y = ..density..), bins = 20, color = "grey40", fill ="white") +
-  geom_density(aes(fill = index), alpha = 0.2) +
-  hrbrthemes::theme_ipsum() +
-  facet_wrap(~index, scales = "free") +
-  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
-    axis.ticks.x=element_blank())
+distribution_plot(contributions_surveys, longer = T,
+                  cols_not_plot = var_metadata)
 
 ggsave(plot = last_plot(), width=15, height= 10,
        filename = here::here("figures", "2_contributions_distribution_raw.jpg"))
@@ -143,16 +134,9 @@ contributions_surveys_log <- contributions_surveys |>
 
 # CHECK DISTRIBUTIONS
 summary(contributions_surveys_log)
-ggplot(data=tidyr::pivot_longer(contributions_surveys_log,
-                                cols = -all_of(var_metadata),
-                                names_to = "index", values_to = "values"))+
-  aes(x=values, group=index, fill=index) +
-  geom_histogram(aes(y = ..density..), bins = 20, color = "grey40", fill ="white") +
-  geom_density(aes(fill = index), alpha = 0.2) +
-  hrbrthemes::theme_ipsum() +
-  facet_wrap(~index, scales = "free") +
-  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
-        axis.ticks.x=element_blank())
+
+distribution_plot(contributions_surveys_log, longer = T,
+                  cols_not_plot = var_metadata)
 
 ggsave(plot = last_plot(), width=15, height= 10,
        filename = here::here("figures", "2_contributions_distribution_log_transformed.jpg"))
@@ -426,17 +410,9 @@ df <- tibble::rownames_to_column(contributions_sites_date, "id") |>
   dplyr::rename(species = id)
 fb_plot_species_traits_completeness(df)
 
-ggplot(data=tidyr::pivot_longer(contributions_sites_date,
-                                cols = everything(),
-                                names_to = "index", values_to = "values"))+
-  aes(x=values, group=index, fill=index) +
-  geom_histogram(aes(y = ..density..), bins = 20, color = "grey40", fill ="white") +
-  geom_density(aes(fill = index), alpha = 0.2) +
-  hrbrthemes::theme_ipsum() +
-  facet_wrap(~index, scales = "free") +
-  theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
-        axis.ticks.x=element_blank())
 
+distribution_plot(contributions_sites_date, longer = T,
+                  cols_plot = colnames(contributions_sites_date))
 
 
 # Save #

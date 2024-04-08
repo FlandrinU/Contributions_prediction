@@ -13,7 +13,7 @@
 rm(list=ls())
 
 ##-----------------Loading packages-------------------
-# pkgs <- c("sjSDM")
+# pkgs <- c("spaMM", "DHARMa)
 
 
 ##-------------loading data and functions-------------
@@ -33,6 +33,10 @@ load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rd
 
 #load functions
 source("R/evaluation_prediction_model.R")
+
+
+#Quick and good explanation on linear mixed effect models:
+# https://www.youtube.com/watch?v=QCqF-2E86r0
 
 
 ##------------- spaMM multivariate -------------
@@ -172,10 +176,15 @@ ggsave(filename = here::here("figures", "models", "Pred_spaMM.jpg"),
 
 
 ##------------- spaMM univariate -------------
+distribution_plot(covariates_final, longer = T,
+                  cols_not_plot = c("longitude", "latitude", "country",
+                                    "ecoregion", "effectiveness"))
+distribution_plot(observations_final, longer = T,
+                  cols_plot = colnames(observations_final))
 
 # cross_val <- pbmcapply::pbmclapply(1:length(datasets), mc.cores = 5,
 #                                    FUN = function(i){
-cross_val <- lapply(1:2,FUN = function(i){
+cross_val <- lapply(1:1,FUN = function(i){
   
   
   # i=1
@@ -189,22 +198,24 @@ cross_val <- lapply(1:2,FUN = function(i){
   train <- cbind(X_train, Y_train) |> 
     tibble::rownames_to_column("survey_id")
   
-  covariates <- colnames(dplyr::select(X_train, -longitude, -latitude))
+  covariates <- colnames(dplyr::select(X_train, -longitude, -latitude, -ecoregion, -year))
   
   #run model on each variable
   preds_raw <- lapply(colnames(Y_train),
               # pbmcapply::pbmclapply(colnames(Y_train), mc.cores = parallel::detectCores()-3,
                       FUN = function(contrib){
                         
+    # contrib = "herbivores_biomass"
     cat("contribution", which(contrib == colnames(Y_train)), "/", 
         length(colnames(Y_train)), ":", contrib, "\n")
     
     form <- as.formula(
         paste(
-          contrib, "~ ", paste(c("1", covariates, 
-                                 "Matern(1|longitude+latitude)",
-                                 "(1|country)" #intercept random effect on country
-                                 # , "(1|ecoregion)"
+          contrib, "~ ", paste(c("1", 
+                                 covariates,
+                                 "Matern(1|longitude+latitude)"
+                                 , "(1|country)" #intercept random effect on country
+                                 # # , "(effectiveness|country)"
                                  , "(1|year)"
                                  ),
                                collapse = "+")
@@ -226,7 +237,7 @@ cross_val <- lapply(1:2,FUN = function(i){
       model <- spaMM::fitme(form,
                             data = train,
                             family = gaussian(),
-                            control.HLfit = list(NbThreads = parallel::detectCores()-5),
+                            control.HLfit = list(NbThreads = parallel::detectCores()-2),
                             method = "ML"
                             )
 
@@ -239,6 +250,10 @@ cross_val <- lapply(1:2,FUN = function(i){
         # error <<- data.frame(V1 = rep(NA, nrow(Y_test)))
         # error
       })#End of tryCatch
+    
+    # #Obs
+    # plot(preds ~ Y_test[,contrib])
+    # cor.test(preds, Y_test[,contrib])
     
   
   }) #END OF LAPPLY ON EACH VARIABLE
@@ -262,10 +277,10 @@ cross_val <- lapply(1:2,FUN = function(i){
     dplyr::full_join(preds_long) |> 
     dplyr::mutate(model = i)
   
-  ##obs
-  eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
-  plot(eval_act$imputed ~ eval_act$observed)
-  cor.test(eval_act$imputed, eval_act$observed)
+  # ##obs
+  # eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
+  # plot(eval_act$imputed ~ eval_act$observed)
+  # cor.test(eval_act$imputed, eval_act$observed)
   
   #Return dataframe
   eval
@@ -286,6 +301,19 @@ density_prediction(all_res)
 ggsave(filename = here::here("figures", "models", 
  "Pred_density_spaMM_univariate_methodML_random_effect_year_country.jpg"),
        width = 20, height = 10)
+
+
+
+# #model quality
+# library(DHARMa)
+# summary(model)
+# testDispersion(model)
+# simulationOutput <- simulateResiduals(fittedModel = model, plot = F)
+# residuals(simulationOutput)
+# residuals(simulationOutput, quantileFunction = qnorm, outlierValues = c(-7,7))
+# plot(simulationOutput)
+# plotResiduals(simulationOutput, X_train$longitude)
+# plotResiduals(simulationOutput, testData$Environment2)
 
 
 

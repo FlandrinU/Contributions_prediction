@@ -308,3 +308,313 @@ estimates_boxplot(result)
 
 
 
+
+
+
+##------------- Generalised Least Square RF (RF-GLS) -> problem of package updating?? -------------
+install.packages(RandomForestsGLS)
+library(RandomForestsGLS)
+
+
+cross_val <- lapply(1:1,FUN = function(i){
+  
+  
+  # i=1
+  cat("Crossvalidation ", i,"/", length(datasets), "\n")
+  data = datasets[[i]] 
+  
+  
+  XYcoords <- covariates_final |>
+    dplyr::select(longitude, latitude) 
+  
+  Y_train <- data[[1]]
+  
+  X_train <- covariates_final[rownames(Y_train),] |> 
+    dplyr::select(-longitude, -latitude, -country, -ecoregion, -effectiveness) |> 
+    as.matrix()
+  
+  coords_train <- XYcoords[rownames(Y_train),] |> as.matrix()
+
+    
+  #run model on each variable
+  preds_raw <- lapply(colnames(Y_train),
+                      # pbmcapply::pbmclapply(colnames(Y_train), mc.cores = parallel::detectCores()-3,
+                      FUN = function(contrib){
+                        
+      # contrib = "herbivores_biomass"
+      cat("contribution", which(contrib == colnames(Y_train)), "/", 
+          length(colnames(Y_train)), ":", contrib, "\n")
+      
+      
+      model <- RFGLS_estimate_spatial(coords = coords_train,
+                                      y = Y_train[, contrib],
+                                      X = X_train,
+                                      Xtest = X_test,
+                                      ntree = 50, cov.model = "exponential",
+                                      nthsize = 20, param_estimate = TRUE)
+      
+      
+      #New data
+      Y_test <- data[[2]][,contrib]
+      
+      X_test <- covariates_final[rownames(data[[2]]), colnames(X_train)]
+      
+      coords_test <- XYcoords[rownames(X_test),]
+        
+      #Predict on new data
+       preds <- RFGLS_predict_spatial(model, coords_test, X_test,
+                                      h = 1, verbose = FALSE)
+       preds
+
+      # #Obs
+      # plot(preds ~ Y_test[,contrib])
+      # cor.test(preds, Y_test[,contrib])
+      
+      
+    }) #END OF LAPPLY ON EACH VARIABLE
+  
+  #extract result
+  preds <- do.call(cbind, preds_raw)
+  colnames(preds) <- colnames(Y_train)
+  rownames(preds) <- rownames(data[[2]])
+  
+  preds_long <- as.data.frame(preds) |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "imputed" )
+  
+  eval <- data[[2]] |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "observed" ) |> 
+    dplyr::full_join(preds_long) |> 
+    dplyr::mutate(model = i)
+  
+  # ##obs
+  # eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
+  # plot(eval_act$imputed ~ eval_act$observed)
+  # cor.test(eval_act$imputed, eval_act$observed)
+  
+  #Return dataframe
+  eval
+  
+}) #END OF LAPPLY ON CROSSVALIDATION
+
+# Observe result
+all_res <- do.call(rbind, cross_val)
+result <- extract_result_contrib(cross_val)
+estimates_boxplot(result)
+ggsave(filename = here::here("figures", "models",
+                             "Pred_spaMM_univariate_methodML_Matern_spatial_ONLY.jpg"),
+       width = 12, height = 7)
+
+
+#density plot
+density_prediction(all_res)
+ggsave(filename = here::here("figures", "models", 
+                             "Pred_density_spaMM_univariate_methodML_Matern_spatial_ONLY.jpg"),
+       width = 20, height = 10)
+
+
+
+
+
+##------------- drf-------------
+# install.packages('drf')
+library(drf)
+
+# cross_val <- lapply(1:length(datasets),FUN = function(i){
+cross_val <- lapply(1:2,FUN = function(i){
+  
+  # i=1
+  cat("Crossvalidation ", i,"/", length(datasets), "\n")
+  data = datasets[[i]] 
+  
+  Y_train <- data[[1]]
+  
+  X_train <- covariates_final[rownames(Y_train),] |> 
+    dplyr::select(longitude, latitude)
+  
+  # dplyr::select(-longitude, -latitude, -country, - ecoregion)
+  # |> 
+  #   dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
+  #                                               "out" = 0,
+  #                                               "Low" = 1,
+  #                                               "Medium" = 2,
+  #                                               "High" = 3)) 
+  
+  
+  #Fit model
+  model <- drf::drf(X = X_train, Y = Y_train,
+                    num.trees = 1000,
+                    mtry = 15)
+  
+  # variableImportance(
+  #   model,
+  #   h = NULL,
+  #   response.scaling = TRUE,
+  #   type = "difference"
+  # ) # /!\ long to run...
+
+  #Predict on new data
+  Y_test <- data[[2]][,colnames(Y_train)]
+  
+  X_test <- covariates_final[rownames(Y_test), colnames(X_train)]
+  # |> 
+  #   dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
+  #                                               "out" = 0,
+  #                                               "Low" = 1,
+  #                                               "Medium" = 2,
+  #                                               "High" = 3)) |> 
+  #   as.matrix()
+  
+  predictions <- predict(model, newdata = X_test, functional = "mean")
+  
+  #Compare prediction
+  preds <- predictions[["mean"]]
+  colnames(preds) <- colnames(Y_test)
+  rownames(preds) <- rownames(Y_test)
+  
+  preds_long <- as.data.frame(preds) |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "imputed" )
+  
+  eval <- as.data.frame(Y_test) |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "observed" ) |> 
+    dplyr::full_join(preds_long) |> 
+    dplyr::mutate(model = i)
+  
+  # ##obs
+  eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
+  plot(eval_act$imputed ~ eval_act$observed)
+  cor.test(eval_act$imputed, eval_act$observed)
+  eval
+}) #END OF LAPPLY ON CROSSVALIDATION
+
+
+# Observe result
+all_res <- do.call(rbind, cross_val)
+result <- extract_result_contrib(cross_val)
+estimates_boxplot(result)
+ggsave(filename = here::here("figures", "models", 
+                             paste0("Pred_drf_multivariate_1000tree_mtry15.jpg")),
+       width = 12, height = 7)
+
+
+density_prediction(all_res)
+
+
+
+##------------- CovRegRF -> useless to predict ?-------------
+# install.packages('CovRegRF')
+library(CovRegRF)
+
+options(rf.cores=1, mc.cores=1)
+## load generated example data
+data(data, package = "CovRegRF")
+xvar.names <- colnames(data$X)
+yvar.names <- colnames(data$Y)
+data1 <- data.frame(data$X, data$Y)
+## define train/test split
+set.seed(2345)
+smp <- sample(1:nrow(data1), size = round(nrow(data1)*0.6), replace = FALSE)
+traindata <- data1[smp,,drop=FALSE]
+testdata <- data1[-smp, xvar.names, drop=FALSE]
+## formula object
+formula <- as.formula(paste(paste(yvar.names, collapse="+"), ".", sep=" ~ "))
+## train covregrf
+covregrf.obj <- covregrf(formula, traindata, params.rfsrc = list(ntree = 50),
+                         importance = TRUE)
+
+
+
+
+
+# cross_val <- lapply(1:length(datasets),FUN = function(i){
+cross_val <- lapply(1:2,FUN = function(i){
+  
+  # i=1
+  cat("Crossvalidation ", i,"/", length(datasets), "\n")
+  data = datasets[[i]] 
+  
+  Y_train <- data[[1]]
+  
+  X_train <- covariates_final[rownames(Y_train),] |> 
+    dplyr::select(-longitude, -latitude, -country, - ecoregion)
+  # |> 
+  #   dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
+  #                                               "out" = 0,
+  #                                               "Low" = 1,
+  #                                               "Medium" = 2,
+  #                                               "High" = 3)) 
+  
+  train <- cbind(X_train, Y_train)
+  
+  formula <- as.formula(paste(paste(colnames(Y_train), collapse="+"), ".", sep=" ~ "))
+  
+  ## train covregrf
+  covregrf.obj <- covregrf(formula, train, 
+                           params.rfsrc = list(ntree = 50),
+                           importance = F)
+  
+  
+  #Predict on new data
+  Y_test <- data[[2]][,colnames(Y_train)]
+  
+  X_test <- covariates_final[rownames(Y_test), colnames(X_train)]
+  # |> 
+  #   dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
+  #                                               "out" = 0,
+  #                                               "Low" = 1,
+  #                                               "Medium" = 2,
+  #                                               "High" = 3)) |> 
+  #   as.matrix()
+  
+  test <- cbind(X_test, Y_test)
+  
+  predictions <- predict(covregrf.obj, newdata = test)
+  
+  #Compare prediction
+  preds <- predictions$predicted
+  colnames(preds) <- colnames(Y_test)
+  rownames(preds) <- rownames(Y_test)
+  
+  preds_long <- as.data.frame(preds) |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "imputed" )
+  
+  eval <- as.data.frame(Y_test) |> 
+    tibble::rownames_to_column("survey_id") |> 
+    tidyr::pivot_longer(cols = -survey_id ,
+                        names_to = "variable",
+                        values_to = "observed" ) |> 
+    dplyr::full_join(preds_long) |> 
+    dplyr::mutate(model = i)
+  
+  # ##obs
+  eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
+  plot(eval_act$imputed ~ eval_act$observed)
+  cor.test(eval_act$imputed, eval_act$observed)
+  eval
+}) #END OF LAPPLY ON CROSSVALIDATION
+
+
+# Observe result
+all_res <- do.call(rbind, cross_val)
+result <- extract_result_contrib(cross_val)
+estimates_boxplot(result)
+ggsave(filename = here::here("figures", "models", 
+                             paste0("Pred_drf_multivariate_1000tree_mtry15.jpg")),
+       width = 12, height = 7)
+
+
+density_prediction(all_res)
