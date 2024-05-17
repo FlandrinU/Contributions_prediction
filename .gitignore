@@ -33,7 +33,7 @@ HMSC_package/hmsc-venv/
 
 #Large outputs ----> can be created running make.R file
 figures/
-#outputs/models/
-outputs/
+outputs/models/
+outputs/2d_cnpflux_sp_size_sst.csv
 
 
