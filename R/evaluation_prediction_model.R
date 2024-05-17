@@ -740,7 +740,15 @@ density_prediction <- function(raw_result = all_res){
 distribution_plot <- function(dataframe = covariates_final,
                               longer = TRUE,
                               cols_plot = c("depth", "gdp"),
-                              cols_not_plot = NULL){
+                              cols_not_plot = NULL,
+                              index_values = NULL,  #if longer = F, give the names of the 'index' and 'values' columns in a vector
+                              xlabel = NULL,
+                              ylabel = NULL,
+                              axis_title_size = NULL,
+                              strip_txt_size = NULL,
+                              strip_txt_face = NULL
+                              )
+  { 
   
   library(ggplot2)
   
@@ -761,7 +769,10 @@ distribution_plot <- function(dataframe = covariates_final,
     }
     
   }else{
-    data <- dataframe
+    data <- dataframe |> 
+      dplyr::rename( index = index_values[1],
+                     values = index_values[2])
+    
   }
   
   
@@ -770,9 +781,53 @@ distribution_plot <- function(dataframe = covariates_final,
     aes(x=values, group=index, fill=index) +
     geom_histogram(aes(y = after_stat(density)), bins = 20, color = "grey40", fill ="white") +
     geom_density(aes(fill = index), alpha = 0.2) +
-    hrbrthemes::theme_ipsum() +
+    hrbrthemes::theme_ipsum(axis_title_size = axis_title_size,
+                            strip_text_size = strip_txt_size,
+                            strip_text_face = strip_txt_size) +
+    xlab(xlabel) + ylab(ylabel)+
     facet_wrap(~index, scales = "free") +
     theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
           axis.ticks.x=element_blank())
   
 } #END OF FUNCTION 'distribution_plot'
+
+
+
+##-------------11) plot relationship of X and Y -------------
+
+plot_interaction <- function(dataframe = residuals,
+                              var_facet_wrap = NULL, #give the name of the column giving the different elements of the facet wrap
+                              X_values = NULL,
+                              Y_values = NULL,
+                              xlabel = NULL,
+                              ylabel = NULL,
+                              axis_title_size = NULL,
+                              strip_txt_size = NULL,
+                              strip_txt_face = NULL
+)
+{ 
+  
+  library(ggplot2)
+  
+    data <- dataframe |> 
+      dplyr::rename( index = var_facet_wrap,
+                     X = X_values,
+                     Y = Y_values)
+    
+  
+  #plot relationship
+  ggplot(data)+
+    geom_point(aes(x = X, y = Y, fill = index),
+               color = "grey40", alpha = 0.2, shape = 21) +
+    hrbrthemes::theme_ipsum(
+      axis_title_size = axis_title_size,
+                            strip_text_size = strip_txt_size,
+                            strip_text_face = strip_txt_size
+      ) +
+    xlab(xlabel) + ylab(ylabel)+
+    facet_wrap(~index, scales = "free") +
+    theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
+          axis.ticks.x=element_blank())
+  
+} #END OF FUNCTION 'interaction_plot'
+

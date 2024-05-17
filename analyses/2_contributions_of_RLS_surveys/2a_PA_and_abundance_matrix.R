@@ -21,6 +21,8 @@ load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
 
 # ------------------- total biomass and abundance in each survey  -------------------
 rls_actino_trop <- rls_actino_trop|>
+  dplyr::mutate(biomass = raw_biomass) |> #IN THIS PROJECT, WE CONSIDER THE BIOMASS
+  # OF FISHES ESTIMATES AS a*Size^b , WITH THE SIZE REPORTED BY DIVERS, AND NOT CORRECTED.
   dplyr::group_by(survey_id) |>
   dplyr::mutate(
     abundance_tot_survey = sum(total), #total abundance in the survey

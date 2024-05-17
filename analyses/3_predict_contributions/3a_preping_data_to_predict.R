@@ -25,6 +25,8 @@ load(file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdat
 # Contribution matrix at the site scale
 load(file = here::here("outputs", "2_contributions_site&date.Rdata"))
 
+## Load functions ##
+source(here::here("R","evaluation_prediction_model.R"))
 
 ###############################################################################"
 ##
@@ -41,9 +43,9 @@ colnames(contributions_with_synthetic_score)
 
 # observations <- contributions |> 
 observations <- contributions_with_synthetic_score |> 
-  dplyr::select(-N_recycling, -P_recycling) |> 
+  dplyr::select(-N_recycling, -P_recycling, -elasmobranch_richness) |> 
   tidyr::drop_na() |> 
-  dplyr::mutate(across(everything(), scale)) |> 
+  dplyr::mutate(across(-c(iucn_species_richness), scale)) |> 
   dplyr::mutate(across(everything(), as.numeric))
 
 
@@ -96,6 +98,7 @@ factoextra::fviz_pca_var(pca, col.var = "contrib", axes=c(3,4), repel = TRUE)
 
 covariates <- all_covariates_benthos_inferred |> 
   dplyr::select(survey_id, latitude, longitude, depth, year,
+                country, realm, ecoregion, 
                 
                 median_7days_chl, median_5year_chl,
                 median_7days_degree_heating_week, median_5year_degree_heating_week,
@@ -127,24 +130,43 @@ covariates_final <- covariates |>
   #                                             "Low" = 1,
   #                                             "Medium" = 2,
   #                                             "High" = 3)) |>  
+  
+  #Change the order of levels of effectiveness for the GLM
+  dplyr::mutate(effectiveness = factor(effectiveness, 
+                                       levels = c("out", "Low", "Medium", "High"))) |> 
   tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |> 
   # dplyr::mutate(across(-c(longitude, latitude), scale)) |> #SCALE ALL COVARIATES
   # dplyr::mutate(across(everything(), as.numeric))
-  dplyr::mutate(across(-c(longitude, latitude, effectiveness), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-effectiveness, as.numeric))
+  dplyr::mutate(across(-c(longitude, latitude,
+                          effectiveness,
+                          country,
+                          realm,
+                          ecoregion), scale)) |> #SCALE ALL COVARIATES
+  dplyr::mutate(across(-c(effectiveness, country, realm, ecoregion), as.numeric))
+
 
 
 #Distribution of covariates
 distribution_plot(covariates_final, longer = T,
-                  cols_not_plot = c("longitude", "latitude", "effectiveness") )
-
+                  cols_not_plot = c("longitude", "latitude", "effectiveness",
+                                    "country", "realm", "ecoregion") )
+ggsave(plot = last_plot(), width=15, height= 10,
+       filename = here::here("figures", "3_covariates_distribution_scaled.jpg"))
 
 #COMMON SURVEYS FOR COVARIATES AND OBSERVATIONS
 observations_final <- observations[rownames(covariates_final),]
-dim(observations_final) #4427 SURVEYS, 21 CONTRIBUTIONS + 2 SCORES
+dim(observations_final) #4420 SURVEYS, 21 CONTRIBUTIONS + 2 SCORES
 
+#Distribution of observations
+distribution_plot(observations_final, longer = T,
+                  cols_plot = colnames(observations_final)) #OK: log transformed and scaled values
+pca <- FactoMineR::PCA(observations_final, scale.unit = T, graph=F, ncp=15,
+                       quanti.sup = c("NN_score", "NP_score"))
+factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
+                            stroke=0, pointsize=3, alpha.ind = 0.7, 
+                            fill.ind = "grey", col.quanti.sup = "firebrick")
 
 
 ##------------------- Rough cross-validation -------------------
@@ -170,6 +192,26 @@ save(datasets, file = here::here("data", "derived_data", "3_datasets_for_predict
 
 
 
+##------------------- Chose statistical distribution -------------------
+cov <- covariates_final |> dplyr::select(-longitude, -latitude, -country, -year)
+
+distrib <- list()
+distri_df <- data.frame(row.names = colnames(observations_final))
+
+for( contrib in colnames(observations_final)){
+  fmla <- as.formula( paste(contrib, "~ ", paste(c("1", colnames(cov)) , 
+          collapse = "+")))
+  fit <- glm(formula = fmla, data = cbind(cov, observations_final))
+  
+  distribution <- performance::check_distribution(fit)
+  which_max <- distribution$p_Response == max(distribution$p_Response)
+  
+  distrib[[contrib]] <- distribution
+  
+  distri_df[contrib, "distribution"] <- paste(distribution$Distribution[which_max],
+                                              collapse = "_OR_")
+  distri_df[ contrib, "proba"] <- unique(distribution$p_Response[which_max])
+}
 
 
 ###############################################################################"
@@ -252,7 +294,7 @@ factoextra::fviz_pca_var(pca, col.var = "contrib", axes=c(3,4), repel = TRUE)
 
 covariates <- covariates_sites |> 
   dplyr::select(survey_id, latitude, longitude, depth, year,
-                country, ecoregion,
+                country, ecoregion, realm,
                 
                 median_7days_chl, median_5year_chl,
                 median_7days_degree_heating_week, median_5year_degree_heating_week,
@@ -278,8 +320,8 @@ funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates, species
 ## SEE DISTRIBUTION
 distribution_plot(covariates, longer = T,
                   cols_not_plot = c("longitude", "latitude", 
-                                     "effectiveness", "country", 
-                                     "ecoregion", "survey_id") )
+                                     "effectiveness", "country", "ecoregion",
+                                     "realm", "survey_id") )
 
 # to_log <- c("coral_algae_500m", "coral_rubble","coralline_algae" ,"gdp" ,"gravtot2",
 #             "hdi", "median_5year_chl","median_5year_nppv", "median_7days_chl", 
@@ -296,6 +338,10 @@ covariates_final <- covariates |>
   #                                             "Low" = 1,
   #                                             "Medium" = 2,
   #                                             "High" = 3)) |>  #effectiveness into quantitative values
+ 
+  #Change the order of levels of effectiveness for the GLM
+  dplyr::mutate(effectiveness = factor(effectiveness, 
+                                       levels = c("out", "Low", "Medium", "High"))) |> 
   tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |> 
@@ -306,14 +352,16 @@ covariates_final <- covariates |>
   #                      .fns = log10 , .names = "{.col}")) |> 
   # dplyr::mutate(across(-c(longitude, latitude), scale)) |> #SCALE ALL COVARIATES
   # dplyr::mutate(across(everything(), as.numeric))
-  dplyr::mutate(across(-c(longitude, latitude, effectiveness, country, ecoregion), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-c(effectiveness, country, ecoregion), as.numeric))
+  dplyr::mutate(across(-c(longitude, latitude, effectiveness, ecoregion,
+                          country, realm), scale)) |> #SCALE ALL COVARIATES
+  dplyr::mutate(across(-c(effectiveness, country, ecoregion, realm), as.numeric))
 
 
 #Distribution of covariates
 distribution_plot(covariates_final, longer = T,
                   cols_not_plot = c("longitude", "latitude", 
-                                    "effectiveness", "country", "ecoregion") )
+                                    "effectiveness", "country",
+                                    "ecoregion", "realm") )
 
 
 
@@ -338,7 +386,17 @@ observations_final$elasmobranch_richness <- NULL
 # observations_final <- dplyr::select(observations_final, )
 
 
+#Distribution of covariates
 dim(observations_final) #2467 SITES, 20 CONTRIBUTIONS + 2 SCORES
+distribution_plot(observations_final, longer = T,
+                  cols_plot = colnames(observations_final) ) #OK: log transformed and scales values
+pca <- FactoMineR::PCA(observations_final, scale.unit = T, graph=F, ncp=15,
+                       quanti.sup = c("NN_score", "NP_score"))
+factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
+                            stroke=0, pointsize=3, alpha.ind = 0.7, 
+                            fill.ind = "grey", col.quanti.sup = "firebrick")
+
+
 
 
 

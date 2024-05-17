@@ -1,0 +1,142 @@
+---
+title: "**Inference of Nature's Contributions**"
+subtitle: "*What drives the Nature's Contributions to Nature and People?*"
+author:
+  - name: Ulysse Flandrin 
+    email: ulysse.flandrin@gmail.com
+    affiliation: University of Montpellier
+    orcid: 0009-0005-2371-9127
+date: today
+abstract: | 
+  Abstract...
+---
+
+# Introduction
+
+->Accroche: “l’homme s’adapte à toutes les situations…”: non. il dépend de contributions et se doit de ne pas tout détruire.
+
+-Alors que nos sociétés nous détachent de la nature, il est important de remettre du lien entre nature, écosystèmes, contributions, et hommes, comme avec des réseaux (cf Felipe-luci, Stanworth 2024). Il est crucial à la fois pour davantage protéger et se préparer au choc, de conscientiser le lien que l’on a avec les processus écologiques, et de quantifier la perte que l’on va subir (dans Stanworth 2024: “Balvanera et al., 2019; IPBES, 2019”).
+
+-Idée d’utiliser des méthodes de jSDM pour expliciter et modéliser des contributions: Thuiller 2024 + Poggiato 2023
+
+-Pour comprendre les patrons de contributions, pour les prédire ou se les approprier, etc… il est possible de modéliser les espèces présentes (SDM), leur abondance et leur interactions, puis d’en déduire les contributions associées (predict first, assemble later), ou de directement modéliser les contributions comme conséquences des conditions (assemble first, predict later) -> cf Thuillier 2024.
+
+
+# Results
+
+## Infer missing traits
+
+## Assess contributions
+
+## Covariates and contributions
+
+
+
+# Discussion
+
+# Materials and methods
+
+## Filtering RLS data
+-> Faire un schéma des étapes de la méthodes
+
+### Filter misidentifications
+Remove all observations with misidentifications: “spp.”, “sp.”, “(cf)”, “hybrid”, “Unidentified”, “?”, “!”, “/”, “New”, “green form”
+
+### Keep only “method 1” = fish assessment in coral reefs
+
+### filter duplicates
+Same information recorded twice, by two different divers (same survey ID, block, species, total, and size) -> keep only one observation for each.
+
+### filter lines without fish
+remove line with total = 0
+
+### filter fishes difficult to spot consistently with UVC
+-Remove Elasmobranchs
+
+-Remove anguiliforms: 16 families according to WORMS: c( "Anguillidae", "Chlopsidae", "Colocongridae", "Congridae" , "Derichthyidae" , "Heterenchelyidae" , "Moringuidae" , "Muraenesocidae" , "Muraenidae" , "Myrocongridae" , "Nemichthyidae" , "Nettastomatidae" , "Ophichthidae" , "Protanguillidae" , "Serrivomeridae" , "Synaphobranchidae")
+
+-Remove cryptobenthic families: c("Aploactinidae", "Apogonidae", "Blenniidae", 
+                     "Bythitidae", "Callionymidae", "Chaenopsidae", 
+                     "Creediidae", "Dactyloscopidae", "Gobiesocidae", 
+                     "Gobiidae", "Grammatidae", "Labrisomidae", 
+                     "Opistognathidae", "Plesiopidae", "Pseudochromidae", 
+                     "Syngnathidae", "Tripterygiidae")
+
+
+
+### Checking size
+-Filling values in Maximum length data: missing values are completed by applying the mean of the genus or the family (if no species in the same genus)
+
+-Remove juveniles: all fish of 2.5 cm, and fish of 5 cm if the maximum length of the species is > 25 cm
+
+-Check large sizes: remove individuals for which size_class > 2*(Maximum length) or (Maximum length+50) => remove surveys with size_class errors.
+
+-Remove abnormal size estimation: fish with a max length < 3.75, fish > 2*(max length) or > max length +50
+
+
+### Filter outliers surveys
+To avoid over-estimating fish abundance due to temporary fish aggregations or large roaming schools, we excluded **surveys** with a total **biomass over 500 kg/500m²** or an **abundance exceeding 10,000 individuals**.
+
+
+### Elasmobranch data
+All Elasmobranch observations are kept for the **surveys** meeting all the above conditions
+
+
+
+
+## Species traits
+
+## Contributions assessement
+
+## Contributions inference
+
+
+# References {.unnumbered}
+
+# Supplemental materials
+
+
+
+# Quarto help
+## First subsection
+
+References: @Scholl2022 showed that XXX [@Vitay2017].
+
+See @fig-matrix and @sec-results.
+
+![Afferent system to VTA. [@Vitay2017]](images/test.png){#fig-matrix width=50%}
+
+Equations:
+
+$$
+    \tau \, \frac{dx_j(t)}{dt} + x_j(t)= \sum_i w^{in}_{ij} \, r^{in}_i(t) + g \, \sum_{i \neq j} w^{rec}_{ij} \, r_i(t)
+$$
+
+Admonitions:
+
+::: {.callout-note}
+## Nota Bene
+
+Important information.
+:::
+
+Code snippets:
+
+
+```{python} 
+#python
+for i in range(10):
+    print(i)
+```
+
+
+```{r}
+#r
+for(i in 1:10) print(i)
+```
+
+## Second subsection {#sec-results}
+
+<!-- {{< video https://www.youtube.com/embed/tPgf_btTFlc >}} -->
+
+# References {.unnumbered}

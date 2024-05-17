@@ -94,6 +94,15 @@ dplyr::n_distinct(contributions_surveys$site_code) # 1977 sites
 dplyr::n_distinct(contributions_surveys$country) # 41 countries
 
 
+
+
+
+###############################################################################"
+##
+##                            #### SURVEY SCALE ####
+##
+###############################################################################"
+
 ##------------------- Check distributions and transform values -------------------####
 summary(contributions_surveys)
 
@@ -315,15 +324,42 @@ parallel::mclapply(colnames(contributions), function(NCP){
 #-------------Compute weighted mean of Contributions: NN and NP scores-------------
 scaled_contrib <- scale(contributions)
 
+
+grp_NN_NP <- as.factor(c(actino_richness = "NN",
+                         elasmobranch_richness = "removed from mean",
+                         functional_distinctiveness = "NN",
+                         iucn_species_richness = "NN", 
+                         mean_endemism = "NN",
+                         evolutionary_distinctiveness = "NN",
+                         functional_entropy = "NN",
+                         phylogenetic_entropy = "NN",
+                         herbivores_biomass = "NN",
+                         invertivores_biomass = "NN",
+                         piscivores_biomass = "NN",
+                         N_recycling = "NN",
+                         P_recycling = "NN",
+                         trophic_web_robustness = "NN",
+                         mean_trophic_level = "NN",
+                         
+                         available_biomass = "NP",
+                         selenium = "NP",
+                         zinc = "NP",
+                         omega_3 = "NP",
+                         calcium = "NP",
+                         iron = "NP",
+                         vitamin_A = "NP",
+                         available_biomass_turnover = "NP")) # /!\ the order matter
+
+
 ## Nature to Nature (NN) score ##
 NN_names <- names(grp_NN_NP)[ grp_NN_NP=="NN" ]
 contrib_NN <- scaled_contrib[,NN_names]
 
 colnames(contrib_NN)
-weighting_par <- c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6,
-                   1/5, 1/5, 1/5, 1/5, 1/5,
-                   1/2,1/2,
-                   1/2,1/2)
+weighting_par <- c(1/5, 1/5, 1/5, 1/5, 1/5, #Biodiversity
+                   1/5, 1/5, 1/5, 1/5, 1/5, #Biomass distribution
+                   1/2, 1/2, #recycling
+                   1/2,1/2) # trophic web
 names(weighting_par) <- colnames(contrib_NN)
 weighting_par
 
@@ -346,28 +382,35 @@ weighting_par
 
 mean_NP <- c()
 for( site in 1:nrow(contrib_NP)){
-  EDS_site <- sum(weighting_par * contrib_NN[site,], na.rm=T) / sum(weighting_par)
+  EDS_site <- sum(weighting_par * contrib_NP[site,], na.rm=T) / sum(weighting_par)
   mean_NP <- c(mean_NP, EDS_site) }
 
 summary(mean_NP)
 
 
-contributions_with_synthetic_score <- as.data.frame(scaled_contrib) |> 
+contributions_with_synthetic_score <- as.data.frame( contributions ) |> 
   dplyr::mutate(NN_score = mean_NN,
                 NP_score = mean_NP)
 
+# plot(mean_NP ~ mean_NN)
+# cor.test(mean_NP, mean_NN)
 
 # Save #
 save(contributions_with_synthetic_score, 
      file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))
 
+# load(file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))
 
 
 
 
+###############################################################################"
+##
+##                            #### SITE SCALE ####
+##
+###############################################################################"
 
-
-##------------------- MEAN VALUES AT THE SITE SCALE -------------------####
+#------------------- Mean contribution values at the site X year scale -------------------####
 
 #TO REDUCE NOISES IN DATA, WE MEANS THE CONTRIBUTIONS VALUES OF SURVEYS, 
 # IN A GIVEN SITE, OBSERVED IN THE SAME DATE
@@ -375,12 +418,9 @@ save(contributions_with_synthetic_score,
 # Mean the contribution at the site scale, for a given date: all surveys in the
 # same place, observed at the same date are merged
 
-synthetic_scores <- dplyr::select(contributions_with_synthetic_score,
-                                  NN_score, NP_score) |> 
-  tibble::rownames_to_column("survey_id")
+
 
 contributions_sites <- contributions_surveys |> 
-  dplyr::left_join(synthetic_scores) |> 
   dplyr::select(-survey_id) |> 
   dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
                   survey_date, year, effectiveness) |> 
@@ -392,6 +432,9 @@ contributions_sites <- contributions_surveys |>
   dplyr::ungroup() 
 
 nrow(contributions_sites) # 3325 mean_surveys
+
+distribution_plot(contributions_sites, longer = T,cols_plot = colnames(contributions_sites)[13:36])
+
 
 # Log transformation
 contributions_sites_log <- contributions_sites |>
@@ -408,23 +451,84 @@ contributions_sites_date <- contributions_sites_log |>
 #Check NA and distributions
 df <- tibble::rownames_to_column(contributions_sites_date, "id") |> 
   dplyr::rename(species = id)
-fb_plot_species_traits_completeness(df)
+funbiogeo::fb_plot_species_traits_completeness(df)
 
 
 distribution_plot(contributions_sites_date, longer = T,
                   cols_plot = colnames(contributions_sites_date))
 
 
+#------------------- Compute weighted mean of contributions -------------------####
+to_mean <- scale(contributions_sites_date)
+
+## Nature to Nature (NN) score ##
+NN_names <- names(grp_NN_NP)[ grp_NN_NP=="NN" ]
+contrib_NN <- to_mean[,NN_names]
+
+colnames(contrib_NN)
+weighting_par <- c(1/5, 1/5, 1/5, 1/5, 1/5, #Biodiversity
+                   1/5, 1/5, 1/5, 1/5, 1/5, #Biomass distribution
+                   1/2, 1/2, #recycling
+                   1/2,1/2) # trophic web
+names(weighting_par) <- colnames(contrib_NN)
+weighting_par
+
+mean_NN <- c()
+for( site in 1:nrow(contrib_NN)){
+  EDS_site <- sum(weighting_par * contrib_NN[site,], na.rm=T) / sum(weighting_par)
+  mean_NN <- c(mean_NN, EDS_site) }
+
+summary(mean_NN)
+
+
+## Nature to People (NP) score ##
+NP_names <- names(grp_NN_NP)[ grp_NN_NP=="NP" ]
+contrib_NP <- to_mean[,NP_names]
+
+colnames(contrib_NP)
+weighting_par <- c(1/2, 1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 1/2)
+names(weighting_par) <- colnames(contrib_NP)
+weighting_par
+
+mean_NP <- c()
+for( site in 1:nrow(contrib_NP)){
+  EDS_site <- sum(weighting_par * contrib_NP[site,], na.rm=T) / sum(weighting_par)
+  mean_NP <- c(mean_NP, EDS_site) }
+
+summary(mean_NP)
+
+# plot(mean_NP ~ mean_NN)
+# cor.test(mean_NP, mean_NN)
+
+
+contributions_sites_date <- contributions_sites_date |> 
+  dplyr::mutate(NN_score = mean_NN,
+                NP_score = mean_NP)
+
+
 # Save #
 save(contributions_sites_date, file = here::here("outputs", "2_contributions_site&date.Rdata"))
+# load(file = here::here("outputs", "2_contributions_site&date.Rdata"))
+
+
+## Check values
+distribution_plot(contributions_sites_date, cols_plot = colnames(contributions_sites_date))
+pca <- FactoMineR::PCA(contributions_sites_date, scale.unit = T, graph=F, ncp=15,
+                       quanti.sup = c("NN_score", "NP_score"))
+factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
+                            stroke=0, pointsize=3, alpha.ind = 0.7, 
+                            fill.ind = "grey", col.quanti.sup = "firebrick")
 
 
 
-
-
+#------------------- Mean contribution values at the site scale -------------------####
 # Mean the contribution at the site scale, whatever the date:
 #  we offset the temporal information = look only on the spatial patterns.
-contributions_sites_no_date <-contributions_surveys |> 
+
+synthetic_scores <- contributions_with_synthetic_score[,c( "NN_score", "NP_score")] |> 
+  tibble::rownames_to_column("survey_id")
+
+contributions_sites_no_date <- contributions_surveys |> 
   dplyr::left_join(synthetic_scores) |> 
   dplyr::select(-survey_id, -survey_date) |> 
   dplyr::group_by(site_code, latitude, longitude, country, ecoregion,
@@ -433,7 +537,7 @@ contributions_sites_no_date <-contributions_surveys |>
                           .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
   dplyr::mutate(across(.cols = everything(),
                        .fns = ~ifelse(is.nan(.), NA, .), .names = "{.col}")) |> 
-  dplyr::mutate(id = paste0(site_code, "_", effectiveness)) |> 
+  dplyr::mutate(id = paste0(site_code, "_", effectiveness)) |>
   dplyr::ungroup()
 
 # /!\ SOME SITES HAVE CHANGED PROTECTION STATUS BETWEEN DIFFERENT SURVEYS
@@ -450,8 +554,5 @@ contributions_sites_no_date <- contributions_sites_no_date |>
 
 # Save #
 save(contributions_sites_no_date, file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
-
-
-
-
+# load( file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
 

@@ -392,7 +392,7 @@ occ_matrix <- as.matrix(phylo_100[[1]][["comm"]])
 ## Compute Evolutionary distinctivness: ED  Isaac et al. method
 
 # by species -> long time to run
-ED_species_raw <- parallel::mclapply(phylo_100, mc.cores=10, function(x) {
+ED_species_raw <- parallel::mclapply(phylo_100, mc.cores=7, function(x) {
   picante::evol.distinct(x$phy, type = c("fair.proportion"), scale = FALSE, use.branch.lengths = TRUE)})
 
 save(ED_species_raw, file = here::here("outputs", "2b_evolutionary_distinctivness_species.Rdata"))
@@ -407,7 +407,7 @@ ED_species_summary <- cbind( ED_species_summary, sd = apply(ED_species, 1, sd))
 
 #by surveys
 median_ED_sp <- ED_species_summary[,"Median"]
-ED_surveys_raw <- parallel::mclapply(1:nrow(occ_matrix), mc.cores=parallel::detectCores()-5 ,function(i){
+ED_surveys_raw <- parallel::mclapply(1:nrow(occ_matrix), mc.cores=parallel::detectCores()-10 ,function(i){
   if(sum(occ_matrix[i,])==0){
     rep(0,6)
   }else{

@@ -9,6 +9,20 @@ learnr::available_tutorials(package = "occupancyTuts")
 learnr::run_tutorial( name = "intro", package = "occupancyTuts" )
 learnr::run_tutorial( name = "study_design", package = "occupancyTuts" )
 
+##-------------loading data and functions-------------
+#full data
+load(file = here::here("data", "derived_data", "3_all_contributions_to_predict.Rdata"))
+
+#datasets to predict
+load( file = here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
+
+#covariates
+load(file = here::here("data", "derived_data", "3_all_covariates_to_predict.Rdata"))
+
+#load functions
+source("R/evaluation_prediction_model.R")
+
+
 
 ##-------------sj-SDM-------------
 # see vignettes: https://cran.r-project.org/web/packages/sjSDM/vignettes/Dependencies.html
@@ -161,20 +175,6 @@ weights = getWeights(model)
 
 
 
-##-------------loading data and functions-------------
-#full data
-load(file = here::here("data", "derived_data", "3_all_contributions_to_predict.Rdata"))
-
-#datasets to predict
-load( file = here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
-
-#covariates
-load(file = here::here("data", "derived_data", "3_all_covariates_to_predict.Rdata"))
-
-#load functions
-source("R/evaluation_prediction_model.R")
-
-
 
 ##-------------test sjSDM-------------
 # vignette("Dependencies", package = "sjSDM")
@@ -256,7 +256,7 @@ preds = predict(model, newdata = newdata, SP = SP[, 1:20])
 
 
 
-##------------- SPA MM-------------
+##------------- spaMM-------------
 # install.packages("/home/u_flandrin/Téléchargements/spaMM_3.13.0.tar.gz", repos = NULL, type = "source")
 require(spaMM)
 
@@ -334,3 +334,65 @@ preds <- predict(hurdle, newdata = redstart)
 plot(preds[1:266,] ~ redstart$pres)
 plot(preds[266:532,] ~ redstart$Tobs)
 
+
+
+##----------------- JTDM ------------------------
+## CRAN
+install.packages('jtdm', repos = "http://cran.us.r-project.org")
+library(jtdm)
+
+library(ggplot2)
+set.seed(1712)
+data(Y)
+data(X)
+
+# Short MCMC to obtain a fast example: results are unreliable !
+m = jtdm_fit(Y = Y, X = X, formula = as.formula("~GDD+FDD+forest"), sample = 1000)
+
+# Inferred parameters
+getB(m)$Bmean
+get_sigma(m)$Smean 
+
+summary(m)
+
+plot(m)
+partial_response(m, indexGradient="GDD", indexTrait="SLA", 
+                 FixX=list(GDD=NULL,FDD=NULL,forest=1))$p
+ellipse_plot(m,indexTrait = c("SLA","LNC"), indexGradient = "GDD")
+
+
+
+## TEST ON DATA
+X <- covariates_final |> 
+  dplyr::select(-country, -realm, -latitude, -longitude,
+                                       -ecoregion, -effectiveness) |> 
+  as.matrix()
+Y <- as.matrix(observations_final)
+# Short MCMC to obtain a fast example: results are unreliable !
+m = jtdm_fit(Y = Y, X = X, formula = as.formula(
+  paste( "~ ", paste(c(colnames(X)
+                           # , "(1|year)"
+                           # , "(1|country)"
+                           # , "(1|ecoregion)"
+    ),collapse = "+") ) ), sample = 1000)
+
+# jtdmCV(m, K = 5, sample = 100, partition = NULL)
+
+# Inferred parameters
+getB(m)$Bmean
+get_sigma(m)$Smean 
+
+summary(m)
+
+
+plot(m)
+
+partial_response(m, indexGradient="coral", indexTrait="herbivores_biomass")$p
+ellipse_plot(m,indexTrait = c("herbivores_biomass","actino_richness"), indexGradient = "coral")
+ellipse_plot(m,indexTrait = c("omega_3","actino_richness"), indexGradient = "median_5year_analysed_sst")
+
+
+preds <- jtdm_predict(m, Xnew = X, Ynew = Y, validation = T)
+
+##----------------- HMSC ------------------------
+devtools::install_github("hmsc-r/HMSC")

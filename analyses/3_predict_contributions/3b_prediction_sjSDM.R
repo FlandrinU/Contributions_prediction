@@ -17,19 +17,19 @@ rm(list=ls())
 
 
 ##-------------loading data and functions-------------
-# #full data
-# load(file = here::here("data", "derived_data", "3_all_contributions_to_predict.Rdata"))
-# 
-# #datasets to predict
-# load( file = here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
-# 
-# #covariates
-# load(file = here::here("data", "derived_data", "3_all_covariates_to_predict.Rdata"))
+#full data
+load(file = here::here("data", "derived_data", "3_all_contributions_to_predict.Rdata"))
 
-## SITE SCALE
-load(file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
-load( file = here::here("data", "derived_data", "3_sites_datasets_for_predict_CV_80_20.Rdata"))
-load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
+#datasets to predict
+load( file = here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
+
+#covariates
+load(file = here::here("data", "derived_data", "3_all_covariates_to_predict.Rdata"))
+
+# ## SITE SCALE
+# load(file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
+# load( file = here::here("data", "derived_data", "3_sites_datasets_for_predict_CV_80_20.Rdata"))
+# load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
 
 #load functions
 source("R/evaluation_prediction_model.R")
@@ -168,17 +168,19 @@ rownames(SPeigen) <- rownames(covariates_final)
 
 
 # cross_val <- lapply(1:length(datasets),FUN = function(i){
-cross_val <- lapply(1:2,FUN = function(i){
+cross_val <- lapply(1:1,FUN = function(i){
   
-  # i=3
+  # i=1
   cat("Crossvalidation ", i,"/", length(datasets), "\n")
   data = datasets[[i]] 
   
   # TRAIN
-  Y_train <- as.matrix(data[[1]])
+  Y_train <- as.matrix( dplyr::select(data[[1]],
+                                      iucn_species_richness, elasmobranch_richness)) 
+   
   
   X_train <- covariates_final[rownames(Y_train),]|> 
-    dplyr::select(-longitude, -latitude, -country, - ecoregion) |> 
+    dplyr::select(-longitude, -latitude, -country) |> 
     dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
                                                 "out" = 0,
                                                 "Low" = 1,
@@ -207,12 +209,12 @@ cross_val <- lapply(1:2,FUN = function(i){
       iter = 500L, # best with 100 iterations
       # 
       se = F,
-      family = gaussian(),
+      family = poisson(),
       device = "cpu")
   # plot(model)
   
   #Predict on new data
-  Y_test <- as.matrix(data[[2]])
+  Y_test <- as.matrix(data[[2]][, colnames(Y_train)])
   
   X_test <- covariates_final[rownames(Y_test), colnames(X_train)]|> 
     dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
@@ -247,9 +249,9 @@ cross_val <- lapply(1:2,FUN = function(i){
     dplyr::mutate(model = i)
   
   ##obs
-  eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
-  plot(eval_act$imputed ~ eval_act$observed)
-  cor.test(eval_act$imputed, eval_act$observed)
+  # eval_act <- dplyr::filter(eval, variable == "herbivores_biomass")
+  # plot(eval_act$imputed ~ eval_act$observed)
+  # cor.test(eval_act$imputed, eval_act$observed)
   
   eval
 }) #END OF LAPPLY ON CROSSVALIDATION

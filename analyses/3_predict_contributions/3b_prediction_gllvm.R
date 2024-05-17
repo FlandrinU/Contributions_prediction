@@ -37,10 +37,10 @@ source("R/evaluation_prediction_model.R")
 ##------------- gllvm multi-contributions-------------
 library(gllvm)
 
-data(antTraits)
-y <- as.matrix(antTraits$abund)
-X <- scale(as.matrix(antTraits$env))
-TR <- antTraits$traits
+# data(antTraits)
+# y <- as.matrix(antTraits$abund)
+# X <- scale(as.matrix(antTraits$env))
+# TR <- antTraits$traits
 
 
 # cross_val <- lapply(1:length(datasets),FUN = function(i){
@@ -53,7 +53,7 @@ cross_val <- lapply(1:1,FUN = function(i){
   Y_train <- as.matrix(data[[1]])
   
   X_train <- covariates_final[rownames(Y_train),] |> 
-    dplyr::select(-country, -ecoregion) |> 
+    dplyr::select(-country, -ecoregion, -longitude, -latitude) |> 
     dplyr::mutate(effectiveness = dplyr::recode(effectiveness,
                                                 "out" = 0,
                                                 "Low" = 1,
@@ -111,12 +111,12 @@ cross_val <- lapply(1:1,FUN = function(i){
 all_res <- do.call(rbind, cross_val)
 result <- extract_result_contrib(cross_val)
 estimates_boxplot(result)
-ggsave(filename = here::here("figures", "models", "Pred_mgpr_multivariate_mattern32_20var.jpg"),
+ggsave(filename = here::here("figures", "models", "Pred_gllvm_multivariate_without_long_lat.jpg"),
        width = 12, height = 7)
 
 
 density_prediction(all_res)
-ggsave(filename = here::here("figures", "models", "Pred_density_mgpr_multivariate_mattern32_20var.jpg"),
+ggsave(filename = here::here("figures", "models", "Pred_density_gllvm_multivariate.jpg"),
        width = 20, height = 10)
 
 

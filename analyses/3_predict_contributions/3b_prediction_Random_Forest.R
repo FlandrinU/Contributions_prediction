@@ -209,7 +209,7 @@ cross_val <- lapply(1:2,FUN = function(i){
 all_res <- do.call(rbind, cross_val)
 result <- extract_result_contrib(cross_val)
 estimates_boxplot(result)
-ggsave(filename = here::here("figures", "models", "Pred_spRF_100tree_0.25_0.75.jpg"),
+ggsave(filename = here::here("figures", "models", "Pred_spRF_100tree_10bw_0.25_0.75.jpg"),
        width = 12, height = 7)
 
 
