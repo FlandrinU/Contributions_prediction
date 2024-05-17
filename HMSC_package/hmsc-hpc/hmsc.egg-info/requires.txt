@@ -1,0 +1,7 @@
+numpy
+pandas
+pyreadr
+scipy
+tensorflow[and-cuda]
+tensorflow-probability[tf]
+ujson

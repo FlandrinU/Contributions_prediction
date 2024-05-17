@@ -1,0 +1,113 @@
+---
+title: "spatial Hmsc-HCP multivariate"
+output: html_document
+date: "2024-04-18"
+---
+
+This notebook demonstrates the concept of using Hmsc-HPC extension for `Hmsc` package. Unlike the core `Hmsc`, the Hmsc-HPC extension is written in Python programming language and is executed with Python interpreter. Hence, before a user can use it, a proper Python installation is required.
+
+# Preparing Python environment
+
+**If you are familiar with using Python within R**, then please configure Python in your preferred way and pip-install the Python package from the distributed zip package (`pip install .../path/to/hmsc-hpc`), and skip to the section [Checking Python environment].
+
+**If you are not familiar with using Python within R**, then please follow the detailed instructions below.
+
+## Detailed instructions
+
+### 1. Finding Python installation
+
+Depending on your hardware, operating system and user rights, the set of steps to acquire and configure a proper Python distribution may greatly vary. Thus, we would like to relay the installation process itself either to one of multitude guides available on the web, or to the IT support that manages your device. This section merely checks that a Python installation can be found.
+
+Please test the next chunk of code that tries to check version of Python available in you system:
+
+```{r}
+system_python = "python"
+# system_python = "/Users/username/opt/anaconda3/envs/tf/bin/python3"
+system2(system_python, "--version")
+```
+
+If the Python distribution in your system is configured well, then the code shall print the version of Python. If this is failing, then you are likely missing Python altogether, or its path is not configured correctly. In some cases you may have several distributions of Python available, and then you shall either explicitly specify the path to the desired Python distribution --- as exemplified in the commented-out `system_python = ...` line above.
+
+### 2. Creating a new virtual environment
+
+Please note that this notebook is configured **NOT** to execute the codes that install any software or packages --- both in this and next sections during whole notebook execution. Please execute them manually one by one if needed.
+
+
+The next line creates an empty virtual environment where we will set up Hmsc-HPC:
+
+```{r}
+system2(system_python, "-m venv hmsc-venv")
+
+```
+
+Then, we activate this Python environment by defining an appropriate `python` path variable and check that it works by printing the version of Python:
+
+```{r}
+python = file.path(getwd(), "hmsc-venv", "bin", "python")  # for Linux and macOS
+# python = file.path(getwd(), "hmsc-venv", "Scripts", "python")  # for Windows
+system2(python, "--version")
+```
+
+If this is failing, then you need to adjust the path to the correct Python executable (note that the path depends on operating system -- see comments in the code block above).
+
+### 3. Install Hmsc-HPC package
+
+For installing the Hmsc-HPC Python package, we need to define the path to the Hmsc-HPC package. Assuming that you have downloaded this notebook as a part of the distributed zip package, the pre-set `package_path` shall work fine. Otherwise, please set the correct `package_path`. (Note for reviewers: after the blind review, the Hmsc-HPC package will be published and can be directly installed from web repository.):
+
+```{r, echo = FALSE}
+package_path = file.path(getwd(), "hmsc-hpc")
+system2(python, "-m pip install --upgrade pip")
+system2(python, paste("-m pip install", shQuote(package_path)))
+```
+
+After this, you should have a functioning Python environment.
+
+## Checking Python environment
+
+This section is for checking whether the examples in this notebook shall be expected to execute well or not.
+
+The next code chunk tests that the Python environment works by executing a basic TensorFlow-based command and importing Hmsc-HPC package. Please define the correct `python` path to the Python executable. If you have configured Python outside R, then the default should work fine.
+
+```{r}
+# Choose correct python by uncommenting correct line:
+# python = "python3"  # default
+python = file.path(getwd(), "hmsc-venv", "bin", "python")  # hmsc-venv for Linux and macOS
+# python = file.path(getwd(), "hmsc-venv", "Scripts", "python")  # hmsc-venv for Windows
+
+Sys.setenv(TF_CPP_MIN_LOG_LEVEL=3)  # reduce debug output from tensorflow
+system2(python, "-c \"import tensorflow as tf; print(tf.constant(1))\"")
+system2(python, "-c \"import hmsc\"")
+# system2("export LD_LIBRARY_PATH=/home/u_flandrin/Bureau/Chap_2_NCP_predictions/HMSC_github/hmsc-venv/lib/python3.10/site-packages/nvidia/cudnn/lib")
+
+
+#check gpu is available
+system2(python, "-c \"import os; os.environ['TF_ENABLE_ONEDNN_OPTS']= '0'; import tensorflow as tf; print(tf.test.is_gpu_available())\"")
+system2(python, "-c \"import tensorflow as tf; print(tf.test.is_gpu_available())\"")
+system2(python, "-c \"import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))\"")
+
+```
+
+Your Python setup is working correctly if the code does not produce any errors.
+
+### Troubleshooting
+
+If the above check and the detailed instructions do not work for you, please consult one of multitude guides available on the web. You can configure Python within R in multiple ways - for instance, `reticulate` package features several functions aimed to achieve that or you can prepare and activate the correct Python environment outside R.
+
+# Setting up a toy Hmsc model
+
+First, we shall acquire a sufficiently recent `Hmsc` package. Most likely, the actual distribution on CRAN is already suitable, but most certainly it can be done from the master branch of `Hmsc` repo on GitHub.
+
+```{r eval=FALSE, include=FALSE}
+library(devtools)
+Sys.unsetenv("GITHUB_PAT")
+install_github("hmsc-r/HMSC")
+library(Hmsc)
+
+```
+
+Next, we load the required packages. We also set up the path to the working directory and the path to the Hmsc-HPC package. Assuming that you have downloaded this notebook as a part of the distributed Hmsc-HPC extension, the pre-set relative paths shall work fine. Otherwise, please note that these are user and system-specific, therefore you shall ensure their correctness yourself.
+
+```{r, echo = FALSE}
+library(Hmsc)
+library(jsonify)
+```
