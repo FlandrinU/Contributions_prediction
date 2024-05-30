@@ -11,6 +11,27 @@ abstract: |
   Abstract...
 ---
 
+```{r, echo=FALSE}
+# ## Copy all figures form the project in the quarto folder
+if(!require("fs")) install.packages("fs")
+library(fs)
+
+source_dir <- "../figures"
+dest_dir <- "img"
+
+image_files <- dir_ls(source_dir, recurse = TRUE, type = "file")
+
+for (file in image_files) {
+    if (fs::file_exists(file.path(dest_dir, path_file(file)))) {
+      if(file_info(file.path(dest_dir, path_file(file)))$modification_time < file_info(file)$modification_time){
+        file_copy(file, dest_dir, overwrite = TRUE)
+      } #Overwrite the figure if it exists but has been modified
+    }else{
+      file_copy(file, dest_dir) #Copy the figure if it doesn't exist
+    }
+}
+```
+
 # Introduction
 
 ->Accroche: “l’homme s’adapte à toutes les situations…”: non. il dépend de contributions et se doit de ne pas tout détruire.
@@ -34,23 +55,35 @@ abstract: |
 
 # Discussion
 
+Variance partitionning: effet très important des effets random -> les effets locaux sont très importants, les contributions dependent fortement de contingences locales. Beaucoup est déterminé par l'endroit où on est: soit à cause de l'importance de l'histoire évolutive des récifs (biogeographie des espèces, un événement géologique ou écologique particulier passé, une méthode de pêche locale, une tradition,...), soit du à des interactions locales entre espèces (présence d'un type de corail, d'une espèce clé de voûte, …).
+on a finalement peu de leviers disponibles pour augmenter les NCP. Mais ici nos leviers sont debiaisés. Alors on peu regarder à quoi on peut s'attendre au vu des différents contextes que l'on observe aujourd'hui : counterfactual.
+Test de counterfactual: à priori quelles zones pourraient gagner le plus de NCP si on met tout en high protection? Et si on enlève les bateaux de pêche ? Est ce qu'il y a des zones  où on a intérêt à plus investir d'énergie ? 
+
+
 # Materials and methods
 
-## Filtering RLS data
+## Filtering RLS data {#no-numbering}
 -> Faire un schéma des étapes de la méthodes
 
-### Filter misidentifications
+
+**Filter misidentifications**
+
 Remove all observations with misidentifications: “spp.”, “sp.”, “(cf)”, “hybrid”, “Unidentified”, “?”, “!”, “/”, “New”, “green form”
 
-### Keep only “method 1” = fish assessment in coral reefs
 
-### filter duplicates
+**Keep only “method 1” = fish assessment in coral reefs**
+
+**filter duplicates**
+
 Same information recorded twice, by two different divers (same survey ID, block, species, total, and size) -> keep only one observation for each.
 
-### filter lines without fish
+
+**filter lines without fish**
+
 remove line with total = 0
 
-### filter fishes difficult to spot consistently with UVC
+**filter fishes difficult to spot consistently with UVC**
+
 -Remove Elasmobranchs
 
 -Remove anguiliforms: 16 families according to WORMS: c( "Anguillidae", "Chlopsidae", "Colocongridae", "Congridae" , "Derichthyidae" , "Heterenchelyidae" , "Moringuidae" , "Muraenesocidae" , "Muraenidae" , "Myrocongridae" , "Nemichthyidae" , "Nettastomatidae" , "Ophichthidae" , "Protanguillidae" , "Serrivomeridae" , "Synaphobranchidae")
@@ -64,7 +97,8 @@ remove line with total = 0
 
 
 
-### Checking size
+
+**Checking size**
 -Filling values in Maximum length data: missing values are completed by applying the mean of the genus or the family (if no species in the same genus)
 
 -Remove juveniles: all fish of 2.5 cm, and fish of 5 cm if the maximum length of the species is > 25 cm
@@ -74,7 +108,7 @@ remove line with total = 0
 -Remove abnormal size estimation: fish with a max length < 3.75, fish > 2*(max length) or > max length +50
 
 
-### Filter outliers surveys
+### Filter outliers surveys {#no-numbering}
 To avoid over-estimating fish abundance due to temporary fish aggregations or large roaming schools, we excluded **surveys** with a total **biomass over 500 kg/500m²** or an **abundance exceeding 10,000 individuals**.
 
 
@@ -104,7 +138,7 @@ References: @Scholl2022 showed that XXX [@Vitay2017].
 
 See @fig-matrix and @sec-results.
 
-![Afferent system to VTA. [@Vitay2017]](images/test.png){#fig-matrix width=50%}
+![Afferent system to VTA. [@Vitay2017]](img/1_trophic_guild_inference_VS_troph.jpg){#fig-matrix width=75%}
 
 Equations:
 
@@ -130,7 +164,7 @@ for i in range(10):
 ```
 
 
-```{r}
+```{r, echo=TRUE}
 #r
 for(i in 1:10) print(i)
 ```

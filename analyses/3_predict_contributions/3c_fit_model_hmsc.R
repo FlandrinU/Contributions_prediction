@@ -23,7 +23,7 @@ library(ggplot2)
 ##------------------------------- load data ------------------------------------
 load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
-response =  observations_final#[1:100,] ####################### reduce data
+response =  observations_final#[sample(1:nrow(observations_final),1000),] ####################### reduce data
 covariates = covariates_final[rownames(response),]
 
 
@@ -37,11 +37,11 @@ python = file.path(getwd(),"HMSC_package","hmsc-venv", "bin", "python")  # hmsc-
 # We also define the regularity of progress printing during MCMC sampling. 
 # We set the transient phase being equally long as the sampling phase.
 
-nSamples = 500 #1000 
-thin = 200 #100
-nChains = 2 #2
-verbose = 50 #100
-transient = 10000 # 1500 #500 * thin
+nSamples = 300 #1000 
+thin = 1000 #100
+nChains = 3 #2
+verbose = 100 #100
+transient = nSamples * thin # 1500 #100 * thin
 nb_neighbours = 10
 noise_magnitude <- 0.00001 #noise in coordinates
 
@@ -138,15 +138,16 @@ init_obj = Hmsc::sampleMcmc(model_fit,
                             thin=thin,
                             transient=transient, 
                             nChains=nChains,
-                            verbose=verbose, 
-                            engine="HPC") # HPC : try to use the GPU
+                            verbose=verbose,
+                            nParallel = nChains,
+                            engine="HPC") # HPC : try to use the GPU under python command: on github version only (v3.1-2)
 
 # save it locally
 file_name <- sprintf(paste0("init_multi_without_spatial&year_",
                             paste(nChains, "chains",
                                   thin, "thin",
                                   nSamples, "samples",
-                                  transient, "transient",
+                                  transient/thin, "xthin_transient",
                                   sep = "_"),
                             ".Rdata"))
 init_file_path = file.path(save_init, file_name)  
@@ -177,7 +178,7 @@ for (file_path in files[grep(file_name, files)] ) { ############################
                                       "--input", shQuote(file_path),
                                       "--output", shQuote(post_file_path),
                                       "--samples", nSamples,
-                                      "--transient", transient,
+                                      "--transient", format(transient, scientific = FALSE),
                                       "--thin", thin,
                                       "--verbose", verbose)
   
@@ -206,7 +207,7 @@ list.files(save_out)
 list_files <- list.files(save_out, full.names = TRUE)
 
 # Import posterior probability
-file_rds <- readRDS(file = list_files[5])[[1]] ######################################" Choose the right one
+file_rds <- readRDS(file = list_files[12])[[1]] ######################################" Choose the right one
 importFromHPC <- jsonify::from_json(file_rds)
 postList <- importFromHPC[1:nChains]
 cat(sprintf("fitting time %.1f min\n", importFromHPC[[nChains+1]] / 60))
@@ -222,7 +223,7 @@ model_name <- sprintf(paste0("init_multi_without_spatial_",
                              paste(nChains, "chains",
                                    thin, "thin",
                                    nSamples, "samples",
-                                   transient, "transient",
+                                   transient/thin, "xthin_transient",
                                    sep = "_"),
                              ".Rdata"))
 save(model_fit_mcmc, file=file.path(localDir, model_name))
@@ -257,7 +258,8 @@ mpost <- Hmsc::convertToCodaObject(model_fit_mcmc)
 summary(mpost$Beta)
 postBeta <- Hmsc::getPostEstimate(model_fit_mcmc, parName = "Beta")
 
-png("figures/models/hmsc/estimate_significance_(different_from_0).png",
+png(paste0("figures/models/hmsc/estimate_significance_(different_from_0)",
+           thin, "thin", transient, "transient", ".png"),
     width = 25, height = 15, units = "cm", res = 300)
 par(mar = c(10,10,2,2))
 Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Support", supportLevel = 0.95)
@@ -269,22 +271,24 @@ dev.off()
 # plot(mpost$Beta)
 
 summary(coda::effectiveSize(mpost$Beta))
-png("figures/models/hmsc/convergence_estimates.png",
+png(paste0("figures/models/hmsc/convergence_estimates",
+           thin, "thin", transient, "transient", ".png"),
     width = 20, height = 20, units = "cm", res = 200)
   par(mfrow=c(2,2), mar = c(4,4,4,4))
-  hist(coda::effectiveSize(mpost$Beta), main="ess(beta)")
-  abline(v= nSamples*nChains, col = "red4", lty = 2)
-  hist(coda::gelman.diag(mpost$Beta, multivariate=FALSE)$psrf, main="psrf(beta)")
-  abline(v= 1, col = "red4", lty = 2)
-  hist(coda::effectiveSize(mpost$Omega[[1]]), main="ess(omega)") #also check associations between y
-  hist(coda::gelman.diag(mpost$Omega[[1]], multivariate=FALSE)$psrf, main="psrf(omega)")
+  hist(coda::effectiveSize(mpost$Beta), main="ess(beta)", breaks = 30)
+  abline(v= nSamples*nChains, col = "red4", lty = 2, lwd = 3)
+  hist(coda::gelman.diag(mpost$Beta, multivariate=FALSE)$psrf, main="psrf(beta)", breaks = 30)
+  abline(v= 1, col = "red4", lty = 2, lwd = 3)
+  hist(coda::effectiveSize(mpost$Omega[[1]]), main="ess(omega)", breaks = 30) #also check associations between y
+  abline(v= nSamples*nChains, col = "red4", lty = 2, lwd = 3)
+  hist(coda::gelman.diag(mpost$Omega[[1]], multivariate=FALSE)$psrf, main="psrf(omega)", breaks = 30)
+  abline(v= 1, col = "red4", lty = 2, lwd = 3)
 dev.off()
 
-# Test prediction performance: CV
+# # Test prediction performance: CV
 # partition = Hmsc::createPartition(model_fit_mcmc, nfolds = 3, column = "associations")
-# preds = Hmsc::computePredictedValues(hM = model_fit_mcmc,
-#                                      partition = partition,
-#                                      nParallel = nChains
+# preds = Hmsc::pcomputePredictedValues(hM = model_fit_mcmc,
+#                                      partition = partition
 #                                      )
 # MF = Hmsc::evaluateModelFit(hM = model_fit_mcmc, predY = preds)
 # MF$R2
@@ -298,6 +302,9 @@ png("figures/models/hmsc/explanatory_power.png",
 hist(MF$R2, xlim = c(0,1), main=paste0("Mean = ", round(mean(MF$R2),2)))
 dev.off()
 
+
+## AUC
+hist(MF$AUC, xlim = c(0,1))
 
 head(model_fit_mcmc$X)
 
@@ -329,7 +336,8 @@ supportLevel <- 0.95
 toPlot <- ((OmegaCor[[1]]$support>supportLevel) +
              (OmegaCor[[1]]$support<(1-supportLevel))>0)*OmegaCor[[1]]$mean
 
-png("figures/models/hmsc/residual_associations.png",
+png(paste0("figures/models/hmsc/residual_associations",
+    thin, "thin", transient, "transient", ".png"),
     width = 25, height = 15, units = "cm", res = 300)
 # par(mar = c(10,10,2,2))
 corrplot::corrplot(toPlot, method = "color",
@@ -371,7 +379,9 @@ ggplot(VP_long, aes(x = Response, y = Value, fill = Covariate)) +
     legend.position = "right",
     legend.text = element_text(size = 6)
   )
-ggsave(filename = "figures/models/hmsc/variance_partitioning_without_spatial.jpg", width = 15, height = 10)
+ggsave(filename = paste0("figures/models/hmsc/variance_partitioning_without_spatial",
+       thin, "thin", transient, "transient", ".jpg"),
+       width = 15, height = 10)
 
 
 
@@ -414,10 +424,17 @@ ggmcmc::ggs_density(S)+facet_wrap(~ Parameter, ncol = 5)
 # assess convergence and diagnose chain problems. the expected outcome is to produce 
 # “white noise”. + a good tool to assess within-chain convergence
 ggmcmc::ggs_traceplot(S)+facet_wrap(~ Parameter, ncol = 5)
+ggsave(filename = paste0("figures/models/hmsc/traceplot_without_spatial",
+                         thin, "thin", transient, "transient", ".jpg"),
+       width = 15, height = 10)
 
 # The expected output is a line that quickly approaches the overall mean, in addition
 # to the fact that all chains are expected to have the same mean
 ggmcmc::ggs_running(S)+facet_wrap(~ Parameter, ncol = 5)
+ggsave(filename = paste0("figures/models/hmsc/Chain_convergence_without_spatial",
+                         thin, "thin", transient, "transient", ".jpg"),
+       width = 15, height = 10)
+
 
 # Ideally, the initial and final parts of the chain have to be sampling in the same 
 # target distribution
@@ -428,6 +445,9 @@ ggmcmc::ggs_compare_partial(S)+facet_wrap(~ Parameter, ncol = 5)
 # it may indicate some misbehaviour of several chains or parameters, or indicate that
 # a chain needs more time to converge. 
 ggmcmc::ggs_autocorrelation(S)+facet_wrap(~ Parameter, ncol = 5)
+ggsave(filename = paste0("figures/models/hmsc/autocorrelation_plot_without_spatial",
+                         thin, "thin", transient, "transient", ".jpg"),
+       width = 15, height = 10)
 
 # diagnose potential problems of convergence due to highly correlated parameters
 ggmcmc::ggs_crosscorrelation(S)

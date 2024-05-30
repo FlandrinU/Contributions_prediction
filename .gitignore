@@ -18,22 +18,28 @@ README.html
 .Rprofile
 renv/
 
+
 # quarto stuffs
+.quarto/
 report/.quarto/
+report/img/
+report/_freeze/
+
 
 #remove large data files ----> to include in a data repo.
 data_rfishbase.RData
 data/raw_data/phylogeny/
 
+
 #png files of species for new aesthetic scores
 data/raw_data/aesthetic_deep_model_Langlois_2022/png/
 
+
 #Python environment (heavy libraries)
 HMSC_package/hmsc-venv/
+
 
 #Large outputs ----> can be created running make.R file
 figures/
 outputs/models/
 outputs/2d_cnpflux_sp_size_sst.csv
-
-
