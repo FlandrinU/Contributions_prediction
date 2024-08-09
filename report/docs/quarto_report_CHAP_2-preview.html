@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
     <meta name="author" content="Ulysse Flandrin">
-    <meta name="dcterms.date" content="2024-05-30">
+    <meta name="dcterms.date" content="2024-08-07">
 
     <title>Inference of Nature’s Contributions</title>
     <style>
@@ -200,10 +200,10 @@
 <meta name="citation_abstract" content="Abstract...
 ">
 <meta name="citation_author" content="Ulysse Flandrin">
-<meta name="citation_publication_date" content="2024-05-30">
-<meta name="citation_cover_date" content="2024-05-30">
+<meta name="citation_publication_date" content="2024-08-07">
+<meta name="citation_cover_date" content="2024-08-07">
 <meta name="citation_year" content="2024">
-<meta name="citation_online_date" content="2024-05-30">
+<meta name="citation_online_date" content="2024-08-07">
 <meta name="citation_language" content="en">
 <meta name="citation_reference" content="citation_title=Enhanced Habit Formation in Tourette Patients Explained by Shortcut Modulation in a Hierarchical Cortico-Basal Ganglia Model;,citation_abstract=Devaluation protocols reveal that Tourette patients show an increased propensity to habitual behaviors as they continue to respond to devalued outcomes in a cognitive stimulus-response-outcome association task. We use a neuro-computational model of hierarchically organized cortico-basal ganglia-thalamo-cortical loops to shed more light on habit formation and its alteration in Tourette patients. In our model, habitual behavior emerges from cortico-thalamic shortcut connections, where enhanced habit formation can be linked to faster plasticity in the shortcut or to a stronger feedback from the shortcut to the basal ganglia. We explore two major hypotheses of Tourette pathophysiologylocal striatal disinhibition and increased dopaminergic modulation of striatal medium spiny neuronsas causes for altered shortcut activation. Both model changes altered shortcut functioning and resulted in higher rates of responses towards devalued outcomes, similar to what is observed in Tourette patients. We recommend future experimental neuroscientific studies to locate shortcuts between cortico-basal ganglia-thalamo-cortical loops in the human brain and study their potential role in health and disease.;,citation_author=Carolin Scholl;,citation_author=Javier Baladron;,citation_author=Julien Vitay;,citation_author=Fred H. Hamker;,citation_publication_date=2022-02;,citation_cover_date=2022-02;,citation_year=2022;,citation_fulltext_html_url=https://link.springer.com/article/10.1007%2Fs00429-021-02446-x;,citation_doi=10.1007/s00429-021-02446-x;,citation_issn=1863-2653, 1863-2661;,citation_journal_title=Brain Structure and Function;">
 <meta name="citation_reference" content="citation_title=On the Role of Dopamine in Motivated Behavior: A Neuro-Computational Approach;,citation_abstract=Neuro-computational models allow to study the brain mechanisms involved in intelligent behavior and extract essential computational principles which can be implemented in cognitive systems. They are a promising solution to achieve a brain-like artificial intelligence that can compete with natural intelligence on realistic behaviors. A crucial property of intelligent behavior is motivation, defined as the incentive to interact with the world in order to achieve specific goals, either extrinsic (obtaining rewards such as food or money, or avoiding pain) or intrinsic (satisfying one’s curiosity, fun). In the human brain, motivated or goal-directed behavior depends on a network of different structures, including the prefrontal cortex, the basal ganglia and the limbic system. Dopamine, a neuro-transmitter associated with reward processing, plays a central role in coordinating the activity of this network. It structures processing in high-level cognitive areas along a limbic-associative-motor gradient and impacts the learning capabilities of the whole system. In this habilitation thesis, I present biologically-constrained neuro-computational models which investigate the role of dopamine in visual object categorization and memory retrieval (Vitay and Hamker, 2008), reinforcement learning and action selection (Vitay and Hamker, 2010), the updating, learning and maintenance of working memory (Schroll, Vitay and Hamker, 2012) and timing processes (Vitay and Hamker, 2014). These models outline the many mechanisms by which the dopaminergic system regulates cognitive and emotional behavior: bistable processing modes in the cerebral cortex, modulation of synaptic transmission and plasticity, allocation of cognitive resources and signaling of relevant events. Finally, I present a neural simulator able to simulate a variety of neuro-computational models efficiently on parallel architectures (Vitay, Dinkelbach and Hamker, 2015).;,citation_author=Julien Vitay;,citation_publication_date=2017;,citation_cover_date=2017;,citation_year=2017;,citation_fulltext_html_url=https://julien-vitay.net/publication/vitay2017/;,citation_dissertation_institution=Technische Universität Chemnitz;">
@@ -248,7 +248,7 @@
                 <div>
             <div class="quarto-title-meta-heading">Published</div>
             <div class="quarto-title-meta-contents">
-              <p class="date">May 30, 2024</p>
+              <p class="date">August 7, 2024</p>
             </div>
           </div>
           
@@ -280,19 +280,21 @@
   <ul class="collapse">
   <li><a href="#infer-missing-traits" id="toc-infer-missing-traits" class="nav-link" data-scroll-target="#infer-missing-traits"><span class="header-section-number">2.1</span> Infer missing traits</a></li>
   <li><a href="#assess-contributions" id="toc-assess-contributions" class="nav-link" data-scroll-target="#assess-contributions"><span class="header-section-number">2.2</span> Assess contributions</a></li>
-  <li><a href="#covariates-and-contributions" id="toc-covariates-and-contributions" class="nav-link" data-scroll-target="#covariates-and-contributions"><span class="header-section-number">2.3</span> Covariates and contributions</a></li>
+  <li><a href="#covariates" id="toc-covariates" class="nav-link" data-scroll-target="#covariates"><span class="header-section-number">2.3</span> Covariates</a></li>
+  <li><a href="#contribution-inference" id="toc-contribution-inference" class="nav-link" data-scroll-target="#contribution-inference"><span class="header-section-number">2.4</span> Contribution Inference</a>
+  <ul class="collapse">
+  <li><a href="#spamm-spatial-mixed-models" id="toc-spamm-spatial-mixed-models" class="nav-link" data-scroll-target="#spamm-spatial-mixed-models"><span class="header-section-number">2.4.1</span> SpaMM: Spatial mixed models</a></li>
+  <li><a href="#hmsc-hierarchical-model-of-species-communities-bayesian-model" id="toc-hmsc-hierarchical-model-of-species-communities-bayesian-model" class="nav-link" data-scroll-target="#hmsc-hierarchical-model-of-species-communities-bayesian-model"><span class="header-section-number">2.4.2</span> Hmsc: Hierarchical Model of Species Communities (Bayesian model)</a></li>
+  <li><a href="#counterfactual-scenarios" id="toc-counterfactual-scenarios" class="nav-link" data-scroll-target="#counterfactual-scenarios"><span class="header-section-number">2.4.3</span> Counterfactual scenarios</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion"><span class="header-section-number">3</span> Discussion</a></li>
   <li><a href="#materials-and-methods" id="toc-materials-and-methods" class="nav-link" data-scroll-target="#materials-and-methods"><span class="header-section-number">4</span> Materials and methods</a>
   <ul class="collapse">
-  <li><a href="#no-numbering" id="toc-no-numbering" class="nav-link" data-scroll-target="#no-numbering"><span class="header-section-number">4.1</span> Filtering RLS data</a>
-  <ul class="collapse">
-  <li><a href="#no-numbering" id="toc-no-numbering" class="nav-link" data-scroll-target="#no-numbering"><span class="header-section-number">4.1.1</span> Filter outliers surveys</a></li>
-  <li><a href="#elasmobranch-data" id="toc-elasmobranch-data" class="nav-link" data-scroll-target="#elasmobranch-data"><span class="header-section-number">4.1.2</span> Elasmobranch data</a></li>
-  </ul></li>
+  <li><a href="#filtering-rls-data" id="toc-filtering-rls-data" class="nav-link" data-scroll-target="#filtering-rls-data"><span class="header-section-number">4.1</span> Filtering RLS data</a></li>
   <li><a href="#species-traits" id="toc-species-traits" class="nav-link" data-scroll-target="#species-traits"><span class="header-section-number">4.2</span> Species traits</a></li>
   <li><a href="#contributions-assessement" id="toc-contributions-assessement" class="nav-link" data-scroll-target="#contributions-assessement"><span class="header-section-number">4.3</span> Contributions assessement</a></li>
-  <li><a href="#contributions-inference" id="toc-contributions-inference" class="nav-link" data-scroll-target="#contributions-inference"><span class="header-section-number">4.4</span> Contributions inference</a></li>
+  <li><a href="#covariates-1" id="toc-covariates-1" class="nav-link" data-scroll-target="#covariates-1"><span class="header-section-number">4.4</span> Covariates</a></li>
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   <li><a href="#supplemental-materials" id="toc-supplemental-materials" class="nav-link" data-scroll-target="#supplemental-materials"><span class="header-section-number">5</span> Supplemental materials</a></li>
@@ -330,7 +332,17 @@
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    }<span class="cf">else</span>{</span>
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">file_copy</span>(file, dest_dir) <span class="co">#Copy the figure if it doesn't exist</span></span>
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove old files</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>dest_files <span class="ot">&lt;-</span> <span class="fu">dir_ls</span>(dest_dir, <span class="at">recurse =</span> <span class="cn">TRUE</span>, <span class="at">type =</span> <span class="st">"file"</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(files <span class="cf">in</span> dest_files){</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>   <span class="cf">if</span> ( <span class="sc">!</span> <span class="fu">path_file</span>(file) <span class="sc">%in%</span> <span class="fu">path_file</span>(image_files)) { <span class="co"># the file has been removed from the project</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>     <span class="fu">file_delete</span>(file)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>   }</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></div>
 <section id="introduction" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
@@ -338,60 +350,1912 @@
 <p>-Alors que nos sociétés nous détachent de la nature, il est important de remettre du lien entre nature, écosystèmes, contributions, et hommes, comme avec des réseaux (cf Felipe-luci, Stanworth 2024). Il est crucial à la fois pour davantage protéger et se préparer au choc, de conscientiser le lien que l’on a avec les processus écologiques, et de quantifier la perte que l’on va subir (dans Stanworth 2024: “Balvanera et al., 2019; IPBES, 2019”).</p>
 <p>-Idée d’utiliser des méthodes de jSDM pour expliciter et modéliser des contributions: Thuiller 2024 + Poggiato 2023</p>
 <p>-Pour comprendre les patrons de contributions, pour les prédire ou se les approprier, etc… il est possible de modéliser les espèces présentes (SDM), leur abondance et leur interactions, puis d’en déduire les contributions associées (predict first, assemble later), ou de directement modéliser les contributions comme conséquences des conditions (assemble first, predict later) -&gt; cf Thuillier 2024.</p>
+<p>-on veut comprendre quels sont les leviers d’actions possible pour bénéficier au mieux des contributions de la Nature et ainsi de comprendre à quoi on peut s’attendre lorsque l’on fournit un effort d’e protection ou’organisation collective pour protéger ou autre…</p>
 </section>
 <section id="results" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Results</h1>
 <section id="infer-missing-traits" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="infer-missing-traits"><span class="header-section-number">2.1</span> Infer missing traits</h2>
+<div id="fig-misforest-perf" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-misforest-perf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/1_Missforest_final_performance_boxplot_traits.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-1" data-gallery="quarto-lightbox-gallery-1"><img src="img/1_Missforest_final_performance_boxplot_traits.jpg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-misforest-perf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Missforest performance in 80/20 crossvalidation.
+</figcaption>
+</figure>
+</div>
+<div id="fig-trait-completedness" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-trait-completedness-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/1_percent_species_per_traits_tropical.png" class="lightbox" data-glightbox="description: .lightbox-desc-2" data-gallery="quarto-lightbox-gallery-2" title="a) Before inferrence."><img src="img/1_percent_species_per_traits_tropical.png" class="img-fluid figure-img"></a></p>
+<figcaption>a) Before inferrence.</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/1_percent_species_INFERRED_TRAITS_tropical.png" class="lightbox" data-glightbox="description: .lightbox-desc-3" data-gallery="quarto-lightbox-gallery-3" title="b) Inferred traits."><img src="img/1_percent_species_INFERRED_TRAITS_tropical.png" class="img-fluid figure-img"></a></p>
+<figcaption>b) Inferred traits.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-trait-completedness-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Trait completedness in tropical reef fishes
+</figcaption>
+</figure>
+</div>
 </section>
 <section id="assess-contributions" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="assess-contributions"><span class="header-section-number">2.2</span> Assess contributions</h2>
+<div id="fig-distr-raw-contrib" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-distr-raw-contrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/2_contributions_distribution_raw.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-4" data-gallery="quarto-lightbox-gallery-4"><img src="img/2_contributions_distribution_raw.jpg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-distr-raw-contrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Distribution of raw contributions.
+</figcaption>
+</figure>
+</div>
+<div id="fig-distr-contrib" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-distr-contrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/2_contributions_distribution_log_transformed.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-5" data-gallery="quarto-lightbox-gallery-5"><img src="img/2_contributions_distribution_log_transformed.jpg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-distr-contrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Distribution of log-transformed contributions.
+</figcaption>
+</figure>
+</div>
+<div id="fig-PCA-contrib" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-PCA-contrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/2h_PCA_contributions_axes1-2.png" class="lightbox" data-glightbox="description: .lightbox-desc-6" data-gallery="quarto-lightbox-gallery-6"><img src="img/2h_PCA_contributions_axes1-2.png" class="img-fluid figure-img" style="width:75.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-PCA-contrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Covariations of contributions.
+</figcaption>
+</figure>
+</div>
 </section>
-<section id="covariates-and-contributions" class="level2" data-number="2.3">
-<h2 data-number="2.3" class="anchored" data-anchor-id="covariates-and-contributions"><span class="header-section-number">2.3</span> Covariates and contributions</h2>
+<section id="covariates" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="covariates"><span class="header-section-number">2.3</span> Covariates</h2>
+<section id="covariates-selection" class="level4 unumbered" data-number="2.3.0.1">
+<h4 class="unumbered anchored" data-number="2.3.0.1" data-anchor-id="covariates-selection"><span class="header-section-number">2.3.0.1</span> <strong>Covariates selection</strong></h4>
+<div id="fig-corr_all_cov" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-corr_all_cov-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="img/corr_matrix_env_covariates.png" class="lightbox" data-glightbox="description: .lightbox-desc-7" data-gallery="quarto-lightbox-gallery-7"><img src="img/corr_matrix_env_covariates.png" class="img-fluid figure-img"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><a href="img/corr_matrix_others_covariates.png" class="lightbox" data-glightbox="description: .lightbox-desc-8" data-gallery="quarto-lightbox-gallery-8"><img src="img/corr_matrix_others_covariates.png" class="img-fluid figure-img"></a></p>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-corr_all_cov-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Correlation matrices between all covariates
+</figcaption>
+</figure>
+</div>
+<div id="fig-selected_cov" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-selected_cov-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/Selected_covariates_correlation.png" class="lightbox" data-glightbox="description: .lightbox-desc-9" data-gallery="quarto-lightbox-gallery-9"><img src="img/Selected_covariates_correlation.png" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-selected_cov-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Selected covariates.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="covariates-distributions" class="level4 unumbered" data-number="2.3.0.2">
+<h4 class="unumbered anchored" data-number="2.3.0.2" data-anchor-id="covariates-distributions"><span class="header-section-number">2.3.0.2</span> <strong>Covariates distributions</strong></h4>
+<div id="fig-selected_cov_distri" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-selected_cov_distri-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/covariates_distribution_log_transformed_and_scaled.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-10" data-gallery="quarto-lightbox-gallery-10"><img src="img/covariates_distribution_log_transformed_and_scaled.jpg" class="img-fluid figure-img" style="width:80.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-selected_cov_distri-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Distribution of log-transformed and scaled covariates.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="contribution-inference" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="contribution-inference"><span class="header-section-number">2.4</span> Contribution Inference</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Which model to use?</strong></p>
+<p>Tests with linear models (1-spaMM), Machine learning (2-RF), deep learning (3-sjSDM, cito)</p>
+<p>-&gt; difficult to have multivariate response (1,2)</p>
+<p>-&gt; low R-squares (3)</p>
+<p>-&gt; many parameters… (1,3)</p>
+</div>
+</div>
+<section id="spamm-spatial-mixed-models" class="level3" data-number="2.4.1">
+<h3 data-number="2.4.1" class="anchored" data-anchor-id="spamm-spatial-mixed-models"><span class="header-section-number">2.4.1</span> SpaMM: Spatial mixed models</h3>
+<ul>
+<li>modelisation of one contribution at once.</li>
+</ul>
+<div id="fig-spaMM-perf" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-spaMM-perf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/Pred_spaMM_univariate_methodML.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-11" data-gallery="quarto-lightbox-gallery-11"><img src="img/Pred_spaMM_univariate_methodML.jpg" class="img-fluid figure-img" style="width:70.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-spaMM-perf-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Predictive performance of spaMM (cross-validation).
+</figcaption>
+</figure>
+</div>
+<div id="fig-spaMM-estimates" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-spaMM-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-spaMM-estimates" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-spaMM-biomass" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-spaMM-biomass-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/spaMM_univariate_available_biomass.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-12" data-gallery="fig-spaMM-estimates"><img src="img/spaMM_univariate_available_biomass.jpg" class="img-fluid figure-img" data-ref-parent="fig-spaMM-estimates"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-spaMM-biomass-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Effect of covariates on available biomass (Estimates).
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-spaMM-estimates" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-spaMM-estimates" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-spaMM-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/spaMM_univariate_ALL_contrib_boxplot.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-13" data-gallery="fig-spaMM-estimates"><img src="img/spaMM_univariate_ALL_contrib_boxplot.jpg" class="img-fluid figure-img" data-ref-parent="fig-spaMM-estimates"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-spaMM-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Distribution of all estimates in spaMM.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-spaMM-estimates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: Estimates in spaMM models.
+</figcaption>
+</figure>
+</div>
+<ul>
+<li><p>high importance of spatial information</p></li>
+<li><p>wide distribution of estimates (?)</p></li>
+<li><p>Difficult to distangle the effects of covariates, spatial and random effects (-&gt; no variance partitioning plot ?)</p></li>
+<li><p>Covergence plot ?</p></li>
+</ul>
+</section>
+<section id="hmsc-hierarchical-model-of-species-communities-bayesian-model" class="level3" data-number="2.4.2">
+<h3 data-number="2.4.2" class="anchored" data-anchor-id="hmsc-hierarchical-model-of-species-communities-bayesian-model"><span class="header-section-number">2.4.2</span> Hmsc: Hierarchical Model of Species Communities (Bayesian model)</h3>
+<p>-&gt; multivariate response: take into account the associations between contributions ??? Random level at the sampling unit</p>
+<p>-&gt; take into account spatial and random effects.</p>
+<p>-&gt; Give posterior distributions of estimates and the explained variance partitioning.</p>
+<section id="check-convergence-of-the-model" class="level4 unumbered" data-number="2.4.2.1">
+<h4 class="unumbered anchored" data-number="2.4.2.1" data-anchor-id="check-convergence-of-the-model"><span class="header-section-number">2.4.2.1</span> <strong>Check convergence of the model</strong></h4>
+<div id="fig-convergence-hmsc" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-convergence-hmsc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-convergence-hmsc" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-convergence-500thin" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-convergence-500thin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/convergence_estimates1000thin3e+05transient.png" class="lightbox" data-glightbox="description: .lightbox-desc-14" data-gallery="fig-convergence-hmsc"><img src="img/convergence_estimates1000thin3e+05transient.png" class="img-fluid figure-img" data-ref-parent="fig-convergence-hmsc"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-convergence-500thin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Convergence diagnosis 500 thin, 500 samples.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-convergence-hmsc" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-convergence-3000thin" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-convergence-3000thin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/convergence_estimates_effective_size_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="lightbox" data-glightbox="description: .lightbox-desc-15" data-gallery="fig-convergence-hmsc"><img src="img/convergence_estimates_effective_size_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="img-fluid figure-img" data-ref-parent="fig-convergence-hmsc"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-convergence-3000thin-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Convergence diagnosis 3000 thin, 300 samples.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-convergence-hmsc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: Hmsc convergence.
+</figcaption>
+</figure>
+</div>
+<p>-&gt; <em>effective size should be around nSamples x nChains, and psrf around 1 (see red lines)</em></p>
+<p>-&gt; Good convergence with high thin (1000 or better): around 8h with thin=2000 and sample = 300.</p>
+<p>(Problem of convergence in the model with spatial information: ess of Omega too low.)</p>
+</section>
+<section id="explanatory-and-predictive-power" class="level4 unumbered" data-number="2.4.2.2">
+<h4 class="unumbered anchored" data-number="2.4.2.2" data-anchor-id="explanatory-and-predictive-power"><span class="header-section-number">2.4.2.2</span> <strong>Explanatory and predictive power</strong></h4>
+<div id="fig-power" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-power-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="column quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-power" style="flex-basis: 65.0%;justify-content: flex-start;">
+<div id="fig-explan_power" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-explan_power-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/explanatory_power_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="lightbox" data-glightbox="description: .lightbox-desc-16" data-gallery="fig-power"><img src="img/explanatory_power_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="img-fluid figure-img" data-ref-parent="fig-power"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-explan_power-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Explanatory power: model R-squared on all data.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="column quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-power" style="flex-basis: 35.0%;justify-content: flex-start;">
+<div id="fig-predict_power" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-predict_power-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/predictive_power_CV_5_folds.png" class="lightbox" data-glightbox="description: .lightbox-desc-17" data-gallery="fig-power"><img src="img/predictive_power_CV_5_folds.png" class="img-fluid figure-img" data-ref-parent="fig-power"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-predict_power-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Predictive power: R-squared in 5 fold crossvalidation
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-power-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: Hmsc convergence.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="residuals-of-predictions" class="level4 unumbered" data-number="2.4.2.3">
+<h4 class="unumbered anchored" data-number="2.4.2.3" data-anchor-id="residuals-of-predictions"><span class="header-section-number">2.4.2.3</span> <strong>Residuals of predictions</strong></h4>
+<div id="fig-residuals" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-residuals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/Predictions_VS_Observations_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-18" data-gallery="quarto-lightbox-gallery-18" title="Predictions vs observations."><img src="img/Predictions_VS_Observations_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>Predictions vs observations.</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/Residual_VS_Observations_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-19" data-gallery="quarto-lightbox-gallery-19" title="Residuals vs observations."><img src="img/Residual_VS_Observations_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>Residuals vs observations.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-residuals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: Quality of prediction in the full model
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="variance-partitioning" class="level4 unumbered" data-number="2.4.2.4">
+<h4 class="unumbered anchored" data-number="2.4.2.4" data-anchor-id="variance-partitioning"><span class="header-section-number">2.4.2.4</span> <strong>Variance partitioning</strong></h4>
+<div id="fig-VP" class="quarto-figure quarto-figure-center quarto-float anchored" width="100%">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-VP-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/variance_partitioning_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-20" data-gallery="quarto-lightbox-gallery-20"><img src="img/variance_partitioning_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" id="fig-VP" class="img-fluid figure-img" style="width:100.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-VP-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14
+</figcaption>
+</figure>
+</div>
+<div id="fig-VP-test" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-VP-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-VP-test" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-VP-spatial" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-VP-spatial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/variance_partitioning_with_spatial1000thin3e+05transient.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-21" data-gallery="fig-VP-test"><img src="img/variance_partitioning_with_spatial1000thin3e+05transient.jpg" class="img-fluid figure-img" data-ref-parent="fig-VP-test"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-VP-spatial-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) VP with Spatial in random effect.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-VP-test" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-VP-country-cov" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-VP-country-cov-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/variance_partitioning_without_spatial_ALL_covariates_2chains300samples1000thin.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-22" data-gallery="fig-VP-test"><img src="img/variance_partitioning_without_spatial_ALL_covariates_2chains300samples1000thin.jpg" class="img-fluid figure-img" data-ref-parent="fig-VP-test"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-VP-country-cov-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) VP with country scaled covariates.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-VP-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15: Variance Partitioning with spatial and country covariates.
+</figcaption>
+</figure>
+</div>
+<p>Very long time to run Hmsc with spatial random effect, but reduce the importance on “Country” and “associations” in VP. Estimates are mostly the same.</p>
+<div id="fig-VP" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-VP-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/variance_explained_per_category_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-23" data-gallery="quarto-lightbox-gallery-23" title="aggregated VP (total of 100%)"><img src="img/variance_explained_per_category_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>aggregated VP (total of 100%)</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/variance_partitioning_absolute_values_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-24" data-gallery="quarto-lightbox-gallery-24" title="VP with absolute values."><img src="img/variance_partitioning_absolute_values_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>VP with absolute values.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-VP-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;16
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="residual-covariations" class="level4 unumbered" data-number="2.4.2.5">
+<h4 class="unumbered anchored" data-number="2.4.2.5" data-anchor-id="residual-covariations"><span class="header-section-number">2.4.2.5</span> <strong>Residual covariations</strong></h4>
+<div id="fig-VP-test" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-VP-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-VP-test" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-residuals" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<div aria-describedby="fig-residuals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/residual_associations_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="lightbox" data-glightbox="description: .lightbox-desc-25" data-gallery="fig-VP-test"><img src="img/residual_associations_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="img-fluid figure-img" data-ref-parent="fig-VP-test"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-subfloat-caption quarto-subfloat-fig" id="fig-residuals-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Residuals covariations without spatial (country and “association” only.
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/residual_associations_WITH_SPATIAL1000thin3e+05transient.png" class="lightbox" data-glightbox="description: .lightbox-desc-26" data-gallery="quarto-lightbox-gallery-26" title="Residuals covariations with spatial."><img src="img/residual_associations_WITH_SPATIAL1000thin3e+05transient.png" class="img-fluid figure-img"></a></p>
+<figcaption>Residuals covariations with spatial.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-VP-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17: Residuals covariations among contributions
+</figcaption>
+</figure>
+</div>
+<p>Interpretation: variable pas prise en compte, ou contingence historique similaire, ou co-variation intrinsèque (association écologique)</p>
+</section>
+<section id="estimates" class="level4 unumbered" data-number="2.4.2.6">
+<h4 class="unumbered anchored" data-number="2.4.2.6" data-anchor-id="estimates"><span class="header-section-number">2.4.2.6</span> <strong>Estimates</strong></h4>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><em>The estimates distributions are fairly consistent among models.</em></p>
+</div>
+</div>
+<div id="fig-estimates-distr" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-estimates-distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_sampleseffectivenessHigh-effectivenessMedium-effectivenessLow-n_fishing_vessels.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-27" data-gallery="quarto-lightbox-gallery-27" title="Protection measures."><img src="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_sampleseffectivenessHigh-effectivenessMedium-effectivenessLow-n_fishing_vessels.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>Protection measures.</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samplesgravtot2-gdp-neartt-n_fishing_vessels.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-28" data-gallery="quarto-lightbox-gallery-28" title="Human impact."><img src="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samplesgravtot2-gdp-neartt-n_fishing_vessels.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>Human impact.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-estimates-distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;18: Posterior distributions of human estimates
+</figcaption>
+</figure>
+</div>
+<div id="fig-estimates-distr" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-estimates-distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samplescoral-algae-Terrestrial_Reef_Flat_500m-depth.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-29" data-gallery="quarto-lightbox-gallery-29" title="Habitat factors."><img src="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samplescoral-algae-Terrestrial_Reef_Flat_500m-depth.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>Habitat factors.</figcaption>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samplesq95_5year_degree_heating_week-median_5year_analysed_sst-median_5year_ph.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-30" data-gallery="quarto-lightbox-gallery-30" title="Environment factors"><img src="img/posterior_distribution_of_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samplesq95_5year_degree_heating_week-median_5year_analysed_sst-median_5year_ph.jpg" class="img-fluid figure-img"></a></p>
+<figcaption>Environment factors</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-estimates-distr-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;19: Examples of posterior distributions of estimates.
+</figcaption>
+</figure>
+</div>
+<div id="fig-heatmap-estimates-hmsc" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-heatmap-estimates-hmsc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/estimate_significance_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="lightbox" data-glightbox="description: .lightbox-desc-31" data-gallery="quarto-lightbox-gallery-31"><img src="img/estimate_significance_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.png" class="img-fluid figure-img" style="width:100.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-heatmap-estimates-hmsc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;20: Mean of estimates statistically different from 0 (support level &gt; 0.95).
+</figcaption>
+</figure>
+</div>
+<p>-&gt; In this figure, we can see the sign of the relationship between covariates and contributions. Estimates not different from 0 are not displayed. Overall positive effect of coral, algae cover, depth and low effectiveness MPA. Overall negative effect of degree heating week, gdp.</p>
+<div id="fig-heatmap-estimates-hmsc" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-heatmap-estimates-hmsc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/heatmap_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-32" data-gallery="quarto-lightbox-gallery-32"><img src="img/heatmap_estimates_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="img-fluid figure-img" style="width:70.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-heatmap-estimates-hmsc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21: Median of estimates (red = high positive values, purple = low negative values)
+</figcaption>
+</figure>
+</div>
+<div id="fig-estimate-distrib" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-estimate-distrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="img/mean_estimate_distribution_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-33" data-gallery="quarto-lightbox-gallery-33"><img src="img/mean_estimate_distribution_full_model_country&amp;asso_in_rL_3_chains_3000_thin_300_samples.jpg" class="img-fluid figure-img" style="width:100.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-estimate-distrib-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;22: Distribution of mean estimates among contributions.
+</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Bilan fit models
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Choix des effets randoms: pays et ecoregion ont environ le même effet, mais ecoregion est un peu redondant avec certaines covariables car définies avec ces dernières.Association seule ne capte pas les grand patterns géographiques.</p>
+<p>[!] “Association” n’est qu’un effet rando à l’échelle du sampling. i.e.&nbsp;ce n’est pas vraiment de l’association. Il contient du spatial (echelle fine), de la vraie interaction, et de la cooccurrence contingente. -&gt; <strong>Quoi faire ?</strong></p>
+</div>
+</div>
+</section>
+</section>
+<section id="counterfactual-scenarios" class="level3" data-number="2.4.3">
+<h3 data-number="2.4.3" class="anchored" data-anchor-id="counterfactual-scenarios"><span class="header-section-number">2.4.3</span> Counterfactual scenarios</h3>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Counterfactual scenarios
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Faire un predict des contributions en mettant tous les sites non protégés en protection low, medium ou high. Sur l’ACP des contributions, on peut alors placer le barycentre des sites non protégés, et le barycentre de ces sites si on les met en protecction low, medium ou high. +/- barycentre pour chaque ecorégion ou chaque océan, …</p>
+<p>|!| MPA status et fishing pressure sont liés…: mettre la valeur moyenne de n_fishing_vessel pour cette modalité.</p>
+</div>
+</div>
+</section>
 </section>
 </section>
 <section id="discussion" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Discussion</h1>
 <p>Variance partitionning: effet très important des effets random -&gt; les effets locaux sont très importants, les contributions dependent fortement de contingences locales. Beaucoup est déterminé par l’endroit où on est: soit à cause de l’importance de l’histoire évolutive des récifs (biogeographie des espèces, un événement géologique ou écologique particulier passé, une méthode de pêche locale, une tradition,…), soit du à des interactions locales entre espèces (présence d’un type de corail, d’une espèce clé de voûte, …). on a finalement peu de leviers disponibles pour augmenter les NCP. Mais ici nos leviers sont debiaisés. Alors on peu regarder à quoi on peut s’attendre au vu des différents contextes que l’on observe aujourd’hui : counterfactual. Test de counterfactual: à priori quelles zones pourraient gagner le plus de NCP si on met tout en high protection? Et si on enlève les bateaux de pêche ? Est ce qu’il y a des zones où on a intérêt à plus investir d’énergie ?</p>
+<p><strong>Estimates</strong>: on regarde les effets des covariables au niveau mondial, donc si les estimates sont significativement différents de 0, il y a une tendance générale sur nos sites observés. Si estimates à 0 : les covariables n’ont pas d’effet sur cette contribution OU l’effet est contexte dépendant et en moyenne nul.</p>
+<p>|!| Coral et Algae semblent avoir le même effet sur les contributions.. -&gt; sûrement à cause des autres composantes de benthic composition (coral rubble, sans, rock, …)</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Review Cyril
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>“Another question that immediately came to mind was that with such a rich spatial dataset, why did the authors not examine whether there were any geographic trends in the importance of variables. Were climate factors more important in some regions than others or was it consistent globally?”</p>
+</div>
+</div>
 </section>
 <section id="materials-and-methods" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Materials and methods</h1>
-<section id="no-numbering" class="level2" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="no-numbering"><span class="header-section-number">4.1</span> Filtering RLS data</h2>
+<section id="filtering-rls-data" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="filtering-rls-data"><span class="header-section-number">4.1</span> Filtering RLS data</h2>
 <p>-&gt; Faire un schéma des étapes de la méthodes</p>
-<p><strong>Filter misidentifications</strong></p>
+<section id="filter-misidentifications" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="filter-misidentifications"><strong>Filter misidentifications</strong></h4>
 <p>Remove all observations with misidentifications: “spp.”, “sp.”, “(cf)”, “hybrid”, “Unidentified”, “?”, “!”, “/”, “New”, “green form”</p>
-<p><strong>Keep only “method 1” = fish assessment in coral reefs</strong></p>
-<p><strong>filter duplicates</strong></p>
+</section>
+<section id="keep-only-fish-abundance-assessement-from-rls-protocol" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="keep-only-fish-abundance-assessement-from-rls-protocol"><strong>Keep only fish abundance assessement from RLS protocol</strong></h4>
+<p>select “method 1, block 1 and 2” in RLS metadata (fish assessment in 2 bands of 5mx50m)</p>
+</section>
+<section id="filter-duplicates" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="filter-duplicates"><strong>filter duplicates</strong></h4>
 <p>Same information recorded twice, by two different divers (same survey ID, block, species, total, and size) -&gt; keep only one observation for each.</p>
-<p><strong>filter lines without fish</strong></p>
+</section>
+<section id="filter-lines-without-fish" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="filter-lines-without-fish"><strong>filter lines without fish</strong></h4>
 <p>remove line with total = 0</p>
-<p><strong>filter fishes difficult to spot consistently with UVC</strong></p>
-<p>-Remove Elasmobranchs</p>
+</section>
+<section id="filter-fishes-difficult-to-spot-consistently-with-uvc" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="filter-fishes-difficult-to-spot-consistently-with-uvc"><strong>filter fishes difficult to spot consistently with UVC</strong></h4>
+<p>-Remove Elasmobranchs (different behaviours, shy or not, …)</p>
 <p>-Remove anguiliforms: 16 families according to WORMS: c( “Anguillidae”, “Chlopsidae”, “Colocongridae”, “Congridae” , “Derichthyidae” , “Heterenchelyidae” , “Moringuidae” , “Muraenesocidae” , “Muraenidae” , “Myrocongridae” , “Nemichthyidae” , “Nettastomatidae” , “Ophichthidae” , “Protanguillidae” , “Serrivomeridae” , “Synaphobranchidae”)</p>
 <p>-Remove cryptobenthic families: c(“Aploactinidae”, “Apogonidae”, “Blenniidae”, “Bythitidae”, “Callionymidae”, “Chaenopsidae”, “Creediidae”, “Dactyloscopidae”, “Gobiesocidae”, “Gobiidae”, “Grammatidae”, “Labrisomidae”, “Opistognathidae”, “Plesiopidae”, “Pseudochromidae”, “Syngnathidae”, “Tripterygiidae”)</p>
-<p><strong>Checking size</strong> -Filling values in Maximum length data: missing values are completed by applying the mean of the genus or the family (if no species in the same genus)</p>
+</section>
+<section id="checking-size" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="checking-size"><strong>Checking size</strong></h4>
+<p>-Filling values in Maximum length data: missing values are completed by applying the mean of the genus or the family (if no species in the same genus)</p>
 <p>-Remove juveniles: all fish of 2.5 cm, and fish of 5 cm if the maximum length of the species is &gt; 25 cm</p>
-<p>-Check large sizes: remove individuals for which size_class &gt; 2*(Maximum length) or (Maximum length+50) =&gt; remove surveys with size_class errors.</p>
-<p>-Remove abnormal size estimation: fish with a max length &lt; 3.75, fish &gt; 2*(max length) or &gt; max length +50</p>
-<section id="no-numbering" class="level3" data-number="4.1.1">
-<h3 data-number="4.1.1" class="anchored" data-anchor-id="no-numbering"><span class="header-section-number">4.1.1</span> Filter outliers surveys</h3>
+<p>-Remove abnormal size estimation: fish with a max length &lt; 3.75, individuals for which size_class &gt; 2*(Maximum length) or (Maximum length+50) =&gt; <strong>we removed all the surveys with size_class errors</strong>.</p>
+</section>
+<section id="filter-outliers-surveys" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="filter-outliers-surveys"><strong>Filter outliers surveys</strong></h4>
 <p>To avoid over-estimating fish abundance due to temporary fish aggregations or large roaming schools, we excluded <strong>surveys</strong> with a total <strong>biomass over 500 kg/500m²</strong> or an <strong>abundance exceeding 10,000 individuals</strong>.</p>
 </section>
-<section id="elasmobranch-data" class="level3" data-number="4.1.2">
-<h3 data-number="4.1.2" class="anchored" data-anchor-id="elasmobranch-data"><span class="header-section-number">4.1.2</span> Elasmobranch data</h3>
-<p>All Elasmobranch observations are kept for the <strong>surveys</strong> meeting all the above conditions</p>
+<section id="elasmobranch-data" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="elasmobranch-data"><strong>Elasmobranch data</strong></h4>
+<p>All Elasmobranch occurences are kept for the <strong>surveys</strong> meeting all the above conditions (Elamsobranch abundance isn’t used)</p>
 </section>
 </section>
 <section id="species-traits" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="species-traits"><span class="header-section-number">4.2</span> Species traits</h2>
+<section id="species-list" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="species-list"><strong>Species list</strong></h4>
+<p>We consider only surveys that experience a minimum monthly sea surface temperature (SST) above 17°C, over the 5 years before the sampling protocol (survey date). +We consider only surveys between -30° and 30° of latitude to fit with the habitat variables of the Allen Atlas. We extracted all species (‘rls_species_name’) found in the remaining surveys.</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="at">file =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data/derived_data/tropical_species_traits.Rdata"</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>elasmo <span class="ot">&lt;-</span> <span class="fu">nrow</span>(dplyr<span class="sc">::</span><span class="fu">filter</span>(tropical_species_traits, class <span class="sc">==</span> <span class="st">"Elasmobranchii"</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>actino <span class="ot">&lt;-</span> <span class="fu">nrow</span>(tropical_species_traits) <span class="sc">-</span> elasmo</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+<p>In the end, we consider the abundance data of <strong>1609 actinopterygians</strong> and the occurence data of <strong>54 elasmobranchs</strong>.</p>
+</section>
+<section id="traits-and-databases" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="traits-and-databases"><strong>Traits and databases</strong></h4>
+<!-- to generate table: https://www.tablesgenerator.com/markdown_tables -->
+<table class="table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;"><strong>Index</strong></th>
+<th style="text-align: center;"><strong>Description</strong></th>
+<th style="text-align: center;"><strong>Data sources</strong></th>
+<th style="text-align: center;"><strong>Rationale</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>species</em></strong></td>
+<td style="text-align: center;">original species name</td>
+<td style="text-align: center;">provided species list</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>fishbase_name</em></strong></td>
+<td style="text-align: center;">accepted latin name according to fishbase</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>spec_code</em></strong></td>
+<td style="text-align: center;">unique species code of fishbase</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>worms_id</em></strong></td>
+<td style="text-align: center;">unique species code of WoRMS</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>phylum - class - order - family</em></strong></td>
+<td style="text-align: center;">Accepted taxonomy</td>
+<td style="text-align: center;">taxize</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>Length</em></strong></td>
+<td style="text-align: center;">Maximum length of the species</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">Check the observed sizes. Build the trophic metaweb.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>Troph (TL)</em></strong></td>
+<td style="text-align: center;">trophic level from fishbase</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">To check the guild inference</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>DemersPelag</em></strong></td>
+<td style="text-align: center;">watercolumn position (reef-associated, benthopelagic, pelagic-oceanic, bathypelagic, demersal, pelagic, pelagic-neritic, bathydemersal)</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">co-occurence probability in the water column -&gt; build the metaweb</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>a</em></strong></td>
+<td style="text-align: center;">weight-lenght relationship: W=a.L^b</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">Assess weight from the size</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>b</em></strong></td>
+<td style="text-align: center;">weight-lenght relationship: W=a.L^b</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">Assess weight from the size</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>K</em></strong></td>
+<td style="text-align: center;">growth constant</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">Assess individual biomass production</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>TempPrefMean</em></strong></td>
+<td style="text-align: center;">Mean optimal temperature of the species</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>Schooling</em></strong></td>
+<td style="text-align: center;">schooling behaviour (0/1)</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>Vulnerability</em></strong></td>
+<td style="text-align: center;">Vulnerability to fishing</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>PriceCateg</em></strong></td>
+<td style="text-align: center;">Economic importance</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">highly depending on occidental/large fisheries practices</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>Importance</em></strong></td>
+<td style="text-align: center;">interest for human consumption: highly commercial; commercial; minor commercial; subsistence fisheries; of potential interest; of no interest.</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;">highly depending on occidental practices</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>UsedforAquaculture</em></strong></td>
+<td style="text-align: center;">Interest in aquaculture</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>Aquarium</em></strong></td>
+<td style="text-align: center;">Interest in aquarium trade</td>
+<td style="text-align: center;">rfishbase</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>IUCN_category</em></strong></td>
+<td style="text-align: center;">Conservation status assessed by IUCN</td>
+<td style="text-align: center;">rredlist</td>
+<td style="text-align: center;">Overall vulnerability of a species to the future.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>IUCN_inferred_Loiseau23</em></strong></td>
+<td style="text-align: center;">IUCN status resumed in 3 categories (Threatened, Non Threatened, No status), from redlist data, completed by multi-modelling approach.</td>
+<td style="text-align: center;">Loiseau et al . 2023</td>
+<td style="text-align: center;">More complete data on overall vulnerability of a species to the future.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>trophic_guild</em></strong></td>
+<td style="text-align: center;">trophic guild (“macroinvertivore” , NA , “planktivore” “Herbivores Microvores Detritivores”, “microinvertivore” “corallivore” , “piscivore” “crustacivore”, “sessile invertivores” ) inferred in tropical regions.</td>
+<td style="text-align: center;">Parravicini et al.&nbsp;2021</td>
+<td style="text-align: center;">major trophic guild in tropical species. To build a trophic metaweb.</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>Morphometry (body_depth_ratio, …)</em></strong></td>
+<td style="text-align: center;">morphometric measures (mouth and body): each measure done at the individual level, are divided by the total length of the individual, to obtain a mean morphometric trait at the species level.</td>
+<td style="text-align: center;">Friedman et al.&nbsp;2020</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>bathymetric range: depth_max / depth_min</em></strong></td>
+<td style="text-align: center;">range of bathymetry where the species live. These ranges are log10-transformed to avoid rightskewed distribution in inference model.</td>
+<td style="text-align: center;">Duhamet et al.&nbsp;2023 https://doi.org/10.6084/m9.figshare.20403111</td>
+<td style="text-align: center;">Define the geometric ranges</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong><em>CilmateVulnearability (ClimVuln_SSP585, ClimVuln_SSP126)</em></strong></td>
+<td style="text-align: center;">Climate vulnerability estimated in SSP585 and SSP126 scenarios</td>
+<td style="text-align: center;">Boyce 2022 https://doi.org/10.5061/dryad.7wm37pvwr</td>
+<td style="text-align: center;">Sensibility of species to climate change</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong><em>Geographic range: geographic_range_Albouy19</em></strong></td>
+<td style="text-align: center;">intersection between GBIF occurrence data and spatial grid of 0.01 degree Geographic ranges defined as convex of the OBIS occurrences, refined by the watercolumn position and bathymetric ranges</td>
+<td style="text-align: center;">Mouquet et al.&nbsp;2023 Albouy 2019, Duhamet 2023</td>
+<td style="text-align: center;">Geographic extent of species , i.e 1-endemism.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="merge-traits" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="merge-traits"><strong>Merge traits</strong></h4>
+<p>To avoid taxonomic mismatch, we associated the species name of all databases and RLS data, with the accepted scientific name of rfishbase and its SpecCode (unique ID). All data base have been then merged using this unique ID.</p>
+</section>
+<section id="traits-inference" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="traits-inference"><strong>Traits inference</strong></h4>
+<p>Assess the performance of missforest on prediction: On 100 iterations, we create a trait dataset with 20% of NAs randomly placed. We used MissForest package (ntree = 100, max_iter = 10) to infer the created missing values and evaluated the prediction performance. Categorical variables were evaluate with accuracy (proportion of good prediction) and numerical variables were evaluated with R-squared correlation, over the 100 iterations. The expected proportion of error in our final dataset was calculated as the proportion of missing values multiplied by the potential error of missforest ( Prop_NA * (1-R²) ). We choose to fill gaps on variables with <em>reasonable risk of error</em> . To fill the gaps, we ran 100 missforest models on the dataset and check the consistency of all models. Categorical values were kept if more than 80% of models converged to the same result. The median of the 100 numerical values were kept if the coefficient of variation (sd/mean) &lt; 0.2, i.e if 1-CV &gt; 0.8.</p>
+</section>
+<section id="targeted-families" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="targeted-families"><strong>Targeted families</strong></h4>
+<p>Determine if species are targeted or not at the family level, from fishbase data:</p>
+<div class="cell-container"><div class="cell-decorator"><pre>In [3]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>targeted_species <span class="ot">&lt;-</span> targeted_species <span class="sc">|&gt;</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">target =</span> <span class="fu">ifelse</span>(mean_importance_of_family <span class="sc">%in%</span><span class="fu">c</span>(<span class="st">"highly commercial"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                                    <span class="st">"commercial"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                                                    <span class="st">"subsistence fisheries"</span>), <span class="st">"targeted"</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">ifelse</span>(mean_importance_of_family <span class="sc">==</span> <span class="st">"of no interest"</span>, <span class="st">"untargeted"</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                <span class="fu">ifelse</span>(max_MaxLength_of_family <span class="sc">&lt;</span> <span class="dv">20</span>, <span class="st">"untargeted"</span>, </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">ifelse</span>(max_importance_of_family <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"highly commercial"</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                                                         <span class="st">"commercial"</span>), <span class="st">"targeted&gt;20cm"</span>, </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">ifelse</span>(<span class="fu">is.na</span>(target) <span class="sc">&amp;</span> </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                           mean_importance_of_family <span class="sc">==</span> <span class="st">"minor commercial"</span>, <span class="st">"targeted&gt;20cm"</span>, <span class="st">"untargeted"</span>))))))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div>
+<p>This results in this decision table:</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+NB: Targeted families by fisheries
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<table class="table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>family</th>
+<th><strong>mean_size_indiv_in_survey</strong></th>
+<th><strong>mean_relative_biom_in_survey</strong></th>
+<th><strong>nb_surveys_observed</strong></th>
+<th><strong>max_importance_of_family</strong></th>
+<th><strong>mean_importance_of_family</strong></th>
+<th><strong>max_MaxLength_of_family</strong></th>
+<th><strong>min_MaxLength_of_family</strong></th>
+<th><strong>nb_sp_in_family</strong></th>
+<th><strong>target</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Acanthuridae</strong></td>
+<td>17.5793484881834</td>
+<td>0.236059967642559</td>
+<td>4864</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>100</td>
+<td>16</td>
+<td>67</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Ambassidae</strong></td>
+<td>5</td>
+<td>0.0138023141785647</td>
+<td>1</td>
+<td>NA</td>
+<td>NA</td>
+<td>7</td>
+<td>7</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Aplodactylidae</strong></td>
+<td>27.6479885057471</td>
+<td>0.0379450599678348</td>
+<td>58</td>
+<td>NA</td>
+<td>NA</td>
+<td>45</td>
+<td>45</td>
+<td>2</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Arripidae</strong></td>
+<td>45.4166666666667</td>
+<td>0.219835521957053</td>
+<td>4</td>
+<td>NA</td>
+<td>NA</td>
+<td>85</td>
+<td>85</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Atherinidae</strong></td>
+<td>6.28333333333333</td>
+<td>0.148787055914739</td>
+<td>25</td>
+<td>subsistence fisheries</td>
+<td>subsistence fisheries</td>
+<td>20</td>
+<td>10</td>
+<td>2</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Aulopidae</strong></td>
+<td>31.875</td>
+<td>0.00348270670821101</td>
+<td>4</td>
+<td>NA</td>
+<td>NA</td>
+<td>60</td>
+<td>60</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Aulostomidae</strong></td>
+<td>39.7549228896104</td>
+<td>0.024994588974953</td>
+<td>800</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>100</td>
+<td>75</td>
+<td>3</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Balistidae</strong></td>
+<td>18.2209347198761</td>
+<td>0.0475511523733509</td>
+<td>2391</td>
+<td>commercial</td>
+<td>minor commercial</td>
+<td>100</td>
+<td>22</td>
+<td>27</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Batrachoididae</strong></td>
+<td>15</td>
+<td>0.0336045224659176</td>
+<td>1</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>40</td>
+<td>40</td>
+<td>1</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Belonidae</strong></td>
+<td>56.0887096774194</td>
+<td>0.072818616326503</td>
+<td>31</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>150</td>
+<td>100</td>
+<td>4</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Bothidae</strong></td>
+<td>20.7589285714286</td>
+<td>0.00994741352245097</td>
+<td>28</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>51</td>
+<td>23.5</td>
+<td>5</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Caesionidae</strong></td>
+<td>17.1513065787259</td>
+<td>0.210837585364884</td>
+<td>1705</td>
+<td>commercial</td>
+<td>minor commercial</td>
+<td>60</td>
+<td>14</td>
+<td>18</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Callanthiidae</strong></td>
+<td>7.5</td>
+<td>0.000256639565428837</td>
+<td>1</td>
+<td>NA</td>
+<td>NA</td>
+<td>49</td>
+<td>49</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Caracanthidae</strong></td>
+<td>5</td>
+<td>0.00169204828161851</td>
+<td>8</td>
+<td>NA</td>
+<td>NA</td>
+<td>5</td>
+<td>2.90000009536743</td>
+<td>2</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Carangidae</strong></td>
+<td>35.1407715378304</td>
+<td>0.107305124320657</td>
+<td>1581</td>
+<td>highly commercial</td>
+<td>commercial</td>
+<td>250</td>
+<td>22</td>
+<td>53</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Centriscidae</strong></td>
+<td>11.031746031746</td>
+<td>0.0101126871933626</td>
+<td>9</td>
+<td>of no interest</td>
+<td>of no interest</td>
+<td>15</td>
+<td>15</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Centropomidae</strong></td>
+<td>50</td>
+<td>0.0485808378219396</td>
+<td>1</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>140</td>
+<td>140</td>
+<td>1</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Chaetodontidae</strong></td>
+<td>10.7143021958228</td>
+<td>0.0220170729629392</td>
+<td>5337</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>30</td>
+<td>10</td>
+<td>93</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Chanidae</strong></td>
+<td>60.875</td>
+<td>0.182038075861696</td>
+<td>10</td>
+<td>highly commercial</td>
+<td>highly commercial</td>
+<td>180</td>
+<td>180</td>
+<td>1</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Cheilodactylidae</strong></td>
+<td>26.2374329782418</td>
+<td>0.0392287323467473</td>
+<td>204</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>100</td>
+<td>20</td>
+<td>8</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Chironemidae</strong></td>
+<td>14.375</td>
+<td>0.00494931761975047</td>
+<td>4</td>
+<td>NA</td>
+<td>NA</td>
+<td>40</td>
+<td>40</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Cirrhitidae</strong></td>
+<td>8.69999561179384</td>
+<td>0.00423997947430425</td>
+<td>2084</td>
+<td>commercial</td>
+<td>of no interest</td>
+<td>60</td>
+<td>7</td>
+<td>20</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Clupeidae</strong></td>
+<td>9.28571428571429</td>
+<td>0.102746641084933</td>
+<td>14</td>
+<td>highly commercial</td>
+<td>highly commercial</td>
+<td>41</td>
+<td>10.5</td>
+<td>4</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Dinolestidae</strong></td>
+<td>20</td>
+<td>0.000359750912318672</td>
+<td>1</td>
+<td>NA</td>
+<td>NA</td>
+<td>84</td>
+<td>84</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Diodontidae</strong></td>
+<td>25.0738841741317</td>
+<td>0.0465411533998927</td>
+<td>303</td>
+<td>minor commercial</td>
+<td>of no interest</td>
+<td>91</td>
+<td>30</td>
+<td>8</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Echeneidae</strong></td>
+<td>24.1676912568306</td>
+<td>0.00682600027426122</td>
+<td>122</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>110</td>
+<td>75</td>
+<td>3</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Elopidae</strong></td>
+<td>35</td>
+<td>0.00740883497251015</td>
+<td>1</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>91</td>
+<td>91</td>
+<td>1</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Enoplosidae</strong></td>
+<td>12.7777777777778</td>
+<td>0.000973384932968243</td>
+<td>9</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>50</td>
+<td>50</td>
+<td>1</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Ephippidae</strong></td>
+<td>35.7158792650919</td>
+<td>0.0677278018151826</td>
+<td>254</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>91</td>
+<td>40</td>
+<td>8</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Fistulariidae</strong></td>
+<td>58.0509906759907</td>
+<td>0.0292696525601106</td>
+<td>286</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>200</td>
+<td>160</td>
+<td>3</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Gerreidae</strong></td>
+<td>12.678869047619</td>
+<td>0.0394578948152165</td>
+<td>40</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>41</td>
+<td>20</td>
+<td>5</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Glaucosomatidae</strong></td>
+<td>27.2380952380952</td>
+<td>0.0351927510585575</td>
+<td>35</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>122</td>
+<td>32</td>
+<td>2</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Haemulidae</strong></td>
+<td>29.9158655835601</td>
+<td>0.0922844601988545</td>
+<td>1710</td>
+<td>commercial</td>
+<td>minor commercial</td>
+<td>100</td>
+<td>13</td>
+<td>46</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Hemiramphidae</strong></td>
+<td>18.75</td>
+<td>0.0526605916858104</td>
+<td>4</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>45</td>
+<td>34.5999984741211</td>
+<td>4</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Holocentridae</strong></td>
+<td>18.3405328270394</td>
+<td>0.0363011737342512</td>
+<td>2389</td>
+<td>commercial</td>
+<td>minor commercial</td>
+<td>61</td>
+<td>15.3999996185303</td>
+<td>36</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Inermiidae</strong></td>
+<td>13.75</td>
+<td>0.0770575974013551</td>
+<td>5</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>23</td>
+<td>23</td>
+<td>1</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Kuhliidae</strong></td>
+<td>13.8888888888889</td>
+<td>0.0196038635666431</td>
+<td>3</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>40</td>
+<td>40</td>
+<td>1</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Kyphosidae</strong></td>
+<td>26.5369796697404</td>
+<td>0.143248591736946</td>
+<td>897</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>80</td>
+<td>11.2200002670288</td>
+<td>23</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Labridae</strong></td>
+<td>11.106466330588</td>
+<td>0.0920526248358737</td>
+<td>5983</td>
+<td>commercial</td>
+<td>minor commercial</td>
+<td>229</td>
+<td>4.69999980926514</td>
+<td>233</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Latidae</strong></td>
+<td>26.1312130691693</td>
+<td>0.0641233628571814</td>
+<td>137</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>47</td>
+<td>47</td>
+<td>1</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Lethrinidae</strong></td>
+<td>23.7810719685402</td>
+<td>0.0539244615969104</td>
+<td>2085</td>
+<td>highly commercial</td>
+<td>minor commercial</td>
+<td>100</td>
+<td>20</td>
+<td>26</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Lutjanidae</strong></td>
+<td>25.8503844530648</td>
+<td>0.0858412965008539</td>
+<td>3449</td>
+<td>highly commercial</td>
+<td>commercial</td>
+<td>170</td>
+<td>25</td>
+<td>51</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Malacanthidae</strong></td>
+<td>22.9931972789116</td>
+<td>0.00880986051889063</td>
+<td>84</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>102</td>
+<td>15.5</td>
+<td>6</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Megalopidae</strong></td>
+<td>137.5</td>
+<td>0.63305549021549</td>
+<td>1</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>250</td>
+<td>250</td>
+<td>1</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Microdesmidae</strong></td>
+<td>6.97082898323763</td>
+<td>0.00104609703004726</td>
+<td>821</td>
+<td>of no interest</td>
+<td>of no interest</td>
+<td>15</td>
+<td>3.5</td>
+<td>12</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Molidae</strong></td>
+<td>162.5</td>
+<td>0.849864919735198</td>
+<td>1</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>333</td>
+<td>333</td>
+<td>1</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Monacanthidae</strong></td>
+<td>10.908975456621</td>
+<td>0.00485870220201031</td>
+<td>1460</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>110</td>
+<td>6.19999980926514</td>
+<td>28</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Monocentridae</strong></td>
+<td>15</td>
+<td>0.00121286770563951</td>
+<td>1</td>
+<td>of no interest</td>
+<td>of no interest</td>
+<td>22</td>
+<td>22</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Monodactylidae</strong></td>
+<td>11.7032828282828</td>
+<td>0.167695642881516</td>
+<td>33</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>27</td>
+<td>20</td>
+<td>3</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Moronidae</strong></td>
+<td>16.25</td>
+<td>0.033472885737596</td>
+<td>2</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>103</td>
+<td>103</td>
+<td>1</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Mugilidae</strong></td>
+<td>28.5714285714286</td>
+<td>0.170387728877334</td>
+<td>28</td>
+<td>highly commercial</td>
+<td>commercial</td>
+<td>100</td>
+<td>40</td>
+<td>7</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Mullidae</strong></td>
+<td>16.5190266021578</td>
+<td>0.0252589338348899</td>
+<td>3268</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>60</td>
+<td>16</td>
+<td>27</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Nemipteridae</strong></td>
+<td>15.5565806471702</td>
+<td>0.0239143521678044</td>
+<td>2383</td>
+<td>commercial</td>
+<td>subsistence fisheries</td>
+<td>38</td>
+<td>20</td>
+<td>21</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Odacidae</strong></td>
+<td>16.09375</td>
+<td>0.00878210070549549</td>
+<td>8</td>
+<td>of no interest</td>
+<td>of no interest</td>
+<td>35</td>
+<td>24</td>
+<td>2</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Ogcocephalidae</strong></td>
+<td>20</td>
+<td>0.000895458188862435</td>
+<td>1</td>
+<td>of no interest</td>
+<td>of no interest</td>
+<td>20.2999992370605</td>
+<td>20.2999992370605</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Oplegnathidae</strong></td>
+<td>40</td>
+<td>0.0247845027748692</td>
+<td>11</td>
+<td>NA</td>
+<td>NA</td>
+<td>66</td>
+<td>66</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Ostraciidae</strong></td>
+<td>11.9571026722925</td>
+<td>0.00404819420882873</td>
+<td>711</td>
+<td>commercial</td>
+<td>of no interest</td>
+<td>55</td>
+<td>12</td>
+<td>14</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Pempheridae</strong></td>
+<td>11.9092832577843</td>
+<td>0.010378864583513</td>
+<td>467</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>28</td>
+<td>10</td>
+<td>13</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Percophidae</strong></td>
+<td>5</td>
+<td>3.86467990193724e-05</td>
+<td>1</td>
+<td>NA</td>
+<td>NA</td>
+<td>8</td>
+<td>8</td>
+<td>1</td>
+<td>untargeted</td>
+</tr>
+<tr class="even">
+<td><strong>Pinguipedidae</strong></td>
+<td>11.3176636479187</td>
+<td>0.00213809011534792</td>
+<td>1049</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>29</td>
+<td>7.40999984741211</td>
+<td>16</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Platycephalidae</strong></td>
+<td>39.8333333333333</td>
+<td>0.0400507084653292</td>
+<td>9</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>120</td>
+<td>50</td>
+<td>2</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Plotosidae</strong></td>
+<td>21.8316831683168</td>
+<td>0.0123981214046724</td>
+<td>101</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>111.099998474121</td>
+<td>26.7999992370605</td>
+<td>5</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Pomacanthidae</strong></td>
+<td>14.6440245700737</td>
+<td>0.0270037402900635</td>
+<td>4231</td>
+<td>commercial</td>
+<td>minor commercial</td>
+<td>60</td>
+<td>7</td>
+<td>44</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Pomacentridae</strong></td>
+<td>7.41411153352408</td>
+<td>0.138028186646838</td>
+<td>5950</td>
+<td>highly commercial</td>
+<td>of no interest</td>
+<td>31</td>
+<td>4</td>
+<td>245</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Pomatomidae</strong></td>
+<td>35</td>
+<td>0.0195438778199723</td>
+<td>1</td>
+<td>highly commercial</td>
+<td>highly commercial</td>
+<td>130</td>
+<td>130</td>
+<td>1</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Priacanthidae</strong></td>
+<td>22.209145021645</td>
+<td>0.0225705869788288</td>
+<td>154</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>50.7000007629395</td>
+<td>36.0999984741211</td>
+<td>3</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Rachycentridae</strong></td>
+<td>75</td>
+<td>0.0193115159034707</td>
+<td>1</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>200</td>
+<td>200</td>
+<td>1</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Scaridae</strong></td>
+<td>21.9121807904733</td>
+<td>0.174227913244983</td>
+<td>5210</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>130</td>
+<td>13</td>
+<td>75</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Sciaenidae</strong></td>
+<td>14.8608058608059</td>
+<td>0.0252958922642659</td>
+<td>91</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>30</td>
+<td>23</td>
+<td>8</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Scombridae</strong></td>
+<td>56.1136363636364</td>
+<td>0.0987604650236427</td>
+<td>121</td>
+<td>highly commercial</td>
+<td>minor commercial</td>
+<td>250</td>
+<td>36</td>
+<td>17</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Scorpaenidae</strong></td>
+<td>16.6019696969697</td>
+<td>0.00696311950930942</td>
+<td>275</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>45.7000007629395</td>
+<td>9.5</td>
+<td>30</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Serranidae</strong></td>
+<td>23.5312605191687</td>
+<td>0.0846125767570906</td>
+<td>4860</td>
+<td>highly commercial</td>
+<td>minor commercial</td>
+<td>270</td>
+<td>3.98000001907349</td>
+<td>141</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="odd">
+<td><strong>Siganidae</strong></td>
+<td>20.3013726817873</td>
+<td>0.0406117842900717</td>
+<td>1910</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>53</td>
+<td>25</td>
+<td>20</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Sillaginidae</strong></td>
+<td>28.75</td>
+<td>0.0100850840814245</td>
+<td>8</td>
+<td>highly commercial</td>
+<td>highly commercial</td>
+<td>51</td>
+<td>30</td>
+<td>2</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Sparidae</strong></td>
+<td>19.8638438367028</td>
+<td>0.144738122213517</td>
+<td>306</td>
+<td>highly commercial</td>
+<td>commercial</td>
+<td>130</td>
+<td>28</td>
+<td>27</td>
+<td>targeted</td>
+</tr>
+<tr class="even">
+<td><strong>Sphyraenidae</strong></td>
+<td>41.7371088435374</td>
+<td>0.146514209563919</td>
+<td>175</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>200</td>
+<td>55</td>
+<td>9</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Synanceiidae</strong></td>
+<td>22.9166666666667</td>
+<td>0.0563030446406924</td>
+<td>4</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>60</td>
+<td>25</td>
+<td>4</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Synodontidae</strong></td>
+<td>13.1745426829268</td>
+<td>0.00384775338752201</td>
+<td>984</td>
+<td>commercial</td>
+<td>commercial</td>
+<td>46</td>
+<td>16.5</td>
+<td>15</td>
+<td>targeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Terapontidae</strong></td>
+<td>12.2916666666667</td>
+<td>0.0162048008764927</td>
+<td>4</td>
+<td>minor commercial</td>
+<td>minor commercial</td>
+<td>30</td>
+<td>15</td>
+<td>2</td>
+<td>targeted&gt;20cm</td>
+</tr>
+<tr class="even">
+<td><strong>Tetraodontidae</strong></td>
+<td>10.6497721836148</td>
+<td>0.0139890799558321</td>
+<td>2471</td>
+<td>commercial</td>
+<td>of no interest</td>
+<td>120</td>
+<td>9</td>
+<td>30</td>
+<td>untargeted</td>
+</tr>
+<tr class="odd">
+<td><strong>Zanclidae</strong></td>
+<td>17.3691977059064</td>
+<td>0.0141569226873253</td>
+<td>1864</td>
+<td>subsistence fisheries</td>
+<td>subsistence fisheries</td>
+<td>23</td>
+<td>23</td>
+<td>1</td>
+<td>targeted</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
 </section>
 <section id="contributions-assessement" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="contributions-assessement"><span class="header-section-number">4.3</span> Contributions assessement</h2>
+<p>Cf “<em>Contributions of the world’s tropical reef fish communities to nature and people</em>”, Flandrin <em>et al.</em></p>
+<p>We assessed the potential contribution of a surveys only if the species for which the needed traits are still unknown, represent less than 20% of the abundance and 20% of biomass of the survey.</p>
+<p>We removed carbonate estimates and recycling because there were too much NA. elamsobranch richness has been replaced by IUCN species. All contributions were scaled, and surveys with NAs were removed.</p>
 </section>
-<section id="contributions-inference" class="level2" data-number="4.4">
-<h2 data-number="4.4" class="anchored" data-anchor-id="contributions-inference"><span class="header-section-number">4.4</span> Contributions inference</h2>
+<section id="covariates-1" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="covariates-1"><span class="header-section-number">4.4</span> Covariates</h2>
+<section id="extraction" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="extraction"><strong>Extraction</strong></h4>
+<p>Cf Cyril…</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+review Cyril
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>Attention à bien définir les catégories d’effectiveness, comment elle sont été calculées, ce que ça veut dire.</p></li>
+<li><p>changer: GDP = growth domestic product.</p></li>
+<li><p>Notifier/Expliquer pourquoi le Allen ne fait pas la différence entre algue et corail.</p></li>
+<li><p>|!| à fishing_pressure: uniquement sur 2023 ?</p></li>
+<li><p><em>“I also would like more detail about why some of the covariates were specifically selected or how they were calculated, perhaps in the supplemental materials.”</em></p></li>
+<li><p><em>“the link between reef fish biomass and structural complexity is well established in the literature, and I was surprised not to see complexity as a covariate in the models. It did not seem that the Reef Life Surveys collected any rugosity or maximum height data, but did the authors consider any remotely-sensed metrics of complexity like the bathymetry products in the Allen Coral Atlas?”</em></p></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="inference-of-benthic-composition---to-reformulate" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="inference-of-benthic-composition---to-reformulate"><strong>Inference of benthic composition -&gt; to reformulate</strong></h4>
+<p>Benthic composition is assessed during RLS surveys using photo-quadrats of the substrate. Twenty evenly-spaced photos are recorded along the survey transect and later processed using SQUIDLE+ software (https://squidle.org/). Points are randomly overlaid on photographs and users identify the organisms into broad functional groups (and sometimes to the lowest taxonomic resolution possible) that the points land on. This provides percent cover data for benthic organisms such as corals, macroalgae, sponges, etc. Here, we binned the groups into 9 broader benthic groups that can be consistently applied (globally): coral, algae, coralline algae, seagrass, other sessile invertebrates (e.g., ascidians, sponges), coral rubble, rock, sand, and microalgal mats (e.g., cyanobacteria, encrusting algae films). We first applied an arcsine transformation (inverse Sine of square-root transformed values) to the proportional benthic cover data, which were highly right skewed. This is similar to a log transformation but more appropriate for proportional data, which are bounded between 0 and 1 <strong>[REF]</strong>. In the tropical zone, we used the available socio-environnmentales covariates to infer the 29% of missing values on benthic composition. We first applied a PCoA on these covariates, except spatial information (latitude, longitude, depth), to reduce 63 variables into 20 composite dimensions. We then used these 20+3 spatial dimensions to infer the arcsine transformed benthic composition. We tested the accuracy of the imputation by cross validation with the observed data. We randomly deleted 30% of true observations, imputed those values, and checked the correlation between the true and the imputed values. Correlations were reasonably good for all categories (R-squares between 0.4 and 0.7), with very good predictions for algae and coral cover (R-squares ~0.7 for each).</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+review Cyril
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><em>“Was there any analysis conducted on the sites without missing data to ensure that there was no systematic error introduced by modeling the missing factors?”</em></p>
+<p><em>“My concerns with filling in missing benthic data are explained above in more detail, but it seems questionable to have more than ¼ of the only in situ covariates as inferred with R2 values of 0.71 and 0.55.”</em></p>
+<p>=&gt; faire un test de sensibilité avec les sites ou on a tout le benthic cover.</p>
+</div>
+</div>
+</section>
+<section id="selection-and-preping-of-covariates" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="selection-and-preping-of-covariates"><strong>Selection and preping of covariates</strong></h4>
+<ul>
+<li><p>Environment: we kept the median, quantiles 5% and 95% over the last 5 years before the sampling, of nppv, chl, DHW, SST, pH, so, O2.</p></li>
+<li><p>Habitat: Allen Atlas in a area of 500m of diameter, and local habitats from benthic cover.</p></li>
+<li><p>Human: all we had.</p></li>
+</ul>
+<p>We then removed variables that were highly correlated.</p>
+<p>Covariates with right-skewed distribution have been log-transformed, and then all covariates have been scaled (mean = 0, sd = 1)</p>
+</section>
 </section>
 </section>
 <section id="references" class="level1 unnumbered">
@@ -399,20 +2263,33 @@
 </section>
 <section id="supplemental-materials" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Supplemental materials</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+TO DO?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Comparer les résultats d’estimates entre Bayesien et spaMM…</p>
+</div>
+</div>
 </section>
 <section id="quarto-help" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> Quarto help</h1>
 <section id="first-subsection" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="first-subsection"><span class="header-section-number">6.1</span> First subsection</h2>
 <p>References: <span class="citation" data-cites="Scholl2022">Scholl et al. (<a href="#ref-Scholl2022" role="doc-biblioref">2022</a>)</span> showed that XXX <span class="citation" data-cites="Vitay2017">(<a href="#ref-Vitay2017" role="doc-biblioref">Vitay, 2017</a>)</span>.</p>
-<p>See <a href="#fig-matrix" class="quarto-xref">Figure&nbsp;1</a> and <a href="#sec-results" class="quarto-xref">Section&nbsp;6.2</a>.</p>
+<p>See <a href="#fig-matrix" class="quarto-xref">Figure&nbsp;23</a> and <a href="#sec-results" class="quarto-xref">Section&nbsp;6.2</a>.</p>
 <div id="fig-matrix" class="quarto-figure quarto-figure-center quarto-float anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-matrix-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="img/1_trophic_guild_inference_VS_troph.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-1" data-gallery="quarto-lightbox-gallery-1"><img src="img/1_trophic_guild_inference_VS_troph.jpg" class="img-fluid figure-img" style="width:75.0%"></a>
+<a href="img/1_trophic_guild_inference_VS_troph.jpg" class="lightbox" data-glightbox="description: .lightbox-desc-34" data-gallery="quarto-lightbox-gallery-34"><img src="img/1_trophic_guild_inference_VS_troph.jpg" class="img-fluid figure-img" style="width:75.0%"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-matrix-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Afferent system to VTA. <span class="citation" data-cites="Vitay2017">(<a href="#ref-Vitay2017" role="doc-biblioref">Vitay, 2017</a>)</span>
+Figure&nbsp;23: Afferent system to VTA. <span class="citation" data-cites="Vitay2017">(<a href="#ref-Vitay2017" role="doc-biblioref">Vitay, 2017</a>)</span>
 </figcaption>
 </figure>
 </div>
@@ -435,10 +2312,10 @@ Nota Bene
 </div>
 </div>
 <p>Code snippets:</p>
-<div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#python</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#python</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>0
 1
@@ -452,9 +2329,9 @@ Nota Bene
 9</code></pre>
 </div>
 </div></div>
-<div class="cell-container"><div class="cell-decorator"><pre>In [3]:</pre></div><div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#r</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="fu">print</span>(i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-container"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#r</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="fu">print</span>(i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1
 [1] 2
@@ -477,7 +2354,40 @@ Nota Bene
 <section id="references-1" class="level1 unnumbered">
 <h1 class="unnumbered">References</h1>
 <div class="hidden" aria-hidden="true">
-<span class="glightbox-desc lightbox-desc-1">Figure&nbsp;1: Afferent system to VTA. <span class="citation" data-cites="Vitay2017">(<a href="#ref-Vitay2017" role="doc-biblioref">Vitay, 2017</a>)</span></span>
+<span class="glightbox-desc lightbox-desc-1">Figure&nbsp;1: Missforest performance in 80/20 crossvalidation.</span>
+<span class="glightbox-desc lightbox-desc-2">a) Before inferrence.</span>
+<span class="glightbox-desc lightbox-desc-3">b) Inferred traits.</span>
+<span class="glightbox-desc lightbox-desc-4">Figure&nbsp;3: Distribution of raw contributions.</span>
+<span class="glightbox-desc lightbox-desc-5">Figure&nbsp;4: Distribution of log-transformed contributions.</span>
+<span class="glightbox-desc lightbox-desc-6">Figure&nbsp;5: Covariations of contributions.</span>
+<span class="glightbox-desc lightbox-desc-7">Figure&nbsp;6: Correlation matrices between all covariates</span>
+<span class="glightbox-desc lightbox-desc-8">Figure&nbsp;6: Correlation matrices between all covariates</span>
+<span class="glightbox-desc lightbox-desc-9">Figure&nbsp;7: Selected covariates.</span>
+<span class="glightbox-desc lightbox-desc-10">Figure&nbsp;8: Distribution of log-transformed and scaled covariates.</span>
+<span class="glightbox-desc lightbox-desc-11">Figure&nbsp;9: Predictive performance of spaMM (cross-validation).</span>
+<span class="glightbox-desc lightbox-desc-12">Figure&nbsp;10&nbsp;(a): Effect of covariates on available biomass (Estimates).</span>
+<span class="glightbox-desc lightbox-desc-13">Figure&nbsp;10&nbsp;(b): Distribution of all estimates in spaMM.</span>
+<span class="glightbox-desc lightbox-desc-14">Figure&nbsp;11&nbsp;(a): Convergence diagnosis 500 thin, 500 samples.</span>
+<span class="glightbox-desc lightbox-desc-15">Figure&nbsp;11&nbsp;(b): Convergence diagnosis 3000 thin, 300 samples.</span>
+<span class="glightbox-desc lightbox-desc-16">Figure&nbsp;12&nbsp;(a): Explanatory power: model R-squared on all data.</span>
+<span class="glightbox-desc lightbox-desc-17">Figure&nbsp;12&nbsp;(b): Predictive power: R-squared in 5 fold crossvalidation</span>
+<span class="glightbox-desc lightbox-desc-18">Predictions vs observations.</span>
+<span class="glightbox-desc lightbox-desc-19">Residuals vs observations.</span>
+<span class="glightbox-desc lightbox-desc-20">Figure&nbsp;14: </span>
+<span class="glightbox-desc lightbox-desc-21">Figure&nbsp;15&nbsp;(a): VP with Spatial in random effect.</span>
+<span class="glightbox-desc lightbox-desc-22">Figure&nbsp;15&nbsp;(b): VP with country scaled covariates.</span>
+<span class="glightbox-desc lightbox-desc-23">aggregated VP (total of 100%)</span>
+<span class="glightbox-desc lightbox-desc-24">VP with absolute values.</span>
+<span class="glightbox-desc lightbox-desc-25">Figure&nbsp;17&nbsp;(a): Residuals covariations without spatial (country and “association” only.</span>
+<span class="glightbox-desc lightbox-desc-26">Residuals covariations with spatial.</span>
+<span class="glightbox-desc lightbox-desc-27">Protection measures.</span>
+<span class="glightbox-desc lightbox-desc-28">Human impact.</span>
+<span class="glightbox-desc lightbox-desc-29">Habitat factors.</span>
+<span class="glightbox-desc lightbox-desc-30">Environment factors</span>
+<span class="glightbox-desc lightbox-desc-31">Figure&nbsp;20: Mean of estimates statistically different from 0 (support level &gt; 0.95).</span>
+<span class="glightbox-desc lightbox-desc-32">Figure&nbsp;21: Median of estimates (red = high positive values, purple = low negative values)</span>
+<span class="glightbox-desc lightbox-desc-33">Figure&nbsp;22: Distribution of mean estimates among contributions.</span>
+<span class="glightbox-desc lightbox-desc-34">Figure&nbsp;23: Afferent system to VTA. <span class="citation" data-cites="Vitay2017">(<a href="#ref-Vitay2017" role="doc-biblioref">Vitay, 2017</a>)</span></span>
 </div>
 <div id="refs" class="references csl-bib-body hanging-indent" role="list">
 <div id="ref-Scholl2022" class="csl-entry" role="listitem">
@@ -897,7 +2807,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     }
   }
 });
-</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","selector":".lightbox","descPosition":"bottom","loop":false,"openEffect":"zoom"});
+</script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"loop":false,"closeEffect":"zoom","selector":".lightbox","openEffect":"zoom","descPosition":"bottom"});
 window.onload = () => {
   lightboxQuarto.on('slide_before_load', (data) => {
     const { slideIndex, slideNode, slideConfig, player, trigger } = data;

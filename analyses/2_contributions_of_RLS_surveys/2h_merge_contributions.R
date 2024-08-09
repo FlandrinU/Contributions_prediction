@@ -34,6 +34,7 @@ load( file = here::here("outputs", "2e_food_web_indices_surveys.Rdata" ))
 load(file = here::here("outputs", "2f_food_indices_surveys.Rdata" ))
 
 #Cultural values
+load(file = here::here("outputs", "2g_cultural_contributions.Rdata"))
 
 
 #Coastline
@@ -57,7 +58,7 @@ contributions_surveys <- metadata |>
   dplyr::left_join(surveys_fluxes_final) |> 
   dplyr::left_join(food_web_indices) |> 
   dplyr::left_join(food_indices_surveys) |> 
-  # dplyr::left_join(cultural_indices) |> 
+  dplyr::left_join(cultural_contributions) |> 
   dplyr::select(all_of(var_metadata),
                 actino_richness,
                 elasmobranch_richness, 
@@ -75,6 +76,8 @@ contributions_surveys <- metadata |>
                 P_recycling = recycling_P,
                 trophic_web_robustness = b_power_law,
                 mean_trophic_level = troph_mTL,
+                public_interest,
+                aesthetic = aesthe_survey,
                 available_biomass, 
                 selenium = Selenium_C, 
                 zinc = Zinc_C, 
@@ -227,7 +230,9 @@ grp_NN_NP <- as.factor(c(actino_richness = "NN",
                          P_recycling = "NN",
                          trophic_web_robustness = "NN",
                          mean_trophic_level = "NN",
-                    
+                         
+                         public_interest = "NP",
+                         aesthetic = "NP",
                          available_biomass = "NP",
                          selenium = "NP",
                          zinc = "NP",
@@ -241,6 +246,8 @@ grp_NN_NP <- as.factor(c(actino_richness = "NN",
 w <- c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6,
        1/5, 1/5, 1/5, 1/5, 1/5,
        1/2, 1/2, 
+       1/2, 1/2,
+       
        1/2, 1/2,
        1/2, 
        1/6, 1/6, 1/6, 1/6, 1/6, 1/6,
@@ -341,6 +348,8 @@ grp_NN_NP <- as.factor(c(actino_richness = "NN",
                          trophic_web_robustness = "NN",
                          mean_trophic_level = "NN",
                          
+                         public_interest = "NP",
+                         aesthetic = "NP",
                          available_biomass = "NP",
                          selenium = "NP",
                          zinc = "NP",
@@ -376,7 +385,7 @@ NP_names <- names(grp_NN_NP)[ grp_NN_NP=="NP" ]
 contrib_NP <- scaled_contrib[,NP_names]
 
 colnames(contrib_NP)
-weighting_par <- c(1/2, 1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 1/2)
+weighting_par <- c(1/2, 1/2, 1/2, 1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 1/2)
 names(weighting_par) <- colnames(contrib_NP)
 weighting_par
 

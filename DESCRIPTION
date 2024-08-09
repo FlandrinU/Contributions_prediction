@@ -7,12 +7,6 @@ Authors@R: c(
            family  = "Flandrin",
            role    = c("aut", "cre", "cph"),
            email   = "ulysse.flandrin@gmail.com",
-           comment = c(ORCID = "")),
-           
-    person(given   = "Cyril",
-           family  = "Hautecoeur",
-           role    = c("aut", "cre", "cph"),
-           email   = "hautecoeurcyril@gmail.com",
            comment = c(ORCID = "")))
            
 Description: A paragraph providing a full description of the project (on 
