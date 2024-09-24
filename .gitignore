@@ -24,7 +24,7 @@ renv/
 report/.quarto/
 report/img/
 report/_freeze/
-
+report/docs/
 
 #remove large data files ----> to include in a data repo.
 data_rfishbase.RData

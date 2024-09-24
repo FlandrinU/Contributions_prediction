@@ -25,7 +25,7 @@ source("R/HMSC_function.R")
 ##------------------------------- load data ------------------------------------
 load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
-response =  observations_final#[sample(1:nrow(observations_final),1000),] ####################### reduce data
+response =  observations_final
 covariates = covariates_final[rownames(response),]
 
 
@@ -39,8 +39,8 @@ localDir <- here::here("outputs/models/hmsc/multivariate")
 
 list_files <- list.files(save_out) 
 list_files
-file_name <- gsub("output_", "", list_files[9]) #choose the wanted file
-
+file_name <- gsub("output_", "", list_files[13]) #choose the wanted file
+concatenate_chains = F
 
 ##----------------------------- Plot hmsc results ------------------------------
 
@@ -50,12 +50,15 @@ plot_hmsc_result(covariates = covariates,
                  save_init = save_init,
                  save_out = save_out,
                  localDir = localDir,
+                 concatenate_chains = concatenate_chains,
                  plot_convergence = T,
                  plot_explanatory_power = T,
                  plot_variance_partitioning =T,
                  plot_residual_associations = T,
                  plot_estimates = T,
+                 plot_partial_graph = T,
                  check_residuals = T,
+                 latent_factors = T,
                  drivers_to_plot =  list(
                    c("gravtot2", "gdp", "neartt", "n_fishing_vessels"),
                    c("effectivenessHigh", "effectivenessMedium",

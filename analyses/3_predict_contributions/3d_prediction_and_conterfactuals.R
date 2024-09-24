@@ -151,7 +151,7 @@ distribution_plot(residuals, longer = T,cols_plot = colnames(residuals))
 # ~zero centered.
 
 
-##### TO DO: test spatial autocorrelations of residuals. ######
+##### TO DO: test spatial autocorrelations of residuals? ######
 
 
 
@@ -162,7 +162,7 @@ summary(covariates_final)
 
 #(1) Change effectiveness only: from "out" to "high protection"
 X_new_mpa <- covariates_final
-new_surveys_mpa <- rownames(X_new_mpa |> dplyr::filter(effectiveness == "out"))
+new_surveys_mpa <- rownames(X_new_mpa |> dplyr::filter(effectiveness == "Out"))
 X_new_mpa[new_surveys_mpa, "effectiveness"] <- as.factor("High")
 
 #(2) Change fishing pressure only
@@ -173,21 +173,21 @@ new_surveys_vessels <- rownames(
 X_new_vessels[new_surveys_vessels, "n_fishing_vessels"] <- min(X_new_vessels$n_fishing_vessels)
 
 #(3) Change fishing pressure and MPA = real protection
-X_new_protected <- covariates_final
-new_surveys_protected <- unique(c(new_surveys_mpa, new_surveys_vessels))
-X_new_protected[new_surveys_protected, "effectiveness"] <- as.factor("High")
-X_new_protected[new_surveys_protected, "n_fishing_vessels"] <- min(X_new_protected$n_fishing_vessels)
+X_new_mpa_no_vessels <- covariates_final
+new_surveys_mpa_no_vessels <- unique(c(new_surveys_mpa, new_surveys_vessels))
+X_new_mpa_no_vessels[new_surveys_mpa_no_vessels, "effectiveness"] <- as.factor("High")
+X_new_mpa_no_vessels[new_surveys_mpa_no_vessels, "n_fishing_vessels"] <- min(X_new_mpa_no_vessels$n_fishing_vessels)
 
 #(4) Change human pressure: no gravity and high neartt
-X_new_far <- covariates_final
-new_surveys_far <- rownames(
-  X_new_far[X_new_far$gravtot2 != min(X_new_far$gravtot2) |
-              X_new_far$neartt != max(X_new_far$neartt),])
-X_new_far[new_surveys_far, "gravtot2"] <- min(X_new_far$gravtot2)
-X_new_far[new_surveys_far, "neartt"] <- max(X_new_far$neartt)
+X_new_no_human <- covariates_final
+new_surveys_no_human <- rownames(
+  X_new_no_human[X_new_no_human$gravtot2 != min(X_new_no_human$gravtot2) |
+              X_new_no_human$neartt != max(X_new_no_human$neartt),])
+X_new_no_human[new_surveys_no_human, "gravtot2"] <- min(X_new_no_human$gravtot2)
+X_new_no_human[new_surveys_no_human, "neartt"] <- max(X_new_no_human$neartt)
 
 #(5) Pristine sites
-X_new_pristine <- X_new_protected
+X_new_pristine <- X_new_mpa_no_vessels
 new_surveys_pristine <- rownames(X_new_pristine)
 X_new_pristine[new_surveys_pristine, "gravtot2"] <- min(X_new_pristine$gravtot2)
 X_new_pristine[new_surveys_pristine, "neartt"] <- max(X_new_pristine$neartt)
@@ -195,11 +195,11 @@ X_new_pristine[new_surveys_pristine, "neartt"] <- max(X_new_pristine$neartt)
 
 
 #### Run model with new conditions ###
-X_new <- X_new_mpa ; new_survey <- new_surveys_mpa
-X_new <- X_new_vessels ; new_survey <- new_surveys_vessels
-X_new <- X_new_protected ; new_survey <- new_surveys_protected
-X_new <- X_new_far ; new_survey <- new_surveys_far
-X_new <- X_new_pristine ; new_survey <- new_surveys_pristine
+# X_new <- X_new_mpa ; new_survey <- new_surveys_mpa
+# X_new <- X_new_vessels ; new_survey <- new_surveys_vessels
+# X_new <- X_new_mpa_no_vessels ; new_survey <- new_surveys_mpa_no_vessels
+# X_new <- X_new_no_human ; new_survey <- new_surveys_no_human
+# X_new <- X_new_pristine ; new_survey <- new_surveys_pristine
 
 
 new_predictions <- run_hmsc_prediction(X_data = covariates_final,
@@ -217,6 +217,9 @@ distribution_plot(conterfactual, longer = T,
 
 
 ## Check differences ##
+distribution_plot(effective_change, longer = F, cols_plot = colnames(effective_change))
+
+
 distrib_boxplot <- function(data, x, y, fill, hline = 0, title = NULL){
   ggplot(data) +
     aes_string(x= x, y= y, fill = fill)+
@@ -237,8 +240,6 @@ distrib_boxplot <- function(data, x, y, fill, hline = 0, title = NULL){
     coord_flip()
 }
 
-distribution_plot(effective_change, longer = F, cols_plot = colnames(effective_change))
-
 effective_change <- effective_change  |> 
   dplyr::mutate(index = reorder(index, values, FUN = median))
 
@@ -250,7 +251,7 @@ ggsave(width=8, height= 8, here::here("figures/models/hmsc/conterfactuals",
 
 #obs heterogeneity by country
 data_1_contrib <- effective_change |>  
-  dplyr::filter(index == "iucn_species_richness") |> 
+  dplyr::filter(index == "available_biomass") |> 
   dplyr::mutate(country = reorder(country, values, FUN = median))
 
 distrib_boxplot(data_1_contrib, x = "country", y = "values", fill = "country",
@@ -260,16 +261,19 @@ distrib_boxplot(data_1_contrib, x = "country", y = "values", fill = "country",
 
 
 ##----------------------------- Plot changes -----------------------------------
+## Select countries we want to plot
 selected_country <- covariates_final |> 
   dplyr::count(country) |> 
   dplyr::filter(n > 20) |> 
   dplyr::pull(country)
   
-X_new <- X_new_mpa ; new_survey <- new_surveys_mpa
-X_new <- X_new_vessels ; new_survey <- new_surveys_vessels
-X_new <- X_new_protected ; new_survey <- new_surveys_protected
-X_new <- X_new_far ; new_survey <- new_surveys_far
-X_new <- X_new_pristine ; new_survey <- new_surveys_pristine
+## Set the scenario
+
+# X_new <- X_new_mpa ; new_survey <- new_surveys_mpa
+# X_new <- X_new_vessels ; new_survey <- new_surveys_vessels
+# X_new <- X_new_mpa_no_vessels ; new_survey <- new_surveys_mpa_no_vessels
+# X_new <- X_new_no_human ; new_survey <- new_surveys_no_human
+# X_new <- X_new_pristine ; new_survey <- new_surveys_pristine
 
 
 new_predictions <- run_hmsc_prediction(X_data = covariates_final,
@@ -284,22 +288,30 @@ pca <- FactoMineR::PCA(new_predictions[[1]], scale.unit = T, graph=F, ncp=15)
 factoextra::fviz_screeplot(pca, ncp=15)
 
 pca_plot <- factoextra::fviz_pca_biplot(pca,
-                            title="",
-                            label = "var",
-                            labelsize = 4, 
-                            geom=c("point"), 
-                            pointshape=21,
-                            stroke=0, pointsize=2,
-                            alpha.ind = 0.7,
-                            alpha.var = 0.7,
-                            fill.ind = "grey",    
-                            repel = TRUE)
+                                        axes = c(1,2),
+                                        title="",
+                                        label = "var",
+                                        labelsize = 4, 
+                                        geom=c("point"), 
+                                        pointshape=21,
+                                        stroke=0, pointsize=2,
+                                        alpha.ind = 0.7,
+                                        alpha.var = 0.7,
+                                        fill.ind = "grey",    
+                                        repel = TRUE)
 
 # Calculate barycenters (centroids) for each country
-barycenters <- aggregate(pca$ind$coord[, 1:2], 
-                         by = list(X_new$country), FUN = mean) |> 
+coord_old_points <- as.data.frame(pca$ind$coord[, 1:6]) |> 
+  tibble::rownames_to_column("survey_id") |> 
+  dplyr::filter(survey_id %in% new_survey) |> 
+  tibble::column_to_rownames("survey_id")
+
+countries <- covariates_final[rownames(coord_old_points),]$country
+  
+barycenters <- aggregate(coord_old_points, 
+                         by = list(countries), FUN = mean) |> 
   dplyr::filter(Group.1 %in% selected_country)
-colnames(barycenters) <- c("country", "PC1", "PC2")
+colnames(barycenters) <- c("country", "PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
 
 # Add barycenters to the plot
 pca_plot_barycenter <- pca_plot + 
@@ -311,9 +323,14 @@ pca_plot_barycenter <- pca_plot +
 projected_points <- predict(pca, newdata = new_predictions[[2]])
 
 # (2) calculate new barycenters
-barycenters_new <- aggregate(projected_points$coord[, 1:2], 
-                         by = list(X_new$country), FUN = mean)
-colnames(barycenters_new) <- c("country", "PC1", "PC2")
+coord_new_points <- as.data.frame(projected_points$coord[, 1:6]) |> 
+  tibble::rownames_to_column("survey_id") |> 
+  dplyr::filter(survey_id %in% new_survey) |> 
+  tibble::column_to_rownames("survey_id")
+
+barycenters_new <- aggregate(coord_new_points, 
+                         by = list(countries), FUN = mean)
+colnames(barycenters_new) <- c("country", "PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
 
 barycenters_movement <- merge(barycenters, barycenters_new, 
                               by = "country", suffixes = c("_old", "_new"))

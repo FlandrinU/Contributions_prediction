@@ -48,7 +48,7 @@ source("R/check_scientific_names.R")
 
 
 #run aesthetic for new species
-reticulate::source_python("R/inference_aesthetic_score_Langlois2022.py")
+# reticulate::source_python("R/inference_aesthetic_score_Langlois2022.py")
 #IF IMPOSSIBLE TO RUN RETICULATE: open a terminal in the R/ folder, and run the
 # python code via bash: > python3 04_inference.py
 
@@ -95,7 +95,7 @@ human_interest <- hum_int |>
 cultural_sp_contrib <- dplyr::full_join(aesthetic_score, human_interest) |> 
   dplyr::mutate(sp_name = gsub("_", " ", sp_name))
 
-cultural_sp_contrib <- code_sp_check(cultural_sp_contrib, original_name = 'sp_name', mc_cores = 15)
+cultural_sp_contrib <- code_sp_check(cultural_sp_contrib, original_name = 'sp_name', mc_cores = 10)
 
 cultural_all_species <- inferred_species_traits |> 
   dplyr::select(-public_interest, -academic_knowledge ) |> 
@@ -106,43 +106,157 @@ cultural_all_species <- inferred_species_traits |>
   tidyr::fill(tidyr::everything(), .direction = 'updown') |> 
   dplyr::mutate(esthe_score = max(esthe_score)) |> 
   unique()
+
+save(cultural_all_species, file = here::here("outputs","2g_cultural_all_species.Rdata"))
   
 
 ##------------------- 2) Aesthetic scores (survey level) -------------------####
-survey_aesth_all <- read.csv(here::here("data", "derived_data", "survey_aesth.csv"))
+load( here::here("outputs","2g_cultural_all_species.Rdata") )
+
+#' The following code computes community aesthe values at the survey level. It 
+#' comes from Mclean et al. 2025 "Conserving the beauty of fish communities"
+#' @author Matthew McLean, \email {mcleamj@@gmail.com}
+#' 
+# INIT ----
+
+# coefficient a and b from Tribot, A.S, Deter, J., Claverie, T., Guillhaumon, F., Villeger, S., & Mouquet, N. (2019). Species diversity and composition drive the aesthetic value of coral reef fish assemblages. Biology letters, 15, 20190703, doi:10.1098/rsbl.2019.0703
+# will be used to compute the aesthetic scores of assemblages
+intercept_sr <- 7.0772149
+slope_sr     <- 0.20439752
+
+#data
+aesthe_species <- cultural_all_species
+sp_pres_matrix <- surveys_sp_occ
+
+# Compute the aesthe contribution of each species
+# with parameters from Tribot, A.S, Deter, J., Claverie, T., Guillhaumon, F., Villeger, S., & Mouquet, N. (2019). Species diversity and composition drive the aesthetic value of coral reef fish assemblages. Biology letters, 15, 20190703, doi:10.1098/rsbl.2019.0703
+# positive and negative effect are relative to the espected effect computed with the species 
+
+## Computing the aesthe_effect
+aesthe_species$aesthe_effect <- (log(aesthe_species$esthe_score) - 7.3468679)/7.937672
+
+# ----
+
+# COMPUTE AESTHETICS ----
+#aesthe_survey : predicted aesthe 
+#aesthe_SR_survey : predicted aesthe based only on species richness
+
+surveyid_vect <- row.names(sp_pres_matrix)  
+
+survey_aesth <- do.call(rbind, pbmcapply::pbmclapply((1:length(surveyid_vect)), function(i){
+  
+  #i=1
+  # surveyID <- "1003646"
+  surveyID <-surveyid_vect[i]
+  # presence_absence of the species of the survey
+  
+  vector_abs_pres <- sp_pres_matrix[surveyID,]
+  
+  # species present
+  sp_survey <- colnames(vector_abs_pres)[vector_abs_pres[1,]>0]
+  
+  # number of species of the survey
+  nb_species <- length(sp_survey)
+  
+  # species component in community aesthetic
+  species_effect <- sum(
+    aesthe_species$aesthe_effect[aesthe_species$rls_species_name %in%  gsub("_"," ",sp_survey)],
+    na.rm = T
+    )
+  
+  #Prevalence of NA in the survey
+  missing_species <- aesthe_species[aesthe_species$rls_species_name %in%  gsub("_"," ",sp_survey),] |> 
+    dplyr::filter(is.na(esthe_score))
+  
+  if(nrow(missing_species)>0){
+    missing_rls_obs <- rls_actino_trop |> 
+      dplyr::filter(survey_id == surveyID,
+                    rls_species_name %in% missing_species$rls_species_name)
+    
+    prop_biom_aesth <- 1 - sum(missing_rls_obs$raw_biomass) / unique(missing_rls_obs$biomass_tot_survey)
+    prop_abund_aesth <- 1 - sum(missing_rls_obs$total ) / unique(missing_rls_obs$abundance_tot_survey)
+  }else{
+    prop_biom_aesth <- 1 
+    prop_abund_aesth <- 1
+  }
+  
+  # aesthe of the survey
+  E <- intercept_sr + slope_sr * log(nb_species) + species_effect
+  score <-  exp(E)
+  
+  E <-  intercept_sr + slope_sr * log(nb_species)
+  score_SR  <-  exp(E) 
+  
+  # compute the number of species with positive and negative effect in each survey
+  
+  vect  <-  (aesthe_species$aesthe_effect * vector_abs_pres)
+  nb_sp_pos_survey   <-  length(which(vect>0))
+  nb_sp_neg_survey   <-  length(which(vect<0))
+  
+  cbind.data.frame(survey_id=surveyid_vect[i],
+                   nb_species=nb_species,
+                   aesthe_survey=score,
+                   aesthe_SR_survey=score_SR,
+                   nb_sp_pos_survey=nb_sp_pos_survey,
+                   nb_sp_neg_survey=nb_sp_neg_survey,
+                   prop_biom_aesth = prop_biom_aesth, 
+                   prop_abund_aesth = prop_abund_aesth)
+  
+}, mc.cores = parallel::detectCores()-1))
+
+plot(survey_aesth$nb_species,survey_aesth$aesthe_survey)
+
+write.csv(survey_aesth, here::here("outputs", "survey_aesth.csv"), row.names = FALSE)
+
+# ---- 
+
+#Check outputs
+old_surveys_aesth <- read.csv(here::here("data/derived_data/survey_aesth_McLean2024.csv")) |> 
+  dplyr::mutate(SurveyID = as.character(SurveyID)) |> 
+  dplyr::select(SurveyID = survey_id,
+                aesthe_old = aesthe_survey, 
+                aesthe_SR_old = aesthe_SR_survey) |> 
+  dplyr::full_join(survey_aesth)
+
+plot(old_surveys_aesth$aesthe_survey ~ old_surveys_aesth$aesthe_old) ; abline(a=0, b=1)
+plot(old_surveys_aesth$aesthe_SR_survey ~ old_surveys_aesth$aesthe_SR_old) ; abline(a=0, b=1)
 
 
-survey_aesth <- survey_aesth_all |> 
-  dplyr::select(survey_id = SurveyID, aesthe_survey) |> 
-  dplyr::mutate(survey_id = as.character(survey_id))
+## REMOVE NON REPRESENTATIVE ESTIMATIONS: (less than 80% abundance or biomass with known species)
+survey_aesth_filtered <- survey_aesth |> 
+  dplyr::filter(prop_biom_aesth > 0.8 & prop_abund_aesth > 0.8 )
 
-
-## TO DO: Check NAs in aesthetic #######################"
 
 ##------------------- 3) Public attention (survey level) -------------------####
 cultural <- tibble::column_to_rownames(cultural_all_species, var ="rls_species_name")
-cultural_survey <- lapply( rownames(surveys_sp_occ), function(id){
+cultural_survey <-  pbmcapply::pbmclapply(rownames(surveys_sp_occ), function(id){
   cat(id, "\n")
-  sp <- names(surveys_sp_occ[id, which(surveys_sp_occ[id,] >0)])
+  sp <- names(surveys_sp_occ[id, which(surveys_sp_occ[id,] > 0)])
   if( length(sp) > 0){
+    n <- length(sp)
+    
     mean_academic_knowledge <- mean(cultural[sp, "academic_knowledge"], na.rm = T)
     mean_public_interest <- mean(cultural[sp, "public_interest"], na.rm = T)
+    mean_esthe <- mean(cultural[sp, "esthe_score"], na.rm = T)
     
     academic_knowledge <- quantile(cultural[sp, "academic_knowledge"], 0.75, na.rm = T)
     public_interest <- quantile(cultural[sp, "public_interest"], 0.75, na.rm = T)
+    quantile_esthe <- quantile(cultural[sp, "esthe_score"], 0.75, na.rm = T)
     
-    cult <- as.numeric(c(id, academic_knowledge, public_interest,
-                         mean_academic_knowledge, mean_public_interest))
-  }else{cult <- c(id, NA, NA, NA, NA)}
+    cult <- as.numeric(c(id, academic_knowledge, public_interest, quantile_esthe,
+                         mean_academic_knowledge, mean_public_interest, mean_esthe,
+                         n))
+  }else{cult <- c(id, NA, NA, NA, NA, NA, NA, NA)}
   
-  names(cult) <- c("SurveyID", "academic_knowledge", "public_interest", 
-                   "mean_academic_knowledge", "mean_public_interest")
+  names(cult) <- c("survey_id", "academic_knowledge", "public_interest", "quantile_esthe",
+                   "mean_academic_knowledge", "mean_public_interest", "mean_esthe",
+                   "diversity")
   cult
-})
+}, mc.cores = parallel::detectCores()-1)
 
 public_contrib_survey <- data.frame(do.call(rbind, cultural_survey)) |>
   dplyr::mutate( across(everything(), ~as.numeric(.))) |>
-  dplyr::mutate(survey_id = as.character(SurveyID))
+  dplyr::mutate(survey_id = as.character(survey_id))
 
 
 ## Check the importance of NA 
@@ -164,7 +278,7 @@ na_survey <- unique(NA_prop$survey_id)
 
 # ## REMOVE NON REPRESENTATIVE ESTIMATIONS:
 # public_contrib_survey[
-#   public_contrib_survey$survey_id == na_survey, "public_interst"] <- NA
+#   public_contrib_survey$survey_id == na_survey, "public_interest"] <- NA
 
 ####### TO DO WHEN ALL PUBLIC INTEREST WILL BE CALCULATED 
 
@@ -172,7 +286,7 @@ na_survey <- unique(NA_prop$survey_id)
 ##------------------- 4) Save cultural contributions -------------------####
 
 cultural_contributions <- public_contrib_survey |>
-  dplyr::full_join(survey_aesth) |> 
+  dplyr::full_join(survey_aesth_filtered) |> 
   dplyr::select(survey_id, public_interest, aesthe_survey)
 
 save(cultural_contributions, file = here::here("outputs", "2g_cultural_contributions.Rdata"))

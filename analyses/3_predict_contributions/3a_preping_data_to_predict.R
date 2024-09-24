@@ -51,12 +51,6 @@ funbiogeo::fb_plot_species_traits_completeness(
   contributions_with_synthetic_score |> tibble::rownames_to_column("species"))
   
 
-################# COMPLETE AESTHETIC: TO REMOVE WHEN IT WILL BE UPDATED #######################"
-aesth <- missForest::missForest(contributions_with_synthetic_score)
-res <- aesth$ximp
-contributions_with_synthetic_score$aesthetic <- res$aesthetic
-################################### TO REMOVE
-
 
 # observations <- contributions |> 
 observations <- contributions_with_synthetic_score |> 
@@ -166,7 +160,7 @@ data_to_filter <- as.data.frame(data_to_filter) |>
 cov <- colnames(data_to_filter)
 cov <- cov[order(cov)]
 
-metadata_to_select <- c("survey_id", "latitude", "longitude",
+metadata_to_select <- c("survey_id", "site_code", "latitude", "longitude",
                         "country", "ecoregion", "realm",
                         "depth", "year",
                         "effectiveness")
@@ -274,7 +268,7 @@ cov_to_log_transformed <-
     "median_7days_degree_heating_week", "median_7days_degree_heating_week",
     "Microalgal_Mats_500m", "n_fishing_vessels", "natural_ressource_rent",
     "neartt", "ngo", "Patch_Reefs_500m", "Plateau_500m" ,
-    "q05_1year_degree_heating_week", "Reef_Crest_500m","Reef_Slope_500m",  
+    "Reef_Crest_500m","Reef_Slope_500m",  
     "Rock_500m", "Rubble_500m", "Sand_500m", "Seagrass_500m",
     "Sheltered_Reef_Slope_500m", "Terrestrial_Reef_Flat_500m"
   )
@@ -311,11 +305,12 @@ covariates_final <- covariates |>
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |>
   dplyr::mutate(across(-c(longitude, latitude,
+                          site_code,
                           effectiveness,
                           country,
                           realm,
                           ecoregion), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-c(effectiveness, country, realm, ecoregion), as.numeric))
+  dplyr::mutate(across(-c(site_code, effectiveness, country, realm, ecoregion), as.numeric))
 
 
 

@@ -284,46 +284,13 @@ dev.off()
 
 
 ##-------------plot Contributions on map-------------
-#plot function
-plot_Contrib_on_world_map <- function(NCP = "Taxonomic_Richness", xlim=c(-180,180), ylim = c(-36, 31),
-                                      title="world map with ", jitter=1.5, pt_size=2){
-  data <- contributions_surveys_log[order(contributions_surveys_log[,NCP]),]
-  library(ggplot2)
-  map <- ggplot(data) +
-    geom_sf(data = coast, color = "grey30", fill = "lightgrey",
-            size=0.1) +
-    
-    geom_point(data=data,
-               size = pt_size, shape = 20,
-               position=position_jitter(width=jitter, height = jitter),
-               aes(x = longitude, y = latitude,
-                   colour= data[,NCP],
-                   alpha = 0.7)) +
-    scale_colour_gradientn(name  = NCP,
-                           colours = rev(RColorBrewer::brewer.pal(n = 8, name = "RdBu")))+
-    
-    
-    coord_sf(xlim, ylim, expand = FALSE) +
-    guides(alpha= "none" ) +
-    # scale_size_continuous(range = c(0.5, 4), guide = "none") +
-    theme_minimal()+
-    labs(#title = paste0(NCP, " geographic distribution"),
-      x="", y= "") +
-    theme(legend.position = "bottom",
-          plot.title = element_text(size=10, face="bold"),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
-    )
-  
-  ggsave( here::here("figures", "map_contributions", paste0( title , NCP, ".jpg")), plot = map, width=15, height = 7 )
-  #map
-}
 
 # save world maps
 parallel::mclapply(colnames(contributions), function(NCP){
-  plot_Contrib_on_world_map(NCP, xlim=c(-180,180), ylim = c(-36, 31), 
-                            title="world_map_with_", jitter=1.5, pt_size=2)
+  plot_Contrib_on_world_map(data=contributions_surveys_log[order(contributions_surveys_log[,NCP]),],
+                            NCP, xlim=c(-180,180), ylim = c(-36, 31), 
+                            title="world_map_with_", jitter=1.5, pt_size=2,
+                            save=T)
 },mc.cores=parallel::detectCores()-5)
 
 

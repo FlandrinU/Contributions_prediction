@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################'
 ##
 ##  This function contains all code necessary to run Hmsc models and plot results
 ##
@@ -8,26 +8,10 @@
 ##
 ## Ulysse Flandrin
 ##
-################################################################################
+###############################################################################'
 
-# load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
-# load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
-# Y_data =  observations_final#[sample(1:nrow(observations_final),1000),] ####################### reduce data
-# X_data = covariates_final[rownames(Y_data),]
-# rownames(X_data) <- rownames(Y_data)
-# 
-# nSamples = 10 #1000
-# thin = 20 #100
-# nChains = 2 #2
-# verbose = 100 #100
-# transient = nSamples * thin # 1500 #100 * thin
-# nb_neighbours = 10
-# random_factors = c("spatial","country")
-# name = "test"
-# response_distribution <- rep("normal", ncol(Y_data))
-# #response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
-# run_python = TRUE
-# save_path = here::here("outputs/models/hmsc")
+
+##--------------------------FIT HMSC MODELS-----------------------------------##
 
 
 #' HMSC function.
@@ -61,6 +45,7 @@ hmsc_function <- function(nSamples,
                           Y_data,
                           X_data,
                           response_distribution,
+                          quadratic_effects = NULL,
                           random_factors = NULL,
                           nb_neighbours = NULL,
                           name,
@@ -79,7 +64,10 @@ hmsc_function <- function(nSamples,
   cat("-------------- Initialisation of Hmsc model --------------\n")
   
   ## Set fixed effects ##
+  if(!is.null(quadratic_effects)) cat("quadratic effects:", quadratic_effects, "\n")
+  
   fixed_effects <- colnames(dplyr::select(X_data,
+                                          -site_code,
                                           -longitude, -latitude, 
                                           -year,
                                           -country,
@@ -93,7 +81,19 @@ hmsc_function <- function(nSamples,
                                           -natural_ressource_rent
   ))
   
-  formula <- as.formula(paste("~ ", paste(fixed_effects, collapse = "+") ) )
+  linear_effects <- fixed_effects[!fixed_effects %in% quadratic_effects]
+    
+  if(!is.null(quadratic_effects)){
+    formula <- as.formula(
+      paste("~ ", 
+            paste(
+              c(linear_effects,
+                paste0("poly(", quadratic_effects, ",degree = 2,raw = TRUE)")),
+              collapse = "+")      
+      ))
+  }else{ 
+    formula <- as.formula(paste("~ ", paste(linear_effects, collapse = "+")))
+  }
   
   response_distribution <- rep("normal", ncol(Y_data))
   # response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
@@ -120,31 +120,46 @@ hmsc_function <- function(nSamples,
   
   
   # (3) create spatial random effect and study design (rows in Y)
-  rL.nngp = Hmsc::HmscRandomLevel(sData = xycoords,
+  rL.spatial = Hmsc::HmscRandomLevel(sData = xycoords,
                                   sMethod = 'NNGP',
                                   nNeighbours = nb_neighbours,
                                   # sMethod = 'Full', #too much memory needed...
                                   longlat = F) #Should be True but doesn't work after
   
-  rL.nngp = Hmsc::setPriors(rL.nngp, nfMin=1,nfMax=1)
+  # Knots = Hmsc::constructKnots(xycoords, nKnots = 60) #regular nodes in areas with surveys points
+  # rL.spatial = Hmsc::HmscRandomLevel(sData = xycoords,
+  #                                 sMethod = "GPP",
+  #                                 sKnot = Knots,
+  #                                 longlat = F
+  #                                 )
   
-  studyDesign <- data.frame(associations = as.factor(rownames(X)),
+  
+  rL.spatial = Hmsc::setPriors(rL.spatial, nfMin=1,nfMax=1) #max latent factor = 1
+  
+  studyDesign <- data.frame(sample_unit = as.factor(rownames(X)),
+                            site = as.factor(X$site_code),
                             spatial = as.factor(rownames(X)),
                             year = as.factor(X$year),
                             country = as.factor(X$country),
                             ecoregion = as.factor(X$ecoregion))
   
   # (4) Set random levels
-  rL_asso = Hmsc::HmscRandomLevel(units = studyDesign$associations)
-  rL_year = Hmsc::HmscRandomLevel(units = studyDesign$year)
-  rL_ecoregion = Hmsc::HmscRandomLevel(units = studyDesign$ecoregion)
-  rL_country =  Hmsc::HmscRandomLevel(units = studyDesign$country)
+  rL_sample = Hmsc::HmscRandomLevel(units = unique(studyDesign$sample_unit))
+  rL_site = Hmsc::HmscRandomLevel(units = unique(studyDesign$site))
+  rL_year = Hmsc::HmscRandomLevel(units = unique(studyDesign$year))
+  rL_ecoregion = Hmsc::HmscRandomLevel(units = unique(studyDesign$ecoregion))
+  rL_country =  Hmsc::HmscRandomLevel(units = unique(studyDesign$country))
   
-  ranLevels = list(associations = rL_asso,
+  # # Set shrinkage
+  # rL_country=setPriors(rL_country, a1=5, a2=5)
+  # rL_sample=setPriors(rL_sample, a1=5, a2=5)
+
+  ranLevels = list(sample_unit = rL_sample,
+                   site = rL_site,
                    year = rL_year,
                    ecoregion = rL_ecoregion,
                    country = rL_country, 
-                   spatial = rL.nngp)
+                   spatial = rL.spatial)
   
   
   ## Construct HMSC model strucure ##
@@ -225,7 +240,7 @@ hmsc_function <- function(nSamples,
 
 
 
-
+##-----------------------------HMSC RESULTS-----------------------------------##
 
 #' Plot results Hmsc.
 #'
@@ -252,12 +267,15 @@ plot_hmsc_result <- function(covariates = covariates,
                              save_init = save_init,
                              save_out = save_out,
                              localDir = localDir,
+                             concatenate_chains = F,
                              plot_convergence = T,
                              plot_explanatory_power = T,
                              plot_variance_partitioning = T,
                              plot_residual_associations = T,
                              plot_estimates = T,
+                             plot_partial_graph = T,
                              check_residuals = T,
+                             latent_factors = T,
                              drivers_to_plot =  list(
                                c("n_fishing_vessels", "gravtot2", "gdp", "neartt"))
                             ){
@@ -282,10 +300,10 @@ plot_hmsc_result <- function(covariates = covariates,
   save_name <- gsub(".rds", "", file_name)
   
   #Model design
-  load(file = file.path(localDir, paste0("model_fit_", file_name, ".Rdata")))
+  load(file = file.path(localDir, paste0("model_fit_", save_name, ".rds.Rdata")))
   
   #Initial hmsc object
-  init_obj_rds <- readRDS(paste0(save_init, paste0("init_", file_name)))
+  init_obj_rds <- readRDS(paste0(save_init, paste0("init_", save_name, ".rds")))
   init_obj <- jsonify::from_json(init_obj_rds)
   
   nSamples = init_obj[["samples"]]
@@ -295,21 +313,29 @@ plot_hmsc_result <- function(covariates = covariates,
   
   
   ## Import posterior probability
-  file_rds <- readRDS(file = paste0(save_out, paste0("output_", file_name)))[[1]]
-  importFromHPC <- jsonify::from_json(file_rds)
-  postList <- importFromHPC[1:nChains]
+  if(concatenate_chains){
+    chainList = vector("list", nChains)
+    for(cInd in 1:nChains){
+      chain_file_path = file.path(
+        paste0(save_out,"output_", file_name, "/chain_", cInd, ".rds"))
+      chainList[[cInd]] = jsonify::from_json(readRDS(file = chain_file_path)[[1]])[[1]]
+    }
+  }else{
+    all_chains <- readRDS(file = paste0(save_out, paste0("output_", file_name)))[[1]]
+    importFromHPC <- jsonify::from_json(all_chains)
+    chainList <- importFromHPC[1:nChains]
+    ##Result model
+    cat(sprintf("fitting time %.1f h\n", importFromHPC[[nChains+1]] / 3600))
+    
+  }
   ### /!\ CHECK THE STRUCTURE OF THE RESULT: MATRICES IN PYTHON VS LIST IN R ###
-  
-  ##Result model
-  cat(sprintf("fitting time %.1f h\n", importFromHPC[[nChains+1]] / 3600))
   
   ##Export and merge chains
   model_fit_mcmc <- Hmsc::importPosteriorFromHPC(model_fit,
-                                                 postList, 
+                                                 chainList, 
                                                  nSamples, 
                                                  thin, 
                                                  transient)
-  
   
   ## Estimates for each chains
   mpost <- Hmsc::convertToCodaObject(model_fit_mcmc)
@@ -328,19 +354,21 @@ plot_hmsc_result <- function(covariates = covariates,
   
   if(plot_convergence){
     cat("Plot convergence of the model... \n")
-  
+    
   ### Effective size ###
   
   # Estimate convergence -> effective size should be around nSamples*nChains, and psrf around 1
   # ESS = the number of posterior row effectively independent. low ESS => poor prediction
+  # Beta are the estimates of covariables on the responses = fixed effects
+  # Omega is the matrix of species-to-species residual covariances.
   png(paste0(path_file,"/convergence_estimates_effective_size_", save_name,".png"),
       width = 20, height = 20, units = "cm", res = 200)
   par(mfrow=c(2,2), mar = c(4,4,4,4))
-  hist(coda::effectiveSize(mpost$Beta), main="ess(beta)", breaks = 30)
+  hist(coda::effectiveSize(mpost$Beta), main="fixed_effects: ess(beta)", breaks = 30)
   abline(v= nSamples*nChains, col = "red4", lty = 2, lwd = 3)
   hist(coda::gelman.diag(mpost$Beta, multivariate=FALSE)$psrf, main="psrf(beta)", breaks = 30)
   abline(v= 1, col = "red4", lty = 2, lwd = 3)
-  hist(coda::effectiveSize(mpost$Omega[[1]]), main="ess(omega)", breaks = 30) #also check associations between y
+  hist(coda::effectiveSize(mpost$Omega[[1]]), main="random_effects: ess(omega)", breaks = 30) #also check associations between y
   abline(v= nSamples*nChains, col = "red4", lty = 2, lwd = 3)
   hist(coda::gelman.diag(mpost$Omega[[1]], multivariate=FALSE)$psrf, main="psrf(omega)", breaks = 30)
   abline(v= 1, col = "red4", lty = 2, lwd = 3)
@@ -353,10 +381,49 @@ plot_hmsc_result <- function(covariates = covariates,
   # library("ggmcmc")
   # see help at : http://xavier-fim.net/post/using_ggmcmc/
   
-  S <- ggmcmc::ggs(mpost$Beta)
-  cov <- "n_fishing_vessels"
-  S <- S[grep(paste(cov, collapse = "|"), S$Parameter),]
+  library(stringr)
   
+  S_raw <- ggmcmc::ggs(mpost$Beta)
+  
+  #Arrange S table
+  S_arranged <- S_raw |>
+    dplyr::mutate(
+      # Extract the covariates
+      covariate = dplyr::case_when(
+        # Handle polynomial terms like poly(reef_500m, degree = 2)
+        grepl("poly\\(", Parameter) ~ str_replace(
+          str_replace(str_extract(Parameter, "poly\\(([^,]+),"), "poly\\(", ""), 
+          "\\,", ""),
+        # Handle with Intercept
+        grepl("Intercept", Parameter) ~ str_extract(Parameter, "(?<=\\()[a-zA-Z]+(?=\\))"),
+        # Handle other cases without poly
+        TRUE ~ str_extract(Parameter, "[a-zA-Z0-9_]+(?=\\s*\\()")
+      ),
+      
+      # Extract the responses
+      response = dplyr::case_when(
+        # Handle polynomial terms like poly(reef_500m, omega_3)
+        grepl("poly\\(", Parameter) ~ str_replace(
+          str_replace(
+            str_extract(Parameter, ",\\s*([a-zA-Z0-9_]+)\\s*\\("), ",\\s*", ""), 
+          " \\(", ""),
+        # Handle other cases without poly
+        TRUE ~ str_extract(Parameter, "(?<=,\\s)[a-zA-Z0-9_]+")
+      ),
+      
+        #Extract the polynomial degree
+       degree = dplyr::case_when(
+         grepl("poly\\(", Parameter) ~ str_replace(str_extract(Parameter, "\\)\\d+"), "\\)", ""),
+         TRUE ~ ""
+      ))|>
+    dplyr::mutate(covariate = dplyr::case_when(
+      grepl("poly\\(", Parameter) ~ paste0(covariate,"_Deg",degree),
+      TRUE ~ covariate),
+      Parameter = paste0(covariate, "-", response))
+  
+    
+  cov <- "n_fishing_vessels"
+  S <- S_arranged |> dplyr::filter(grepl(cov, covariate))
   # # quick look on the distribution of the values and the shape of the posterior distribution.
   # ggmcmc::ggs_histogram(S)+facet_wrap(~ Parameter, ncol = 5)
   # 
@@ -404,15 +471,21 @@ plot_hmsc_result <- function(covariates = covariates,
   if(plot_explanatory_power){
     cat("Plot explanatory power of the model... \n")
     
+    ### AIC and computing time ###
+    comput_time <- round(importFromHPC[[nChains+1]] / 3600, 1)
+    AIC <- round(Hmsc::computeWAIC(model_fit_mcmc), 2)
+    
     ### Explanatory  power ###
     preds <- Hmsc::computePredictedValues(model_fit_mcmc)
     MF <- Hmsc::evaluateModelFit(hM=model_fit_mcmc, predY=preds)
     
     png(paste0(path_file,"/explanatory_power_", save_name,".png"),
-        width = 20, height = 10, units = "cm", res = 300)
-    par(mfrow=c(1,2), mar = c(4,4,4,4))
+        width = 20, height = 13, units = "cm", res = 300)
+    par(mfrow=c(1,2), mar = c(4,4,10,4))
     hist(MF$R2, xlim = c(0,1), main=paste0("Mean R2 = ", round(mean(MF$R2),2)))
     hist(MF$RMSE, xlim = c(0,1), main=paste0("Mean RMSE = ", round(mean(MF$RMSE),2)))
+    mtext(paste0("WAIC = ", AIC, "     Computing Time: ", comput_time, "h"),
+          side = 3, line = -2.5, outer = TRUE, cex = 1.1, font = 2)
     dev.off()
   } #END OF PLOT EXPLANATORY POWER
   
@@ -441,12 +514,22 @@ plot_hmsc_result <- function(covariates = covariates,
     #classify covariates
     human <- c("gdp", "gravtot2", "effectiveness", "natural_ressource_rent", 
                "neartt","n_fishing_vessels")
+    
     habitat <- c("depth", "algae", "coral", "Sand", "seagrass", "microalgal_mats",
                  "other_sessile_invert", "Rock", "coralline_algae", "coral_rubble",
-                 as.character(unique(VP_long$Covariate)[grepl("500m", unique(VP_long$Covariate))]))
-    envir <-  c(as.character(unique(VP_long$Covariate)[grepl("median", unique(VP_long$Covariate))]),
-                "q05_1year_degree_heating_week", "q95_1year_degree_heating_week", 
+                 "Back_Reef_Slope_500m", "coral_algae_500m",  "Deep_Lagoon_500m", 
+                 "Inner_Reef_Flat_500m", "Microalgal_Mats_500m", "Patch_Reefs_500m",   
+                 "Plateau_500m", "Reef_Crest_500m", "Reef_Slope_500m", 
+                 "Rock_500m", "Rubble_500m", "Sand_500m", "Seagrass_500m", 
+                 "Sheltered_Reef_Slope_500m", "Terrestrial_Reef_Flat_500m")
+    
+    envir <-  c("median_5year_analysed_sst", "median_5year_chl", 
+                "median_5year_degree_heating_week", "median_5year_ph",
+                "median_5year_so_mean", "median_1year_degree_heating_week",
+                "median_7days_degree_heating_week", "median_7days_analysed_sst",
+                "median_7days_chl", "q95_1year_degree_heating_week", 
                 "q95_5year_degree_heating_week")
+    
     random <- unique(VP_long$Covariate)[grepl("Random", unique(VP_long$Covariate))]
     
     # cat_colors <- list(
@@ -465,7 +548,18 @@ plot_hmsc_result <- function(covariates = covariates,
       random = colorRampPalette(c("grey95", "grey50"))(length(random))
     )
     
-    VP_long <- VP_long |> 
+    VP_long <- VP_long |>
+      dplyr::mutate(
+        Covariate = dplyr::case_when(
+          grepl("poly\\(", Covariate) ~ str_replace(
+            str_replace(str_extract(Covariate, "poly\\(([^,]+),"), "poly\\(", ""), 
+            "\\,", ""),
+          TRUE ~ Covariate)
+        # 
+        # degree = dplyr::case_when(
+        #   grepl("poly\\(", Covariate) ~ str_replace(str_extract(Covariate, "\\)\\d+"), "\\)", ""),
+        #   TRUE ~ "")
+        )|>
       dplyr::mutate(category = dplyr::case_when(
         Covariate %in% human ~ "human",
         Covariate %in% habitat ~ "habitat",
@@ -477,6 +571,20 @@ plot_hmsc_result <- function(covariates = covariates,
       dplyr::mutate(color = if (!is.na(category)) cat_colors[[category]][match(Covariate, get(category))] else NA_character_) |> 
       dplyr::ungroup()
     
+    
+    # VP_long <- VP_long |> 
+    #   dplyr::mutate(category = dplyr::case_when(
+    #     Covariate %in% human ~ "human",
+    #     Covariate %in% habitat ~ "habitat",
+    #     Covariate %in% envir ~ "envir",
+    #     Covariate %in% random ~ "random",
+    #     TRUE ~ NA_character_
+    #   )) |> 
+    #   dplyr::rowwise() |> 
+    #   dplyr::mutate(color = if (!is.na(category)) cat_colors[[category]][match(Covariate, get(category))] else NA_character_) |> 
+    #   dplyr::ungroup()
+    
+
     # Order covariates
     VP_long$Covariate <- forcats::fct_relevel(VP_long$Covariate, 
                                               c(human, habitat, envir, random))
@@ -561,7 +669,8 @@ plot_hmsc_result <- function(covariates = covariates,
     
     ## Relative variance partitioning
     ggplot(VP_long, aes(x = Response, y = Value, fill = Covariate)) +
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.1) +
+      geom_bar(stat = "identity", position = "stack", 
+               color = "black",linewidth = 0.1) +
       scale_fill_manual(values = setNames(VP_long$color, VP_long$Covariate),
                         labels = unique(VP_long$labels)) +
       labs(title = "", x = "", y = "") +
@@ -585,7 +694,8 @@ plot_hmsc_result <- function(covariates = covariates,
     
     ggplot(VP_long_absolute, aes(x = reorder(Response,-R2),
                                  y = Value, fill = Covariate)) +
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.1) +
+      geom_bar(stat = "identity", position = "stack",
+               color = "black", linewidth = 0.1) +
       scale_fill_manual(values = setNames(VP_long_absolute$color, VP_long_absolute$Covariate),
                         labels = unique(VP_long_absolute$labels)) +
       labs( title = "",x = "",y = "") +
@@ -641,20 +751,30 @@ plot_hmsc_result <- function(covariates = covariates,
     OmegaCor <- Hmsc::computeAssociations(model_fit_mcmc)
     supportLevel <- 0.95
     
-    toPlot <- ((OmegaCor[[1]]$support>supportLevel) +
-                 (OmegaCor[[1]]$support<(1-supportLevel))>0)*OmegaCor[[1]]$mean
+    for(i in 1:length(OmegaCor)){
+      #i=1
+      toPlot <- ((OmegaCor[[i]]$support>supportLevel) +
+                   (OmegaCor[[i]]$support<(1-supportLevel))>0)*OmegaCor[[i]]$mean
+      
+      png(paste0(path_file,"/residual_associations_", model_fit_mcmc$rLNames[i], save_name,".png"),
+          width = 25, height = 15, units = "cm", res = 300)
+      # par(mar = c(10,10,2,2))
+      corrplot::corrplot(toPlot, method = "color",
+                         col=colorRampPalette(c("blue","white","red"))(200),
+                         tl.cex=.6, tl.col="black",
+                         order = "hclust",
+                         title=paste("random effect level:", model_fit_mcmc$rLNames[i]), 
+                         mar=c(0,0,1,0))
+      #residual associations among species can be generated by correlated responses to missing covariates,
+      # or by ecological interactions/similar life story and constraints.
+      dev.off()
+      
+    }
     
-    png(paste0(path_file,"/residual_associations_", save_name,".png"),
-        width = 25, height = 15, units = "cm", res = 300)
-    # par(mar = c(10,10,2,2))
-    corrplot::corrplot(toPlot, method = "color",
-                       col=colorRampPalette(c("blue","white","red"))(200),
-                       tl.cex=.6, tl.col="black",
-                       title=paste("random effect level:", model_fit_mcmc$rLNames[1]), 
-                       mar=c(0,0,1,0))
-    #residual associations among species can be generated by correlated responses to missing covariates,
-    # or by ecological interactions.
-    dev.off()
+    # etaPost=getPostEstimate(model_fit_mcmc, "Eta")
+    # lambdaPost=getPostEstimate(model_fit_mcmc, "Lambda")
+    # Hmsc::biPlot(model_fit_mcmc, etaPost = etaPost, lambdaPost = lambdaPost, 
+    #              factors = c(1,2))
     
   } #END OF PLOT RESIDUAL ASSOCIATIONS
   
@@ -666,15 +786,15 @@ plot_hmsc_result <- function(covariates = covariates,
     
     ##### Support level  #####
     png(paste0(path_file,"/estimate_significance_", save_name,".png"),
-        width = 25, height = 15, units = "cm", res = 300)
-    par(mar = c(10,10,2,2))
+        width = 30, height = 20, units = "cm", res = 300)
+    par(mar = c(15,10,2,2))
     # Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Mean", supportLevel = 0.95)
     Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Sign", supportLevel = 0.95)
     dev.off()
     
     
     ##### ridges plot  #####
-    S <- ggmcmc::ggs(mpost$Beta)
+    # S <- ggmcmc::ggs(mpost$Beta) # Need to run "check_convergence" part.
     
     # Extract one or some covariate(s)
     unique(S$Parameter)
@@ -686,27 +806,38 @@ plot_hmsc_result <- function(covariates = covariates,
 
     for(drivers in drivers_to_plot){
       
-      df <- S[grep(paste(drivers, collapse = "|"), S$Parameter),] |> 
-        dplyr::mutate(Parameter = as.character(Parameter),
-                      resp_name = sapply(strsplit(sapply(strsplit(Parameter, ","),
-                                                         function(x) x[2]), " "), function(x) x[2]),
-                      driver = sapply(strsplit(sapply(strsplit(sapply(strsplit(Parameter, ","),
-                                                                      function(x) x[1]), "\\["), function(x) x[2]), " "),
-                                      function(x) x[1])) |> 
-        dplyr::filter(driver %in% drivers) #remove composed names as "coral_rubble"
+      drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
+      #Arrange S table
+      df <- S_arranged |>
+        dplyr::filter(covariate %in% drivers)
+      
+      # df <- S[grep(paste(drivers, collapse = "|"), S$Parameter),] |> 
+      #   dplyr::mutate(
+      #     Parameter = as.character(Parameter),
+      #     resp_name = sapply(strsplit(sapply(strsplit(Parameter, ","),
+      #                                        function(x) x[2]), " "), function(x) x[2]),
+      #     driver = sapply(strsplit(sapply(strsplit(sapply(strsplit(Parameter, ","),
+      #                                                     function(x) x[1]), "\\["), function(x) x[2]), " "),
+      #                     function(x) x[1])) |> 
+      #   # #
+      #   # dplyr::mutate(driver = if(str_detect(driver, "poly\\(")){
+      #   #   paste(gsub("poly\\(", "", driver)), 
+      #   # }
+      #   #   gsub("poly\\(", "", driver))
+      #   dplyr::filter(driver %in% drivers) #remove composed names as "coral_rubble"
       
       
       medians <- df  |> 
-        dplyr::filter(driver == drivers[1]) |> 
-        dplyr::group_by(resp_name)  |> 
+        dplyr::filter(covariate %in% c(drivers[1], paste0(drivers[1], "_Deg1"))) |> 
+        dplyr::group_by(response)  |> 
         dplyr::summarise(median_value = median(value)) |> 
         dplyr::arrange(median_value)
       
       df <- df |> 
-        dplyr::mutate(resp_name = factor(resp_name, levels = medians$resp_name))
+        dplyr::mutate(response = factor(response, levels = medians$response))
       
       ggplot(df) +
-        aes(y = resp_name, x = value,  fill = resp_name) +
+        aes(y = response, x = value,  fill = response) +
         ggridges::geom_density_ridges(alpha=0.3)+ #, bandwidth = 0.005) +
         geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.6)+
         hrbrthemes::theme_ipsum( axis_title_size = 0 ) +
@@ -716,7 +847,7 @@ plot_hmsc_result <- function(covariates = covariates,
           strip.text.x = element_text(size = 15)
         ) +
         xlab(drivers) + ylab("Nature Contributions to People and Nature")+
-        facet_wrap(~driver, ncol = length(df$driver)
+        facet_wrap(~covariate, ncol = length(df$covariate)
                    , scales = "free_x"
         )
       
@@ -728,26 +859,26 @@ plot_hmsc_result <- function(covariates = covariates,
     
     
     ##### Estimates Heatmap  #####
-    S_df <- S |> 
-      dplyr::mutate(Parameter = as.character(Parameter),
-                    resp_name = sapply(strsplit(sapply(strsplit(Parameter, ","),
-                                                       function(x) x[2]), " "), function(x) x[2]),
-                    cov = sapply(strsplit(sapply(strsplit(sapply(strsplit(Parameter, ","),
-                                                                 function(x) x[1]), "\\["), function(x) x[2]), " "),
-                                 function(x) x[1]))
+    # S_df <- S |> 
+    #   dplyr::mutate(Parameter = as.character(Parameter),
+    #                 response = sapply(strsplit(sapply(strsplit(Parameter, ","),
+    #                                                    function(x) x[2]), " "), function(x) x[2]),
+    #                 cov = sapply(strsplit(sapply(strsplit(sapply(strsplit(Parameter, ","),
+    #                                                              function(x) x[1]), "\\["), function(x) x[2]), " "),
+    #                              function(x) x[1]))
     
-    mean_estimate <- S_df |> 
-      dplyr::group_by(cov, resp_name) |> 
+    mean_estimate <- S_arranged |> 
+      dplyr::group_by(covariate, response) |> 
       dplyr::summarise(mean_posterior_distrib  = mean(value)) |> 
-      dplyr::filter(cov != "(Intercept)")
+      dplyr::filter(covariate != "Intercept")
     
     summary(mean_estimate$mean_posterior_distrib)
     
     ## Heat map of estimates
     palette <- rev(c("#A50026", "#D73027", "#F46D43", "#FDAE61", "#FEE090", "#D8DAEB", "#B2ABD2", "#8073AC", "#542788"))
     coef_matrix <- mean_estimate |> 
-      tidyr::pivot_wider(names_from = "resp_name", values_from = "mean_posterior_distrib") |> 
-      tibble::column_to_rownames("cov") |> 
+      tidyr::pivot_wider(names_from = "response", values_from = "mean_posterior_distrib") |> 
+      tibble::column_to_rownames("covariate") |> 
       as.matrix()
     
     jpeg(filename = paste0(path_file,"/heatmap_estimates_", save_name,".jpg"),
@@ -761,7 +892,7 @@ plot_hmsc_result <- function(covariates = covariates,
     
     ##### Estimate distribution #####
     # Classification of covariates
-    covariates <- unique(mean_estimate$cov)
+    covariates <- unique(mean_estimate$covariate)
     envir <- c(grep("median", covariates, value = T))
     habitat <- c(grep("500m", covariates, value = T),
                  "depth", "algae", "coral", "Sand", "seagrass", "microalgal_mats",
@@ -769,16 +900,16 @@ plot_hmsc_result <- function(covariates = covariates,
     human <- setdiff(covariates, c(envir, habitat))
     
     # Classification of contributions
-    cont_list <- unique(mean_estimate$resp_name)
+    cont_list <- unique(mean_estimate$response)
     NP <- c("available_biomass", "selenium", "zinc", "omega_3" , "calcium",  "iron",                       
             "vitamin_A", "available_biomass_turnover", "NP_score")
     NN <- setdiff(cont_list, NP)
     
     #Resume data
     coeff_plot <- mean_estimate |> 
-      dplyr::mutate(cov_class = ifelse(cov %in% envir, "environmental",
-                                       ifelse(cov %in% habitat, "habitat", "human"))) |> 
-      dplyr::mutate(contrib_class = ifelse(resp_name %in% NP, "Nature-for-People",
+      dplyr::mutate(cov_class = ifelse(covariate %in% envir, "environmental",
+                                       ifelse(covariate %in% habitat, "habitat", "human"))) |> 
+      dplyr::mutate(contrib_class = ifelse(response %in% NP, "Nature-for-People",
                                            "Nature-for-Nature"))
     
     # Plot estimate distribution
@@ -789,16 +920,16 @@ plot_hmsc_result <- function(covariates = covariates,
       
       # order covariates
       df_ordered <- data |> 
-        dplyr::group_by(cov) |> 
+        dplyr::group_by(covariate) |> 
         dplyr::summarise(mean_estimate = median(mean_posterior_distrib)) |> 
         dplyr::arrange(mean_estimate) |> 
-        dplyr::pull(cov)
+        dplyr::pull(covariate)
       
       
       # Boxplot of estimates
       ggplot(data) +
         geom_vline(xintercept = 0, linetype = "dashed")+
-        geom_boxplot(aes(y=factor(cov, levels = df_ordered), 
+        geom_boxplot(aes(y=factor(covariate, levels = df_ordered), 
                          x = mean_posterior_distrib, fill = cov_class),
                      alpha = 0.7) +
         hrbrthemes::theme_ipsum() +
@@ -823,29 +954,31 @@ plot_hmsc_result <- function(covariates = covariates,
   
   } # END OF PLOT ESTIMATES
   
+  #### Partial graph ####
+  if(plot_partial_graph){
+    
+  Gradient = Hmsc::constructGradient(model_fit_mcmc,
+                                     focalVariable = "median_5year_analysed_sst")
+  predY = predict(model_fit_mcmc,
+                  XData = Gradient$XDataNew,
+                  studyDesign = Gradient$studyDesignNew,
+                  ranLevels = Gradient$rLNew,
+                  expected=TRUE)
+                  
+  # Hmsc::plotGradient(model_fit_mcmc, Gradient, pred = predY, measure = "Y",
+  #                    showData = TRUE, index = 13)
   
+  png(paste0(path_file,"/Partial_plot_SST_", save_name,".jpg"),
+      width = 35, height = 25, units = "cm", res = 300)
+  par(mfrow = c(6, 4), mar = c(4, 4, 2, 2)) 
+  for (i in 1:22) {
+    Hmsc::plotGradient(model_fit_mcmc, Gradient, pred = predY, measure = "Y", 
+                       showPosteriorSupport =F, xlabel="",
+                       showData = TRUE, index = i)
+  } 
+  dev.off()
   
-  # #### Partial graph ####
-  # Gradient = Hmsc::constructGradient(model_fit_mcmc,
-  #                                    focalVariable = "n_fishing_vessels")
-  # predY = predict(model_fit_mcmc, 
-  #                 XData = Gradient$XDataNew, 
-  #                 studyDesign = Gradient$studyDesignNew,
-  #                 ranLevels = Gradient$rLNew, 
-  #                 expected=TRUE)
-  # plotGradient(model_fit_mcmc, Gradient, pred=predY, measure="Y", showData = TRUE,
-  #              index=13)
-  # plotGradient(model_fit_mcmc, Gradient, pred=predY, measure="S", showData = TRUE)
-  # 
-  # 
-  # png("figures/models/hmsc/partial_plot.png",
-  #     width = 15, height = 15, units = "cm", res = 300)
-  # plotGradient(model_fit_mcmc, Gradient, pred=predY, measure="Y", showData = TRUE,
-  #              index=13)
-  # dev.off()
-  
-  
-  
+  }
   
   ##----------------------------- Residuals -----------------------------------
   
@@ -875,13 +1008,8 @@ plot_hmsc_result <- function(covariates = covariates,
       tibble::rownames_to_column("survey_id") |> 
       tidyr::pivot_longer(cols = -survey_id, names_to = "response",
                           values_to = "prediction") |> 
-      dplyr::left_join(response_long)
-    
-    compare_residuals <- residuals |> 
-      tibble::rownames_to_column("survey_id") |> 
-      tidyr::pivot_longer(cols = -survey_id, names_to = "response",
-                          values_to = "residuals") |> 
-      dplyr::left_join(response_long)
+      dplyr::left_join(response_long) |> 
+      dplyr::mutate(residuals = observation-prediction)
     
     
     #histograms of residuals
@@ -895,24 +1023,165 @@ plot_hmsc_result <- function(covariates = covariates,
       xlab("Observed contributions") + ylab("imputed")+
       geom_abline(slope = 1) + 
       ggpubr::stat_regline_equation(data = compare_pred,
-                                    aes(x = observation, y = prediction, label = after_stat(rr.label)))   +
+                                    aes(x = observation, y = prediction,
+                                        label = after_stat(rr.label)))   +
       facet_wrap(~response, scales = "free") +
       theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
-    ggsave(filename = paste0(path_file,"/Predictions_VS_Observations_", save_name,".jpg"),
+    ggsave(filename = paste0(path_file,"/Predictions_VS_Observations_", 
+                             save_name,".jpg"),
            width = 15, height = 8)
     
     #residuals vs observations
-    plot_interaction(compare_residuals, var_facet_wrap = "response", 
+    plot_interaction(compare_pred, var_facet_wrap = "response", 
                      X_values = "observation", Y_values = "residuals")+
       geom_hline(yintercept = 0)
     ggsave(filename = paste0(path_file,"/Residual_VS_Observations_", save_name,".jpg"),
            width = 15, height = 8)
     
+    
+    
+    
+    ## Check for spatial structure:
+    cat("... Measure Moran Indices... \n") 
+    noise_magnitude <- 0.00001 #noise in coordinates
+    
+    geo_points <- covariates |> 
+      dplyr::select(longitude, latitude)|>
+      dplyr::rowwise() |> 
+      dplyr::mutate(latitude = latitude + runif(1, -noise_magnitude, noise_magnitude),
+                    longitude = longitude + runif(1, -noise_magnitude, noise_magnitude)) |>
+      dplyr::ungroup()
+    
+    site_dist <- as.matrix(
+      geodist::geodist(geo_points[,c("longitude", "latitude")], measure = "geodesic"))
+    site_dist_inv <- 1/site_dist
+    diag(site_dist_inv) <- 0
+    
+    moranI <- parallel::mclapply(1:ncol(residuals), mc.cores = 22, FUN = function(i){
+      ape::Moran.I(residuals[,i], site_dist_inv)$observed
+    })
+    names(moranI) <- colnames(residuals)
+    
+    moranI_df <- as.data.frame(t(as.data.frame(moranI))) |> 
+      dplyr::rename(moran_index = V1) |> 
+      tibble::rownames_to_column("response")
+    
+    # #test3
+    # library(spdep)
+    # library(sp)
+    # k <- 4000  # Number of neighbors, you can adjust this
+    # neighbors <- knearneigh(geo_points[,c("longitude", "latitude")], k = k, longlat = T)
+    # nb <- knn2nb(neighbors)
+    # weights <- nb2listw(nb)
+    # moran_test <- moran.test(residuals$actino_richness, weights)
+    # moran_test
+    # 
+    # #test4
+    # spatial_cor <- ncf::correlog(x= covariates$longitude, 
+    #                              y= covariates$latitude, 
+    #                              z = residuals$iucn_species_richness, increment = 300, 
+    #                              resamp= 30, latlon = TRUE)
+    # plot(spatial_cor)
+    # 
+    # ggplot() +
+    #   geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
+    #                  x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]),
+    #              alpha = 0.6, size = 1) +
+    #   geom_smooth(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
+    #                   x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]))+
+    #   
+    #   geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$p <= 0.01 &
+    #                                                       spatial_cor$mean.of.class < 15000) ] ,
+    #                  x = spatial_cor$mean.of.class[ which(spatial_cor$p <= 0.01 &
+    #                                                         spatial_cor$mean.of.class < 15000) ]),
+    #              alpha = 0.8, size = 1, col ="red") +
+    #   geom_vline(xintercept = spatial_cor[["x.intercept"]], linetype="dashed", 
+    #              color = "black", linewidth=1)+
+    #   
+    #   xlab("Distance class (in km)") + ylab("spatial correlation (Moran I)")+
+    #   labs(title =  title,
+    #        subtitle = paste("Increment = ", 300, "km, ", "permutations = ", 30,
+    #                         ", x intercept = ", round(spatial_cor[["x.intercept"]],1), "km"))+
+    #   # ylim(-0.7,0.9)+
+    #   theme_bw()
+    
+    
+    residual_coord <- compare_pred |> 
+      dplyr::left_join(
+        tibble::rownames_to_column(
+          dplyr::select(covariates, longitude, latitude), "survey_id")) |> 
+      dplyr::left_join(moranI_df)
+    
+    
+    #Plot residuals
+    plot_interaction(residual_coord, var_facet_wrap = "response", 
+                     X_values = "longitude", Y_values = "residuals")+
+      geom_hline(yintercept = 0)
+    
+    
+    plot_interaction(residual_coord, var_facet_wrap = "response", 
+                     X_values = "latitude", Y_values = "residuals")+
+      geom_hline(yintercept = 0)+
+      geom_text(aes(x = Inf, y = Inf, label = paste0("Moran's I = ", round(moran_index, 2))), 
+                hjust = 1.1, vjust = 1.1, size = 3, color = "black")
+    
+    ggsave(filename = paste0(path_file,"/residuals_VS_latitude_MoranI_", save_name,".jpg"),
+           width = 15, height = 8)
+    
+    
   } #END OF CHECK RESIDUALS
+  
+  ##----------------------------- Latent factors -----------------------------------
+  
+  if(latent_factors){
+    cat("Plot latent factors of the model... \n")
+    #site loadings (η) and species loadings (λ) on the latent factors
+    postEta <- Hmsc::getPostEstimate(model_fit_mcmc, parName = "Eta")
+    
+    postEtamean1 <- postEta$mean[,1] # Latent factor 1
+    postEtamean2 <- postEta$mean[,2] # Latent factor 2
+    postEtamean3 <- postEta$mean[,3] # Latent factor 3
+    
+    data_lf <- data.frame(
+      survey_id = model_fit_mcmc[["ranLevels"]][["sample_unit"]][["pi"]],
+      latent_factor_1 = postEtamean1,
+      latent_factor_2 = postEtamean2,
+      latent_factor_3 = postEtamean3) |> 
+      dplyr::left_join(
+        tibble::rownames_to_column(covariates_final, "survey_id")
+      )
+    
+    source(here::here("R/evaluation_prediction_model.R"))
+    
+    lf1 <- plot_Contrib_on_world_map(data = data_lf,
+                              "latent_factor_1",
+                              xlim=c(-180,180), ylim = c(-36, 31),
+                              title="",jitter=1.5, pt_size=2, save=F)
+    lf2 <- plot_Contrib_on_world_map(data = data_lf,
+                                     "latent_factor_2",
+                                     xlim=c(-180,180), ylim = c(-36, 31),
+                                     title="",jitter=1.5, pt_size=2, save=F)
+    lf3 <- plot_Contrib_on_world_map(data = data_lf,
+                                     "latent_factor_3",
+                                     xlim=c(-180,180), ylim = c(-36, 31),
+                                     title="",jitter=1.5, pt_size=2, save=F)
+    library(patchwork)
+    latent_factors <- lf1 / lf2 / lf3
+    latent_factors
+    
+    ggsave(latent_factors, 
+           filename = paste0(path_file,"/Latent_factors_", save_name,".jpg"),
+           width = 12, height = 10)
+    
+    }#END OF CHECK LATENT FACTORS
+  
                 
   
 } ## END OF FUNCTION PLOT_HMSC_RESULT
-                          
+       
+
+                   
+##--------------------------HMSC PREDICTION-----------------------------------##
 
 #' Run hmsc prediction.
 #'

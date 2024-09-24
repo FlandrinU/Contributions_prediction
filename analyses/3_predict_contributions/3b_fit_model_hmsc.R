@@ -19,12 +19,13 @@ nip <- lapply(nip, install.packages, dependencies = TRUE)
 # ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 source("R/HMSC_function.R")
+source("R/evaluation_prediction_model.R")
 
 ##------------------------------- load data ------------------------------------
 load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
 load( here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
-Y_data =  observations_final#[sample(1:nrow(observations_final),1000),] ####################### reduce data
+Y_data =  observations_final
 X_data = covariates_final[rownames(Y_data),] 
 # |> 
 #   dplyr::filter(country == "Australia")
@@ -33,34 +34,42 @@ Y_data =  observations_final[rownames(X_data),]
 rownames(X_data) <- rownames(Y_data)
 
 ##----------------------------- Set-up parameters ------------------------------
-nSamples = 50 #1000 
-thin = 10 #100
+nSamples = 100 #1000 
+thin = 2000 #100
 nChains = 2 
-verbose = 100 
+verbose = 1000 
 nb_neighbours = 10
+transient = nSamples * thin
 
-random_factors = c("associations","country")
+random_factors = c("sample_unit", "country", "site")
+
 response_distribution <- rep("normal", ncol(Y_data))
 #response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
 
-name = "test_spatial_full_and_country_in_rL"
+# quadratic_effects = colnames(
+#   dplyr::select(X_data,-longitude,-latitude,-year,-country, -ecoregion,-realm,
+#                 -hdi,-marine_ecosystem_dependency,-ngo,-natural_ressource_rent))
+quadratic_effects = NULL
 
+name = "test_site_country_asso_in_rL"
 
+save_path = here::here("outputs/models/hmsc")
 ##----------------------------- Run HMSC function ------------------------------
 
 hmsc_function(nSamples,
               thin,
               nChains,
               verbose,
-              transient = nSamples * thin,
+              transient = transient,
               Y_data,
               X_data,
               response_distribution,
+              quadratic_effects,
               random_factors,
               nb_neighbours,
               name,
-              run_python = TRUE,
-              save_path = here::here("outputs/models/hmsc"))
+              run_python = T,
+              save_path = save_path)
 
 
 ##----------------------------- Crossvalidation: predictive power ------------------------------
@@ -69,7 +78,7 @@ thin = 2000 #100
 nChains = 2 
 verbose = 100 
 nb_neighbours = 10
-random_factors = c("country", "associations")
+random_factors = c("country", "sample_unit")
 response_distribution <- rep("normal", ncol(Y_data))
 name = "model_train"
 
@@ -127,18 +136,18 @@ predictions_cv <- parallel::mclapply(1:length(datasets),
   Y_data_test <- test
   X_data_test <- covariates_final[rownames(Y_data_test),]
   
-  studyDesign <- data.frame(associations = as.factor(rownames(X_data_test)),
+  studyDesign <- data.frame(sample_unit = as.factor(rownames(X_data_test)),
                             spatial = as.factor(rownames(X_data_test)),
                             year = as.factor(X_data_test$year),
                             country = as.factor(X_data_test$country),
                             ecoregion = as.factor(X_data_test$ecoregion))
   
-  rL_asso = Hmsc::HmscRandomLevel(units = studyDesign$associations)
+  rL_asso = Hmsc::HmscRandomLevel(units = studyDesign$sample_unit)
   rL_year = Hmsc::HmscRandomLevel(units = studyDesign$year)
   rL_ecoregion = Hmsc::HmscRandomLevel(units = studyDesign$ecoregion)
   rL_country =  Hmsc::HmscRandomLevel(units = studyDesign$country)
   
-  ranLevels = list(associations = rL_asso,
+  ranLevels = list(sample_unit = rL_asso,
                    year = rL_year,
                    ecoregion = rL_ecoregion,
                    country = rL_country)
@@ -161,14 +170,33 @@ predictions_cv <- parallel::mclapply(1:length(datasets),
 save(predictions_cv, file = here::here("outputs/models/hmsc/cross_validation/predictions_crossval_5folds.Rdata"))
 
 
-##----------------------------- Sensitivity analyses: fit on several realms ------------------------------
+##--------------------------- Sensitivity analyses -----------------------------
+
+##### Quadratic effects ####
+full_data <- cbind(X_data, Y_data) |> 
+  tidyr::pivot_longer(cols = colnames(Y_data), names_to = "contributions")
+
+plot_interaction(full_data,
+                 var_facet_wrap = "contributions",
+                 X_values = "median_5year_analysed_sst",
+                 Y_values = "value",
+                 add_curve = T) # (mgcv::gam() is used with formula = y ~ s(x, bs = "cs") with method = "REML".)
+
+ggsave(filename = here::here("figures/models/hmsc/sensitivity_analyses/contributions_VS_SST.jpg"),
+       width = 15, height = 8)
+
+
+
+
+##### fit on several realms ####
+
 nSamples = 300 #1000 
 thin = 3000 #100
 nChains = 3 
 verbose = 100 
 nb_neighbours = 10
 
-random_factors = c("associations","country")
+random_factors = c("sample_unit","country")
 response_distribution <- rep("normal", ncol(Y_data))
 
 
