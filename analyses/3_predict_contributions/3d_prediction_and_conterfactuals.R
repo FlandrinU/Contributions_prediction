@@ -23,10 +23,20 @@ library(ggplot2)
 library(patchwork)
 
 ##------------------------------- load data ------------------------------------
-load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
-load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
+# load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
+# load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
 # response =  observations_final#[sample(1:nrow(observations_final),1000),] ####################### reduce data
 # covariates = covariates_final[rownames(response),]
+load(file = here::here("data", "raw_data", "environmental_covariates",
+                       "all_covariates_benthos_inferred_tropical_surveys.Rdata"))
+
+metadata <- all_covariates_benthos_inferred |> 
+  dplyr::select(survey_id:year)
+# ## If site scale
+# metadata <- all_covariates_benthos_inferred |>
+#   dplyr::select(country:year, -depth, -visibility, -hour) |>
+#   dplyr::mutate(survey_id = paste0(site_code, "_", survey_date)) |>  #/!\ here "survey_id" represents the new site_id
+#   unique()
 
 # Crossvalidation result
 load( here::here("outputs/models/hmsc/cross_validation/predictions_crossval_5folds.Rdata"))
@@ -97,8 +107,8 @@ dev.off()
 ## List all files in the directory and choose the model
 list_files <- list.files(save_out) 
 list_files
-file_name <- gsub("output_", "", list_files[9]) #choose the wanted file
-
+file_name <- gsub("output_", "", list_files[5]) #choose the wanted file
+concatenate_chains = F
 
 ## Import initial object
 
@@ -117,27 +127,46 @@ transient = init_obj[["transient"]]
 
 
 ## Import posterior probability
-file_rds <- readRDS(file = paste0(save_out, paste0("output_", file_name)))[[1]]
-importFromHPC <- jsonify::from_json(file_rds)
-postList <- importFromHPC[1:nChains]
+if(concatenate_chains){
+  chainList = vector("list", nChains)
+  importFromHPC <- vector("list", nChains+1)
+  for(cInd in 1:nChains){
+    chain_file_path = file.path(
+      paste0(save_out,"output_", file_name, "/chain_", cInd, ".rds"))
+    chainList[[cInd]] = jsonify::from_json(readRDS(file = chain_file_path)[[1]])[[1]]
+  }
+}else{
+  all_chains <- readRDS(file = paste0(save_out, paste0("output_", file_name)))[[1]]
+  importFromHPC <- jsonify::from_json(all_chains)
+  chainList <- importFromHPC[1:nChains]
+  ##Result model
+  cat(sprintf("fitting time %.1f h\n", importFromHPC[[nChains+1]] / 3600))
+  
+}
 
 ##Export and merge chains
 model_fit_mcmc <- Hmsc::importPosteriorFromHPC(model_fit,
-                                               postList, 
+                                               chainList, 
                                                nSamples, 
                                                thin, 
                                                transient)
-
-
 
 ## Estimates for each chains
 mpost <- Hmsc::convertToCodaObject(model_fit_mcmc)
 
 postBeta <- Hmsc::getPostEstimate(model_fit_mcmc, parName = "Beta")
 
+## Initial data
+Y_data <- as.data.frame(model_fit_mcmc$Y)
+X_data <- model_fit_mcmc$XData
+rownames(X_data) <- rownames(Y_data) ################################ to check #############################""
+rownames(metadata) <- NULL
+metadata_model <- tibble::column_to_rownames(metadata, "survey_id")[rownames(X_data),]
+# X_data <- cbind(X_data, metadata_model)
+
 
 ##----------------------------- Predict contributions -----------------------------------
-predictions <- run_hmsc_prediction(X_data = covariates_final,
+predictions <- run_hmsc_prediction(X_data = X_data,
                                    model_fit_mcmc = model_fit_mcmc)[[1]]
 
 
@@ -146,40 +175,40 @@ distribution_plot(predictions, longer = T, cols_plot = colnames(predictions))
 ggsave(width=15, height= 10, here::here("figures/models/hmsc/conterfactuals", 
                              "predicted_contributions_distribution.jpg"))
 
-residuals <- predictions - observations_final
+residuals <- predictions - Y_data
 distribution_plot(residuals, longer = T,cols_plot = colnames(residuals))
 # ~zero centered.
 
 
-##### TO DO: test spatial autocorrelations of residuals? ######
+##### TO DO: test spatial autocorrelations of residuals from CV? ######
 
 
 
 ##----------------------------- Counterfactual scenarios -----------------------------------
 
 #### Change initial conditions ###
-summary(covariates_final)
+summary(X_data)
 
 #(1) Change effectiveness only: from "out" to "high protection"
-X_new_mpa <- covariates_final
-new_surveys_mpa <- rownames(X_new_mpa |> dplyr::filter(effectiveness == "Out"))
+X_new_mpa <- X_data
+new_surveys_mpa <- rownames(X_new_mpa |> dplyr::filter(effectiveness == "out"))
 X_new_mpa[new_surveys_mpa, "effectiveness"] <- as.factor("High")
 
 #(2) Change fishing pressure only
-X_new_vessels <- covariates_final
+X_new_vessels <- X_data
 new_surveys_vessels <- rownames(
   X_new_vessels[X_new_vessels$n_fishing_vessels != min(X_new_vessels$n_fishing_vessels),]
 )
 X_new_vessels[new_surveys_vessels, "n_fishing_vessels"] <- min(X_new_vessels$n_fishing_vessels)
 
 #(3) Change fishing pressure and MPA = real protection
-X_new_mpa_no_vessels <- covariates_final
+X_new_mpa_no_vessels <- X_data
 new_surveys_mpa_no_vessels <- unique(c(new_surveys_mpa, new_surveys_vessels))
 X_new_mpa_no_vessels[new_surveys_mpa_no_vessels, "effectiveness"] <- as.factor("High")
 X_new_mpa_no_vessels[new_surveys_mpa_no_vessels, "n_fishing_vessels"] <- min(X_new_mpa_no_vessels$n_fishing_vessels)
 
 #(4) Change human pressure: no gravity and high neartt
-X_new_no_human <- covariates_final
+X_new_no_human <- X_data
 new_surveys_no_human <- rownames(
   X_new_no_human[X_new_no_human$gravtot2 != min(X_new_no_human$gravtot2) |
               X_new_no_human$neartt != max(X_new_no_human$neartt),])
@@ -201,9 +230,9 @@ X_new_pristine[new_surveys_pristine, "neartt"] <- max(X_new_pristine$neartt)
 # X_new <- X_new_no_human ; new_survey <- new_surveys_no_human
 # X_new <- X_new_pristine ; new_survey <- new_surveys_pristine
 
-
-new_predictions <- run_hmsc_prediction(X_data = covariates_final,
+new_predictions <- run_hmsc_prediction(X_data = X_data,
                                        model_fit_mcmc = model_fit_mcmc,
+                                       metadata = metadata_model,
                                        X_new_data = X_new,
                                        new_surveys = new_survey)
 
@@ -262,9 +291,9 @@ distrib_boxplot(data_1_contrib, x = "country", y = "values", fill = "country",
 
 ##----------------------------- Plot changes -----------------------------------
 ## Select countries we want to plot
-selected_country <- covariates_final |> 
+selected_country <- metadata_model |> 
   dplyr::count(country) |> 
-  dplyr::filter(n > 20) |> 
+  dplyr::filter(n > 10) |> 
   dplyr::pull(country)
   
 ## Set the scenario
@@ -276,8 +305,9 @@ selected_country <- covariates_final |>
 # X_new <- X_new_pristine ; new_survey <- new_surveys_pristine
 
 
-new_predictions <- run_hmsc_prediction(X_data = covariates_final,
+new_predictions <- run_hmsc_prediction(X_data = X_data,
                                        model_fit_mcmc = model_fit_mcmc,
+                                       metadata = metadata_model,
                                        X_new_data = X_new,
                                        new_surveys = new_survey)
 
@@ -300,13 +330,14 @@ pca_plot <- factoextra::fviz_pca_biplot(pca,
                                         fill.ind = "grey",    
                                         repel = TRUE)
 
+
 # Calculate barycenters (centroids) for each country
 coord_old_points <- as.data.frame(pca$ind$coord[, 1:6]) |> 
   tibble::rownames_to_column("survey_id") |> 
   dplyr::filter(survey_id %in% new_survey) |> 
   tibble::column_to_rownames("survey_id")
 
-countries <- covariates_final[rownames(coord_old_points),]$country
+countries <- metadata_model[rownames(coord_old_points),]$country
   
 barycenters <- aggregate(coord_old_points, 
                          by = list(countries), FUN = mean) |> 
@@ -316,7 +347,7 @@ colnames(barycenters) <- c("country", "PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
 # Add barycenters to the plot
 pca_plot_barycenter <- pca_plot + 
   geom_point(data = barycenters, aes(x = PC1, y = PC2, fill = country), 
-             shape = 23, size = 4, color = "black")
+             shape = 23, size = 4, color = "black", stroke = 1)
 
 ### Obs new scenario ###
 # (1) Project the new predictions in the same space
@@ -329,25 +360,26 @@ coord_new_points <- as.data.frame(projected_points$coord[, 1:6]) |>
   tibble::column_to_rownames("survey_id")
 
 barycenters_new <- aggregate(coord_new_points, 
-                         by = list(countries), FUN = mean)
+                         by = list(countries), FUN = mean) |> 
+  dplyr::filter(Group.1 %in% selected_country)
 colnames(barycenters_new) <- c("country", "PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
 
 barycenters_movement <- merge(barycenters, barycenters_new, 
                               by = "country", suffixes = c("_old", "_new"))
 
 pca_plot_barycenter + 
-  # geom_point(data = barycenters_new, aes(x = PC1, y = PC2, fill = country), 
-  #                                  shape = 23, size = 3, color = "black")
+  geom_point(data = barycenters_new, aes(x = PC1, y = PC2, fill = country),
+                                   shape = 23, size = 3, color = "black", alpha = 0.5)+
   geom_segment(data = barycenters_movement, 
                aes(x = PC1_old, y = PC2_old, 
                    xend = PC1_new, yend = PC2_new,
                    color = country), 
-               arrow = arrow(length = unit(0.3, "cm")),
-               size = 1)+
-  labs(title = "No human and total protection")
+               # arrow = arrow(length = unit(0.3, "cm")),
+               linewidth = 1, linetype = "dotted")+
+  labs(title = "No vessels site scale")
 
 ggsave(width=15, height= 8, here::here("figures/models/hmsc/conterfactuals", 
-                                      "barycenters_movment_pristine.jpg"))
+                                      "barycenters_movment_No_vessels_site_scale.jpg"))
 
 
 

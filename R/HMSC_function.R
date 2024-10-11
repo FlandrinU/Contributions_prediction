@@ -48,6 +48,7 @@ hmsc_function <- function(nSamples,
                           quadratic_effects = NULL,
                           random_factors = NULL,
                           nb_neighbours = NULL,
+                          set_shrink = NULL,
                           name,
                           run_python = TRUE,
                           save_path = here::here("outputs/models/hmsc")
@@ -72,13 +73,12 @@ hmsc_function <- function(nSamples,
                                           -year,
                                           -country,
                                           -ecoregion,
-                                          -realm,
-                                          
-                                          # country level covariates
-                                          -hdi,
-                                          -marine_ecosystem_dependency,
-                                          -ngo,
-                                          -natural_ressource_rent
+                                          -realm
+                                          # ,                     #country level covariates
+                                          # -hdi,
+                                          # -marine_ecosystem_dependency,
+                                          # -ngo,
+                                          # -natural_ressource_rent
   ))
   
   linear_effects <- fixed_effects[!fixed_effects %in% quadratic_effects]
@@ -95,7 +95,7 @@ hmsc_function <- function(nSamples,
     formula <- as.formula(paste("~ ", paste(linear_effects, collapse = "+")))
   }
   
-  response_distribution <- rep("normal", ncol(Y_data))
+  # response_distribution <- rep("normal", ncol(Y_data))
   # response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
   
   
@@ -106,18 +106,17 @@ hmsc_function <- function(nSamples,
   noise_magnitude <- 0.00001 #noise in coordinates
   
   X <- X_data |>
+    tibble::rownames_to_column("survey_id") |> 
     dplyr::rowwise() |> 
     dplyr::mutate(latitude = latitude + runif(1, -noise_magnitude, noise_magnitude),
                   longitude = longitude + runif(1, -noise_magnitude, noise_magnitude)) |>
-    dplyr::ungroup()
-  rownames(X) <- rownames(X_data)
-  
+    dplyr::ungroup() |> 
+    tibble::column_to_rownames("survey_id")
+
   # (2) create a matrix with coordinates : xycoords is a matrix with 2 columns "x-coordinate","y-coordinate" and row names with spygen_code
   xycoords <- X |>
     dplyr::select(longitude, latitude)
-  rownames(xycoords) <- rownames(X)
-  
-  
+
   
   # (3) create spatial random effect and study design (rows in Y)
   rL.spatial = Hmsc::HmscRandomLevel(sData = xycoords,
@@ -150,16 +149,22 @@ hmsc_function <- function(nSamples,
   rL_ecoregion = Hmsc::HmscRandomLevel(units = unique(studyDesign$ecoregion))
   rL_country =  Hmsc::HmscRandomLevel(units = unique(studyDesign$country))
   
-  # # Set shrinkage
-  # rL_country=setPriors(rL_country, a1=5, a2=5)
-  # rL_sample=setPriors(rL_sample, a1=5, a2=5)
-
   ranLevels = list(sample_unit = rL_sample,
                    site = rL_site,
                    year = rL_year,
                    ecoregion = rL_ecoregion,
                    country = rL_country, 
                    spatial = rL.spatial)
+  
+  # (Set shrinkage
+  if(!is.null(set_shrink)){
+    rL_country=Hmsc::setPriors(rL_country, a1=set_shrink, a2=set_shrink)
+    rL_sample=Hmsc::setPriors(rL_sample, a1=set_shrink, a2=set_shrink)
+    rL_site=Hmsc::setPriors(rL_site, a1=set_shrink, a2=set_shrink)
+    rL_ecoregion=Hmsc::setPriors(rL_ecoregion, a1=set_shrink, a2=set_shrink)
+    rL_year=Hmsc::setPriors(rL_year, a1=set_shrink, a2=set_shrink)
+  }
+  #)
   
   
   ## Construct HMSC model strucure ##
@@ -238,14 +243,138 @@ hmsc_function <- function(nSamples,
 
 
 
+##--------------------------FIT HMSC CROSSVALIDATION-----------------------------------##
 
 
-##-----------------------------HMSC RESULTS-----------------------------------##
+#' HMSC function.
+#'
+#' @param k_fold Number of fold in crossvalidations
+#' @param nSamples Number of samples in the markov chain
+#' @param thin Number of iterations between each sample
+#' @param nChains Number of independant chains
+#' @param verbose Frequence of messages diplayed
+#' @param transient Number of iteration before sample begining
+#' @param Y_data dataframe of responses
+#' @param X_data dataframe of covariates
+#' @param response_distribution statistical distribution of responses ("normal", "poisson", or...)
+#' @param random_factors list of random factors as character
+#' @param nb_neighbours number of neighbours taken in spatial model
+#' @param name file name saved
+#' @param run_python if FALSE, the function creates the model and init object but doesn't run the markov chains
+#'
+#' @return save hmsc outputs in save_out directory
+#' @export
+#'
+#' @examples
+#' 
+
+
+
+fit_hmsc_crossvalidation <- function(k_fold = 5, 
+                                 nSamples,
+                                 thin,
+                                 nChains,
+                                 verbose,
+                                 transient,
+                                 Y_data,
+                                 X_data,
+                                 response_distribution,
+                                 quadratic_effects = NULL,
+                                 random_factors = NULL,
+                                 nb_neighbours = NULL,
+                                 set_shrink = NULL,
+                                 name,
+                                 run_python = TRUE,
+                                 save_path = here::here("outputs/models/hmsc")
+){
+  
+  save_path_cv <- file.path(save_path, "cross_validation/")
+  
+  ### Data sets ###
+  folds <- caret::groupKFold(X_data$site_code, k = k_fold)
+  
+  datasets <- lapply(c(1:k_fold), FUN = function(i){
+    
+    train_indices <- folds[[i]]
+
+    train <- Y_data[train_indices,] 
+    test <- Y_data[-train_indices,]
+
+    list(train, test)
+  })
+  
+  
+  ### Train models ###
+  train_model <- parallel::mclapply(1:k_fold, 
+                                    mc.cores = 5,
+                                    function(i){
+      # Data
+      fold <- datasets[[i]]
+      Y_train <- fold[[1]]
+      Y_test <- fold[[2]]
+      name_cv <- paste0( "CV",i, "_", name)
+      
+      X_train <- X_data[rownames(Y_train),]
+      X_test <- X_data[rownames(Y_test),]
+      
+      # Train model
+      hmsc_function(nSamples, thin, nChains, verbose, transient,
+                    Y_data = Y_train,
+                    X_data = X_train,
+                    response_distribution, quadratic_effects,random_factors,
+                    nb_neighbours, set_shrink, name_cv,
+                    run_python = T, save_path_cv)
+      
+      list(X_train, Y_train, X_test, Y_test)
+      
+      }) # END OF TRAIN CROSS-VAL MODEL
+      
+  
+  
+  ## CLEAN FOLDER ###
+  save_init <- paste0(save_path_cv,"init_multi/")
+  save_out <- paste0(save_path_cv, "out_multi/")
+  localDir <- paste0(save_path_cv, "multivariate/")
+  
+  model_name <- paste0(name, "_", paste(nChains, "chains",
+                                        thin, "thin",
+                                        nSamples, "samples",
+                                        sep = "_"))
+  
+  paths <- c(save_init, localDir, save_out)
+  for(path in paths){
+
+    dir.create(paste0(path, model_name), showWarnings = F)
+    
+    list_files <- list.files(path)
+    crossval <- list_files[grep(paste0("CV.*", model_name), list_files)]
+    
+    #deplace all files and rename them
+    for (file in crossval) {
+      destination_file <- file.path(paste0(path, model_name),
+                                    paste0(str_extract(file, "CV[0-9]+"), ".rds"))
+      
+      file.rename(file.path(path, file),
+                  destination_file
+                  )
+      } # end of for each cross val
+    } # end for each path
+  
+  
+  #Save X and Y data associated with crossval
+  save(train_model, file = file.path(paste0(save_out, model_name),
+                                     "dataset_crossvalidation.Rdata"))
+  
+} # END OF fit_hmsc_crossvalidation
+
+
+
+
+
+##-----------------------------PLOT HMSC RESULTS-----------------------------------##
 
 #' Plot results Hmsc.
 #'
-#' @param covariates dataframe of covariates
-#' @param response dataframe of responses
 #' @param file_name name of the model fitted
 #' @param save_init directory for models
 #' @param save_out directory for models
@@ -261,12 +390,10 @@ hmsc_function <- function(nSamples,
 
 
 
-plot_hmsc_result <- function(covariates = covariates,
-                             response = response,
+plot_hmsc_result <- function(metadata = metadata,
+                             #response = response,
                              file_name = file_name,
-                             save_init = save_init,
-                             save_out = save_out,
-                             localDir = localDir,
+                             path = path,
                              concatenate_chains = F,
                              plot_convergence = T,
                              plot_explanatory_power = T,
@@ -275,6 +402,7 @@ plot_hmsc_result <- function(covariates = covariates,
                              plot_estimates = T,
                              plot_partial_graph = T,
                              check_residuals = T,
+                             check_spatial_autocorrelation = F,
                              latent_factors = T,
                              drivers_to_plot =  list(
                                c("n_fishing_vessels", "gravtot2", "gdp", "neartt"))
@@ -293,6 +421,10 @@ plot_hmsc_result <- function(covariates = covariates,
   # Otherwise, use the modified following function of computeVariancePartitioning
   source("R/HMSC_computeVariancePartitioning.R")
   
+  # PATHS
+  save_init <- file.path(path, "init_multi/")
+  save_out <- file.path(path, "out_multi/")
+  localDir <- file.path(path, "multivariate/")
   
   ##---- Import initial object ----
   cat("Import HMSC fitted model... \n")
@@ -300,7 +432,7 @@ plot_hmsc_result <- function(covariates = covariates,
   save_name <- gsub(".rds", "", file_name)
   
   #Model design
-  load(file = file.path(localDir, paste0("model_fit_", save_name, ".rds.Rdata")))
+  load(file = paste0(localDir, paste0("model_fit_", save_name, ".rds.Rdata")))
   
   #Initial hmsc object
   init_obj_rds <- readRDS(paste0(save_init, paste0("init_", save_name, ".rds")))
@@ -315,6 +447,7 @@ plot_hmsc_result <- function(covariates = covariates,
   ## Import posterior probability
   if(concatenate_chains){
     chainList = vector("list", nChains)
+    importFromHPC <- vector("list", nChains+1)
     for(cInd in 1:nChains){
       chain_file_path = file.path(
         paste0(save_out,"output_", file_name, "/chain_", cInd, ".rds"))
@@ -341,6 +474,11 @@ plot_hmsc_result <- function(covariates = covariates,
   mpost <- Hmsc::convertToCodaObject(model_fit_mcmc)
   
   postBeta <- Hmsc::getPostEstimate(model_fit_mcmc, parName = "Beta")
+  
+  ## Initial data
+  Y_data <- as.data.frame(model_fit_mcmc$Y)
+  X_data <- model_fit_mcmc$XData
+  metadata_model <- metadata[rownames(X_data),]
   
   
   ##---- create directory to save figures ----
@@ -512,10 +650,11 @@ plot_hmsc_result <- function(covariates = covariates,
       )
     
     #classify covariates
-    human <- c("gdp", "gravtot2", "effectiveness", "natural_ressource_rent", 
+    human <- c("gdp", "gravtot2", "effectiveness", #"natural_ressource_rent", 
                "neartt","n_fishing_vessels")
     
-    habitat <- c("depth", "algae", "coral", "Sand", "seagrass", "microalgal_mats",
+    habitat <- c("depth", #"algae",
+                 "coral", "Sand", #"seagrass", "microalgal_mats",
                  "other_sessile_invert", "Rock", "coralline_algae", "coral_rubble",
                  "Back_Reef_Slope_500m", "coral_algae_500m",  "Deep_Lagoon_500m", 
                  "Inner_Reef_Flat_500m", "Microalgal_Mats_500m", "Patch_Reefs_500m",   
@@ -524,10 +663,11 @@ plot_hmsc_result <- function(covariates = covariates,
                  "Sheltered_Reef_Slope_500m", "Terrestrial_Reef_Flat_500m")
     
     envir <-  c("median_5year_analysed_sst", "median_5year_chl", 
-                "median_5year_degree_heating_week", "median_5year_ph",
+                "median_5year_degree_heating_week", #"q05_5year_ph",
                 "median_5year_so_mean", "median_1year_degree_heating_week",
-                "median_7days_degree_heating_week", "median_7days_analysed_sst",
-                "median_7days_chl", "q95_1year_degree_heating_week", 
+                "median_7days_degree_heating_week", #"median_7days_analysed_sst",
+                "median_7days_chl", #"q95_1year_degree_heating_week", 
+                "median_5year_ph",
                 "q95_5year_degree_heating_week")
     
     random <- unique(VP_long$Covariate)[grepl("Random", unique(VP_long$Covariate))]
@@ -806,6 +946,7 @@ plot_hmsc_result <- function(covariates = covariates,
 
     for(drivers in drivers_to_plot){
       
+      drivers_name <- drivers
       drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
       #Arrange S table
       df <- S_arranged |>
@@ -852,7 +993,7 @@ plot_hmsc_result <- function(covariates = covariates,
         )
       
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
-                               paste(drivers, collapse = "-"), ".jpg"),
+                               paste(drivers_name, collapse = "-"), ".jpg"),
              width = 12, height = 8)
       
     }
@@ -983,27 +1124,27 @@ plot_hmsc_result <- function(covariates = covariates,
   ##----------------------------- Residuals -----------------------------------
   
   if(check_residuals){
-    cat("Plot predictive resituals of the model... \n")
+    cat("Plot predictive residuals of the model... \n")
     
     #Run predictions on all data
-    X <- covariates_final
     studyDesign <- model_fit_mcmc$studyDesign
     ranLevels <- model_fit_mcmc$ranLevels
-    response_long <- response |> 
+    response_long <- Y_data |> 
       tibble::rownames_to_column("survey_id") |> 
       tidyr::pivot_longer(cols = -survey_id, names_to = "response",
                           values_to = "observation") 
     
     predY = predict(model_fit_mcmc, 
-                    XData = X, 
+                    XData = X_data, 
                     studyDesign = studyDesign,
                     ranLevels = ranLevels, 
                     expected = T)
     
     PredY_mean <- as.data.frame(Reduce("+", predY) / length(predY))
     
-    residuals <- response - PredY_mean
-    
+    residuals <- Y_data - PredY_mean
+    rownames(PredY_mean) <- rownames(Y_data)
+      
     compare_pred <- PredY_mean |> 
       tibble::rownames_to_column("survey_id") |> 
       tidyr::pivot_longer(cols = -survey_id, names_to = "response",
@@ -1042,92 +1183,50 @@ plot_hmsc_result <- function(covariates = covariates,
     
     
     ## Check for spatial structure:
-    cat("... Measure Moran Indices... \n") 
-    noise_magnitude <- 0.00001 #noise in coordinates
-    
-    geo_points <- covariates |> 
-      dplyr::select(longitude, latitude)|>
-      dplyr::rowwise() |> 
-      dplyr::mutate(latitude = latitude + runif(1, -noise_magnitude, noise_magnitude),
-                    longitude = longitude + runif(1, -noise_magnitude, noise_magnitude)) |>
-      dplyr::ungroup()
-    
-    site_dist <- as.matrix(
-      geodist::geodist(geo_points[,c("longitude", "latitude")], measure = "geodesic"))
-    site_dist_inv <- 1/site_dist
-    diag(site_dist_inv) <- 0
-    
-    moranI <- parallel::mclapply(1:ncol(residuals), mc.cores = 22, FUN = function(i){
-      ape::Moran.I(residuals[,i], site_dist_inv)$observed
-    })
-    names(moranI) <- colnames(residuals)
-    
-    moranI_df <- as.data.frame(t(as.data.frame(moranI))) |> 
-      dplyr::rename(moran_index = V1) |> 
-      tibble::rownames_to_column("response")
-    
-    # #test3
-    # library(spdep)
-    # library(sp)
-    # k <- 4000  # Number of neighbors, you can adjust this
-    # neighbors <- knearneigh(geo_points[,c("longitude", "latitude")], k = k, longlat = T)
-    # nb <- knn2nb(neighbors)
-    # weights <- nb2listw(nb)
-    # moran_test <- moran.test(residuals$actino_richness, weights)
-    # moran_test
-    # 
-    # #test4
-    # spatial_cor <- ncf::correlog(x= covariates$longitude, 
-    #                              y= covariates$latitude, 
-    #                              z = residuals$iucn_species_richness, increment = 300, 
-    #                              resamp= 30, latlon = TRUE)
-    # plot(spatial_cor)
-    # 
-    # ggplot() +
-    #   geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
-    #                  x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]),
-    #              alpha = 0.6, size = 1) +
-    #   geom_smooth(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
-    #                   x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]))+
-    #   
-    #   geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$p <= 0.01 &
-    #                                                       spatial_cor$mean.of.class < 15000) ] ,
-    #                  x = spatial_cor$mean.of.class[ which(spatial_cor$p <= 0.01 &
-    #                                                         spatial_cor$mean.of.class < 15000) ]),
-    #              alpha = 0.8, size = 1, col ="red") +
-    #   geom_vline(xintercept = spatial_cor[["x.intercept"]], linetype="dashed", 
-    #              color = "black", linewidth=1)+
-    #   
-    #   xlab("Distance class (in km)") + ylab("spatial correlation (Moran I)")+
-    #   labs(title =  title,
-    #        subtitle = paste("Increment = ", 300, "km, ", "permutations = ", 30,
-    #                         ", x intercept = ", round(spatial_cor[["x.intercept"]],1), "km"))+
-    #   # ylim(-0.7,0.9)+
-    #   theme_bw()
-    
-    
-    residual_coord <- compare_pred |> 
-      dplyr::left_join(
-        tibble::rownames_to_column(
-          dplyr::select(covariates, longitude, latitude), "survey_id")) |> 
-      dplyr::left_join(moranI_df)
-    
-    
-    #Plot residuals
-    plot_interaction(residual_coord, var_facet_wrap = "response", 
-                     X_values = "longitude", Y_values = "residuals")+
-      geom_hline(yintercept = 0)
-    
-    
-    plot_interaction(residual_coord, var_facet_wrap = "response", 
-                     X_values = "latitude", Y_values = "residuals")+
-      geom_hline(yintercept = 0)+
-      geom_text(aes(x = Inf, y = Inf, label = paste0("Moran's I = ", round(moran_index, 2))), 
-                hjust = 1.1, vjust = 1.1, size = 3, color = "black")
-    
-    ggsave(filename = paste0(path_file,"/residuals_VS_latitude_MoranI_", save_name,".jpg"),
-           width = 15, height = 8)
-    
+    if(check_spatial_autocorrelation){
+      cat("... Measure Moran Indices... \n") 
+      noise_magnitude <- 0.00001 #noise in coordinates
+      
+      geo_points <- metadata_model |> 
+        dplyr::select(longitude, latitude)|>
+        dplyr::rowwise() |> 
+        dplyr::mutate(latitude = latitude + runif(1, -noise_magnitude, noise_magnitude),
+                      longitude = longitude + runif(1, -noise_magnitude, noise_magnitude)) |>
+        dplyr::ungroup()
+      
+      site_dist <- as.matrix(
+        geodist::geodist(geo_points[,c("longitude", "latitude")], measure = "geodesic"))
+      site_dist_inv <- 1/site_dist
+      diag(site_dist_inv) <- 0
+      
+      moranI <- parallel::mclapply(1:ncol(residuals), mc.cores = 22, FUN = function(i){
+        ape::Moran.I(residuals[,i], site_dist_inv)$observed
+      })
+      names(moranI) <- colnames(residuals)
+      
+      moranI_df <- as.data.frame(t(as.data.frame(moranI))) |> 
+        dplyr::rename(moran_index = V1) |> 
+        tibble::rownames_to_column("response")
+      
+      
+      residual_coord <- compare_pred |> 
+        dplyr::left_join(
+          tibble::rownames_to_column(
+            dplyr::select(metadata_model, longitude, latitude), "survey_id")) |> 
+        dplyr::left_join(moranI_df)
+      
+      
+      #Plot residuals
+      plot_interaction(residual_coord, var_facet_wrap = "response", 
+                       X_values = "latitude", Y_values = "residuals")+
+        geom_hline(yintercept = 0)+
+        geom_text( aes(x = Inf, y = Inf, 
+                  label = paste0("Moran's I = ", round(moran_index, 2))), 
+                  hjust = 1.1, vjust = 1.1, size = 3, color = "black")
+      
+      ggsave(filename = paste0(path_file,"/residuals_VS_latitude_MoranI_", save_name,".jpg"),
+             width = 15, height = 8)
+    }#END OF CHECK SPATIAL AUTOCORRELATION
     
   } #END OF CHECK RESIDUALS
   
@@ -1142,14 +1241,35 @@ plot_hmsc_result <- function(covariates = covariates,
     postEtamean2 <- postEta$mean[,2] # Latent factor 2
     postEtamean3 <- postEta$mean[,3] # Latent factor 3
     
+    id <- c()
+    id_name <- NULL
+    for(rd_level in 1:length(model_fit_mcmc[["rL"]])){
+      id_temp <- model_fit_mcmc[["rL"]][[rd_level]][["pi"]]
+      if(length(id_temp) > length(id)){ 
+        id <- id_temp
+        id_name <- names(model_fit_mcmc[["rL"]])[rd_level] 
+        }
+    }
+    
+    if(id_name == "site") id_name <- "site_code"
+    if(id_name == "sample_unit") id_name <- "survey_id"
+    
+    
     data_lf <- data.frame(
-      survey_id = model_fit_mcmc[["ranLevels"]][["sample_unit"]][["pi"]],
+      # survey_id = model_fit_mcmc[["ranLevels"]][["sample_unit"]][["pi"]],
+      id_latent_factor = id,
       latent_factor_1 = postEtamean1,
       latent_factor_2 = postEtamean2,
-      latent_factor_3 = postEtamean3) |> 
+      latent_factor_3 = postEtamean3)
+    colnames(data_lf)[1] <- id_name
+    
+    data_lf <- data_lf|> 
       dplyr::left_join(
-        tibble::rownames_to_column(covariates_final, "survey_id")
-      )
+        dplyr::select(
+          tibble::rownames_to_column(metadata_model, "survey_id"),
+          all_of(id_name), longitude, latitude),
+        keep = F) |> 
+      unique()
     
     source(here::here("R/evaluation_prediction_model.R"))
     
@@ -1180,8 +1300,350 @@ plot_hmsc_result <- function(covariates = covariates,
 } ## END OF FUNCTION PLOT_HMSC_RESULT
        
 
+
+##--------------------------RUN HMSC PREDICTION------------------------------##
+
+
+#' Run Hmsc prediction from the fitted model and new X data. Can run conditional 
+#' prediction based on chosen responses.
+#'
+#' @param path file path to the model folder
+#' @param folder_name name of the folder ontaining crossvalidations
+#' @param conditional_prediction Boolean, if conditional prediction should be computed
+#' @param mcmcStep_conditional Number of additionnal Mcmc step in case of conditional prediction
+#' @param marginal_responses name of the responses predicted as marginal and used for conditional prediction
+#'
+#' @return a list of dataframe with observed, marginal predicted, and conditional predicted responses, for each crossvalidation
+#' @export
+#'
+#' @examples
+#' 
+#' 
+make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
+                                 folder_name = "test",
+                                 conditional_prediction = T,
+                                 mcmcStep_conditional = 1, #"should be set high enough to obtain appropriate conditional predictions."
+                                 marginal_responses = c("actino_richness",
+                                                        "functional_distinctiveness")
+                                 ){
+  # PATHS
+  save_init <- file.path(path, "cross_validation/init_multi")
+  save_out <- file.path(path, "cross_validation/out_multi")
+  localDir <- file.path(path, "cross_validation/multivariate")
+  
+
+  ## Extract data and CV names
+  cross_val <- list.files(file.path(save_out,folder_name))
+  load(file.path(save_out,folder_name, "dataset_crossvalidation.Rdata"))
+  cv_files <- cross_val[grep("CV", cross_val)]
+  
+  
+  ## For each fold of crossvalidation, predict the Y responses on test dataset
+  predictions_cv <- pbmcapply::pbmclapply(cv_files,
+                                          mc.cores = 1, #parallelize the predict instead
+                                          FUN = function(cv){
+    # cv <-cv_files[1]
+    
+    # Initial data
+    data <- train_model[[as.numeric(stringr::str_extract(cv, "(?<=CV)[0-9]+"))]]
+    X_train <- data[[1]]
+    X_test <- data[[3]]
+    Y_test <- data[[4]]
+    
+    
+    # Import initial model
+    #Model design
+    load(file = file.path(localDir, folder_name, cv))
+    
+    #Initial hmsc object
+    init_obj_rds <- readRDS(file.path(save_init, folder_name, cv))
+    init_obj <- jsonify::from_json(init_obj_rds)
+    
+    nSamples = init_obj[["samples"]]
+    thin = init_obj[["thin"]]
+    nChains = init_obj[["nChains"]]
+    transient = init_obj[["transient"]]
+    
+    
+    # Import posterior probability
+    if(concatenate_chains){
+      chainList = vector("list", nChains)
+      importFromHPC <- vector("list", nChains+1)
+      for(cInd in 1:nChains){
+        chain_file_path = file.path(
+          save_out, folder_name, paste0(cv, cInd, ".rds")) ### To check ###
+        chainList[[cInd]] = jsonify::from_json(readRDS(file = chain_file_path)[[1]])[[1]]
+      }
+    }else{
+      all_chains <- readRDS(file.path(save_out, folder_name, cv))[[1]]
+      importFromHPC <- jsonify::from_json(all_chains)
+      chainList <- importFromHPC[1:nChains]
+      #Result model
+      cat(sprintf("fitting time %.1f h\n", importFromHPC[[nChains+1]] / 3600))
+    }
+    
+    #Export and merge chains
+    model_fit_mcmc <- Hmsc::importPosteriorFromHPC(model_fit,
+                                                   chainList, 
+                                                   nSamples, 
+                                                   thin, 
+                                                   transient)
+    
+    # Check data
+    X_model <- model_fit_mcmc$XData
+    if( sum(rownames(X_model) != rownames(X_train)) > 0 ){
+      cat("Model and data doesn't match, check data.")
+    } 
+    
+    ## Set study design of new data
+    random_factors <- colnames(model_fit_mcmc[["studyDesign"]])
+    studyDesign <- data.frame(sample_unit = as.factor(rownames(X_test)),
+                              spatial = as.factor(rownames(X_test)),
+                              year = as.factor(X_test$year),
+                              country = as.factor(X_test$country),
+                              ecoregion = as.factor(X_test$ecoregion))
+    
+    rL_asso = Hmsc::HmscRandomLevel(units = studyDesign$sample_unit)
+    rL_year = Hmsc::HmscRandomLevel(units = studyDesign$year)
+    rL_ecoregion = Hmsc::HmscRandomLevel(units = studyDesign$ecoregion)
+    rL_country =  Hmsc::HmscRandomLevel(units = studyDesign$country)
+    
+    ranLevels = list(sample_unit = rL_asso,
+                     year = rL_year,
+                     ecoregion = rL_ecoregion,
+                     country = rL_country)
+    
+    studyDesign <- studyDesign |> dplyr::select(all_of(random_factors))
+    ranLevels <- ranLevels[random_factors]
+    
+    ## MAKE PREDICTIONS
+    PredY_marginal <- PredY_conditional <- NULL
+    
+    #Marginal prediction
+    predY_test <- predict(model_fit_mcmc, 
+                          XData = X_test[, colnames(X_model)], 
+                          studyDesign = studyDesign,
+                          ranLevels = ranLevels, 
+                          expected = F)
+    
+    PredY_marginal <- as.data.frame(Reduce("+", predY_test) / length(predY_test))
+    
+    if(conditional_prediction){
+      
+      #Predict some responses in marginal
+      pred_marg <- predict(model_fit_mcmc, 
+                           XData = X_test[, colnames(X_model)], 
+                           studyDesign = studyDesign,
+                           ranLevels = ranLevels, 
+                           expected = F)
+      
+      PredY_marg <- PredY_marginal |> as.matrix()
+      
+      #use only selected reponses as backbone for other conditional predictions
+      partition.sp <- as.numeric(colnames(PredY_marg) %in% marginal_responses)
+      
+      ############ TEST ##################
+      # add_noise <- function(col, target_r2 = 0.2) {
+      #   noise <- scale(rnorm(length(col)))
+      #   new_col <- sqrt(target_r2) * col + sqrt(1 - target_r2) * noise
+      #   return(new_col)
+      # }
+      # Y_test_noise <- apply(Y_test, 2, add_noise)
+      ####################################
+      
+      conditional_prediction <- predict(model_fit_mcmc, 
+                                        XData = X_test[, colnames(X_model)], 
+                                        studyDesign = studyDesign,
+                                        ranLevels = ranLevels, 
+                                        expected = F,
+                                        
+                                        #use conditional prediction
+                                        # Yc = PredY_marg,
+                                        Yc = as.matrix(Y_test),
+                                        # Yc = Y_test_noise,
+                                        partition.sp = partition.sp,
+                                        mcmcStep = mcmcStep_conditional,
+                                        nParallel = parallel::detectCores()-4)
+      
+      PredY_conditional <- as.data.frame(
+        Reduce("+", conditional_prediction) / length(conditional_prediction))
+      
+      #Replace conditional prediction for the initial predicted responses
+      PredY_conditional[,marginal_responses] <- PredY_marg[,marginal_responses]
+    }
+    
+    #save data
+    list(observed = Y_test, 
+         marginal_prediction = PredY_marginal, 
+         conditional_prediction = PredY_conditional)
+  }) #END OF PREDICTION ON EACH CROSSVAL
+  
+  
+  save(predictions_cv, file = file.path(save_out,folder_name, "prediction_results.Rdata"))
+  # load(file = file.path(save_out,folder_name, "prediction_results.Rdata"))
+  
+} # END OF FUNCION make_prediction_hmsc
                    
-##--------------------------HMSC PREDICTION-----------------------------------##
+
+
+
+##--------------------------PLOT PREDICTIVE POWER------------------------------##
+
+
+#' 
+#'
+#' @param path file path to the model folder
+#' @param folder_name name of the folder ontaining crossvalidations
+#' @param conditional_prediction Boolean, if conditional prediction should be computed
+#' @param mcmcStep_conditional Number of additionnal Mcmc step in case of conditional prediction
+#' @param marginal_responses name of the responses predicted as marginal and used for conditional prediction
+#'
+#' @return a list of dataframe with observed, marginal predicted, and conditional predicted responses, for each crossvalidation
+#' @export
+#'
+#' @examples
+#' 
+#' 
+plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
+                                 folder_name = "test"){
+  
+  
+  source("R/evaluation_prediction_model.R")
+  
+  path_file <- here::here("figures","models","hmsc", folder_name)    
+  dir.exists(path_file)
+  
+  if(!dir.exists(path_file)) dir.create(path_file)
+  
+  
+  # load predictions
+  save_out <- file.path(path, "cross_validation/out_multi")
+  load(file = file.path(save_out,folder_name, "prediction_results.Rdata"))
+  
+  ## Merge crossvalidations
+  observed_contributions <- do.call(rbind, lapply(predictions_cv, `[[`, "observed"))
+  marginal_prediction <- do.call(rbind, lapply(predictions_cv, `[[`, "marginal_prediction"))
+  conditional_prediction <- do.call(rbind, lapply(predictions_cv, `[[`, "conditional_prediction"))
+  
+  ## Merge datasets
+  
+  observed_long <- observed_contributions |> 
+    tibble::rownames_to_column("id") |> 
+    tidyr::pivot_longer(-id, names_to = "responses", values_to = "observed")
+  
+  marginal_long <- marginal_prediction |> 
+    tibble::rownames_to_column("id") |> 
+    tidyr::pivot_longer(-id, names_to = "responses", values_to = "marginal_prediction")
+  
+  conditional_long <- conditional_prediction |> 
+    tibble::rownames_to_column("id") |> 
+    tidyr::pivot_longer(-id, names_to = "responses", values_to = "conditional_prediction")
+  
+  prediction <- observed_long |> 
+    dplyr::left_join(marginal_long) |> 
+    dplyr::left_join(conditional_long) |> 
+    dplyr::mutate(residuals_mar = marginal_prediction - observed,
+                  residuals_cond = conditional_prediction- observed)
+  
+  predictive_power_summary <- prediction |> 
+    dplyr::group_by(responses) |> 
+    dplyr::summarise(r_squared_marginal = summary(lm(marginal_prediction ~ observed))[["r.squared"]],
+                     r_squared_conditional = summary(lm(conditional_prediction ~ observed))[["r.squared"]])
+  
+  
+  ### Predictive power ###
+  
+  ## 1) Marginal predictions
+  ggplot(prediction)+
+    geom_point(aes(x = observed, y = marginal_prediction, fill = responses),
+               color = "grey40", alpha = 0.2, shape = 21) +
+    hrbrthemes::theme_ipsum() +
+    xlab("Observed contributions") + ylab("Marginal conditions")+
+    geom_abline(slope = 1) + 
+    ggpubr::stat_regline_equation(data = prediction,
+                                  aes(x = observed, y = marginal_prediction,
+                                      label = after_stat(rr.label)))   +
+    facet_wrap(~responses, scales = "free") +
+    theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
+  
+  ggsave(filename = paste0(path_file, "/Marginal_predictions_", folder_name, ".jpg"),
+         width = 15, height = 8)
+  
+  
+  
+  
+  ## 2) Conditional predictions
+  ggplot(prediction)+
+    geom_point(aes(x = observed, y = conditional_prediction, fill = responses),
+               color = "grey40", alpha = 0.2, shape = 21) +
+    hrbrthemes::theme_ipsum() +
+    xlab("Observed contributions") + ylab("Conditional conditions")+
+    geom_abline(slope = 1) + 
+    ggpubr::stat_regline_equation(data = prediction,
+                                  aes(x = observed, y = conditional_prediction,
+                                      label = after_stat(rr.label)))   +
+    facet_wrap(~responses, scales = "free") +
+    theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
+  
+  ggsave(filename = paste0(path_file, "/Conditional_predictions_", folder_name, ".jpg"),
+         width = 15, height = 8)
+  
+  
+  ## 3) Summary
+  png(paste0(path_file, "/Predictive_power_", folder_name, ".jpg"),
+      width = 30, height = 15, units = "cm", res = 300)
+  par(mfrow = c(1, 2))
+  hist(predictive_power_summary$r_squared_marginal, xlim = c(0,1), 
+       main=paste0("R_squared marginal Mean = ", 
+                   round(mean(predictive_power_summary$r_squared_marginal),2)))
+  hist(predictive_power_summary$r_squared_conditional, xlim = c(0,1), 
+       main=paste0("R_squared conditional Mean = ", 
+                   round(mean(predictive_power_summary$r_squared_conditional),2)))
+  
+  dev.off()
+  
+  
+  ## 4) residuals
+  plot_interaction(prediction, var_facet_wrap = "responses", 
+                   X_values = "observed", Y_values = "residuals_mar")+
+    geom_hline(yintercept = 0)
+  
+  plot_interaction(prediction, var_facet_wrap = "responses", 
+                   X_values = "observed", Y_values = "residuals_cond")+
+    geom_hline(yintercept = 0)
+  # ggsave(filename = paste0(path_file, "/Residuals_conditional_predictions_", folder_name, ".jpg"),
+  #        width = 15, height = 8)
+  
+  
+  predictive_power_summary <- predictive_power_summary |> 
+    dplyr::arrange(r_squared_conditional) |> 
+    dplyr::mutate(responses = factor(responses, levels = responses))
+  
+  ggplot(predictive_power_summary, aes(y = responses)) +
+    geom_point(aes(x = r_squared_marginal, color = "Marginal"), size = 3) + 
+    geom_point(aes(x = r_squared_conditional, color = "Conditional"), size = 3) + 
+    
+    geom_vline(xintercept = mean(predictive_power_summary$r_squared_marginal),
+               linetype = "dashed", color = "skyblue") + 
+    geom_vline(xintercept = mean(predictive_power_summary$r_squared_conditional),
+               linetype = "dashed", color = "orange") +
+    
+    labs(x = "R_squared", y = "Responses", 
+         title = "R_squared Marginal vs Conditional",
+         color = "R_squared Type") +
+    scale_color_manual(values = c("Marginal" = "skyblue", "Conditional" = "orange")) +
+    theme_minimal()
+  
+  ggsave(filename = paste0(path_file, "/Marginal_vs_Conditional_pred_power_", folder_name, ".jpg"),
+         width = 15, height = 8)
+  
+  ##### TO DO: test spatial autocorrmapping = ##### TO DO: test spatial autocorrelations of residuals ######
+  
+  
+} # END OF FUNCION make_prediction_hmsc
+
+
+##--------------------------HMSC CONTERFACTUAL PREDICTION-----------------------------------##
 
 #' Run hmsc prediction.
 #'
@@ -1200,6 +1662,7 @@ plot_hmsc_result <- function(covariates = covariates,
 
 run_hmsc_prediction <- function(X_data = X,
                                 model_fit_mcmc = model_fit_mcmc,
+                                metadata = NULL,
                                 new_surveys = NULL,
                                 X_new_data = NULL
 ){
@@ -1237,8 +1700,8 @@ run_hmsc_prediction <- function(X_data = X,
     effective_change <- changes_matrix[new_surveys,] |> 
       tibble::rownames_to_column("survey_id") |> 
       tidyr::pivot_longer(cols = -survey_id, names_to = "index", values_to = "values")|> 
-      dplyr::left_join( data.frame(survey_id = rownames(X_data),
-                                   country = X_data$country)
+      dplyr::left_join( data.frame(survey_id = rownames(metadata),
+                                   country = metadata$country)
       )
     
     }else{

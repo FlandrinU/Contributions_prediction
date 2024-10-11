@@ -76,7 +76,7 @@ contributions_surveys <- metadata |>
                 P_recycling = recycling_P,
                 trophic_web_robustness = b_power_law,
                 mean_trophic_level = troph_mTL,
-                public_interest,
+                public_attention,
                 aesthetic = aesthe_survey,
                 available_biomass, 
                 selenium = Selenium_C, 
@@ -171,7 +171,7 @@ library(funbiogeo)
 df <- dplyr::rename(contributions_surveys_log, species = survey_id) |> 
   dplyr::select(-any_of(var_metadata))
 fb_plot_species_traits_completeness(df)
-ggsave(plot = last_plot(), width=15, height= 10,
+ggsave(plot = last_plot(), width=20, height= 10,
        filename = here::here("figures", "2_contributions_completedness.jpg"))
 fb_plot_number_species_by_trait(df)
 
@@ -231,7 +231,7 @@ grp_NN_NP <- as.factor(c(actino_richness = "NN",
                          trophic_web_robustness = "NN",
                          mean_trophic_level = "NN",
                          
-                         public_interest = "NP",
+                         public_attention = "NP",
                          aesthetic = "NP",
                          available_biomass = "NP",
                          selenium = "NP",
@@ -315,7 +315,7 @@ grp_NN_NP <- as.factor(c(actino_richness = "NN",
                          trophic_web_robustness = "NN",
                          mean_trophic_level = "NN",
                          
-                         public_interest = "NP",
+                         public_attention = "NP",
                          aesthetic = "NP",
                          available_biomass = "NP",
                          selenium = "NP",
@@ -397,7 +397,7 @@ save(contributions_with_synthetic_score,
 
 
 contributions_sites <- contributions_surveys |> 
-  dplyr::select(-survey_id) |> 
+  dplyr::select(-survey_id, -elasmobranch_richness) |> 
   dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
                   survey_date, year, effectiveness) |> 
   dplyr::summarise(across(.cols = everything(),
@@ -462,7 +462,7 @@ NP_names <- names(grp_NN_NP)[ grp_NN_NP=="NP" ]
 contrib_NP <- to_mean[,NP_names]
 
 colnames(contrib_NP)
-weighting_par <- c(1/2, 1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 1/2)
+weighting_par <- c(1/2, 1/2, 1/2, 1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 1/2)
 names(weighting_par) <- colnames(contrib_NP)
 weighting_par
 
@@ -497,38 +497,38 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 
 
-#------------------- Mean contribution values at the site scale -------------------####
-# Mean the contribution at the site scale, whatever the date:
-#  we offset the temporal information = look only on the spatial patterns.
-
-synthetic_scores <- contributions_with_synthetic_score[,c( "NN_score", "NP_score")] |> 
-  tibble::rownames_to_column("survey_id")
-
-contributions_sites_no_date <- contributions_surveys |> 
-  dplyr::left_join(synthetic_scores) |> 
-  dplyr::select(-survey_id, -survey_date) |> 
-  dplyr::group_by(site_code, latitude, longitude, country, ecoregion,
-                  realm, effectiveness) |> 
-  dplyr::summarise(across(.cols = everything(),
-                          .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
-  dplyr::mutate(across(.cols = everything(),
-                       .fns = ~ifelse(is.nan(.), NA, .), .names = "{.col}")) |> 
-  dplyr::mutate(id = paste0(site_code, "_", effectiveness)) |>
-  dplyr::ungroup()
-
-# /!\ SOME SITES HAVE CHANGED PROTECTION STATUS BETWEEN DIFFERENT SURVEYS
-
-nrow(contributions_sites_no_date) # 2128 sites
-
-contributions_sites_no_date <- contributions_sites_no_date |>
-  dplyr::mutate(across(.cols = all_of(zero_values),
-                       .fns = ~ .x +1 , .names = "{.col}")) |>
-  dplyr::mutate(across(.cols = all_of(to_log),
-                       .fns = ~ifelse(is.na(.), NA, log10(.)) , .names = "{.col}")) |>  # log(x+1) to avoid -Inf values
-  tibble::column_to_rownames("id") |> 
-  dplyr::select(-total_biomass, -any_of(var_metadata))
-
-# Save #
-save(contributions_sites_no_date, file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
-# load( file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
-
+# #------------------- Mean contribution values at the site scale -------------------####
+# # Mean the contribution at the site scale, whatever the date:
+# #  we offset the temporal information = look only on the spatial patterns.
+# 
+# synthetic_scores <- contributions_with_synthetic_score[,c( "NN_score", "NP_score")] |> 
+#   tibble::rownames_to_column("survey_id")
+# 
+# contributions_sites_no_date <- contributions_surveys |> 
+#   dplyr::left_join(synthetic_scores) |> 
+#   dplyr::select(-survey_id, -survey_date) |> 
+#   dplyr::group_by(site_code, latitude, longitude, country, ecoregion,
+#                   realm, effectiveness) |> 
+#   dplyr::summarise(across(.cols = everything(),
+#                           .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
+#   dplyr::mutate(across(.cols = everything(),
+#                        .fns = ~ifelse(is.nan(.), NA, .), .names = "{.col}")) |> 
+#   dplyr::mutate(id = paste0(site_code, "_", effectiveness)) |>
+#   dplyr::ungroup()
+# 
+# # /!\ SOME SITES HAVE CHANGED PROTECTION STATUS BETWEEN DIFFERENT SURVEYS
+# 
+# nrow(contributions_sites_no_date) # 2128 sites
+# 
+# contributions_sites_no_date <- contributions_sites_no_date |>
+#   dplyr::mutate(across(.cols = all_of(zero_values),
+#                        .fns = ~ .x +1 , .names = "{.col}")) |>
+#   dplyr::mutate(across(.cols = all_of(to_log),
+#                        .fns = ~ifelse(is.na(.), NA, log10(.)) , .names = "{.col}")) |>  # log(x+1) to avoid -Inf values
+#   tibble::column_to_rownames("id") |> 
+#   dplyr::select(-total_biomass, -any_of(var_metadata))
+# 
+# # Save #
+# save(contributions_sites_no_date, file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
+# # load( file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
+# 

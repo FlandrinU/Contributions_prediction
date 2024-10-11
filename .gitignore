@@ -37,7 +37,7 @@ data/raw_data/aesthetic_deep_model_Langlois_2022/png/
 
 #Python environment (heavy libraries)
 HMSC_package/hmsc-venv/
-
+HMSC_package/*.odt
 
 #Large outputs ----> can be created running make.R file
 figures/

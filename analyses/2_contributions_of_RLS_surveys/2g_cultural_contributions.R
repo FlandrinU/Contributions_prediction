@@ -86,7 +86,7 @@ aesthetic_score <- aesth_2022 |>
 ### PUBLIC ATTENTION ###
 
 human_interest <- hum_int |>
-  dplyr::select(public_interest = public,
+  dplyr::select(public_attention = public,
                 academic_knowledge = acad,
                 sp_name = fb_sci_name)
 
@@ -236,20 +236,20 @@ cultural_survey <-  pbmcapply::pbmclapply(rownames(surveys_sp_occ), function(id)
     n <- length(sp)
     
     mean_academic_knowledge <- mean(cultural[sp, "academic_knowledge"], na.rm = T)
-    mean_public_interest <- mean(cultural[sp, "public_interest"], na.rm = T)
+    mean_public_attention <- mean(cultural[sp, "public_attention"], na.rm = T)
     mean_esthe <- mean(cultural[sp, "esthe_score"], na.rm = T)
     
     academic_knowledge <- quantile(cultural[sp, "academic_knowledge"], 0.75, na.rm = T)
-    public_interest <- quantile(cultural[sp, "public_interest"], 0.75, na.rm = T)
+    public_attention <- quantile(cultural[sp, "public_attention"], 0.75, na.rm = T)
     quantile_esthe <- quantile(cultural[sp, "esthe_score"], 0.75, na.rm = T)
     
-    cult <- as.numeric(c(id, academic_knowledge, public_interest, quantile_esthe,
-                         mean_academic_knowledge, mean_public_interest, mean_esthe,
+    cult <- as.numeric(c(id, academic_knowledge, public_attention, quantile_esthe,
+                         mean_academic_knowledge, mean_public_attention, mean_esthe,
                          n))
   }else{cult <- c(id, NA, NA, NA, NA, NA, NA, NA)}
   
-  names(cult) <- c("survey_id", "academic_knowledge", "public_interest", "quantile_esthe",
-                   "mean_academic_knowledge", "mean_public_interest", "mean_esthe",
+  names(cult) <- c("survey_id", "academic_knowledge", "public_attention", "quantile_esthe",
+                   "mean_academic_knowledge", "mean_public_attention", "mean_esthe",
                    "diversity")
   cult
 }, mc.cores = parallel::detectCores()-1)
@@ -260,7 +260,7 @@ public_contrib_survey <- data.frame(do.call(rbind, cultural_survey)) |>
 
 
 ## Check the importance of NA 
-rows_with_na <- which(!complete.cases(cultural_all_species[, "public_interest"]))
+rows_with_na <- which(!complete.cases(cultural_all_species[, "public_attention"]))
 sp_na <- cultural_all_species$rls_species_name[rows_with_na]
 
 NA_prop <- rls_actino_trop |>
@@ -278,7 +278,7 @@ na_survey <- unique(NA_prop$survey_id)
 
 # ## REMOVE NON REPRESENTATIVE ESTIMATIONS:
 # public_contrib_survey[
-#   public_contrib_survey$survey_id == na_survey, "public_interest"] <- NA
+#   public_contrib_survey$survey_id == na_survey, "public_attention"] <- NA
 
 ####### TO DO WHEN ALL PUBLIC INTEREST WILL BE CALCULATED 
 
@@ -287,6 +287,6 @@ na_survey <- unique(NA_prop$survey_id)
 
 cultural_contributions <- public_contrib_survey |>
   dplyr::full_join(survey_aesth_filtered) |> 
-  dplyr::select(survey_id, public_interest, aesthe_survey)
+  dplyr::select(survey_id, public_attention, aesthe_survey)
 
 save(cultural_contributions, file = here::here("outputs", "2g_cultural_contributions.Rdata"))
