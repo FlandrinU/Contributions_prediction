@@ -49,6 +49,7 @@ hmsc_function <- function(nSamples,
                           random_factors = NULL,
                           nb_neighbours = NULL,
                           set_shrink = NULL,
+                          test_null_model = NULL,
                           name,
                           run_python = TRUE,
                           save_path = here::here("outputs/models/hmsc")
@@ -76,7 +77,7 @@ hmsc_function <- function(nSamples,
                                           -realm
                                           # ,                     #country level covariates
                                           # -hdi,
-                                          # -marine_ecosystem_dependency,
+                                          # -marine_ecosystem_dependency
                                           # -ngo,
                                           # -natural_ressource_rent
   ))
@@ -94,6 +95,9 @@ hmsc_function <- function(nSamples,
   }else{ 
     formula <- as.formula(paste("~ ", paste(linear_effects, collapse = "+")))
   }
+  
+  ## Test null model: only random levels
+  if(!is.null(test_null_model)){ formula <- as.formula("~1")}
   
   # response_distribution <- rep("normal", ncol(Y_data))
   # response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
@@ -188,6 +192,7 @@ hmsc_function <- function(nSamples,
   
   
   # create object for computation on HMSC-HPC
+  if(ncol(Y_data) == 1){ engine="R"}else{engine="HPC"}
   init_obj = Hmsc::sampleMcmc(model_fit,
                               samples=nSamples,
                               thin=thin,
@@ -195,7 +200,7 @@ hmsc_function <- function(nSamples,
                               nChains=nChains,
                               verbose=verbose,
                               nParallel = nChains,
-                              engine="HPC") # HPC : try to use the GPU under python command: on github version only (v3.1-2)
+                              engine=engine) # HPC : try to use the GPU under python command: on github version only (v3.1-2)
   
   
   # save it locally
@@ -235,11 +240,15 @@ hmsc_function <- function(nSamples,
   
   
   if(run_python){
-    cat("-------------- Run Hmsc with python --------------\n")
-    system2(python, python_cmd_args)
+    if(ncol(Y_data) == 1){
+      saveRDS(jsonify::to_json(init_obj), file=post_file_path)
+      }else{
+      cat("-------------- Run Hmsc with python --------------\n")
+      system2(python, python_cmd_args)
+    }
   }
   
-}
+} # END OF hmsc_function
 
 
 
@@ -283,6 +292,7 @@ fit_hmsc_crossvalidation <- function(k_fold = 5,
                                  random_factors = NULL,
                                  nb_neighbours = NULL,
                                  set_shrink = NULL,
+                                 test_null_model = NULL,
                                  name,
                                  run_python = TRUE,
                                  save_path = here::here("outputs/models/hmsc")
@@ -322,9 +332,9 @@ fit_hmsc_crossvalidation <- function(k_fold = 5,
                     Y_data = Y_train,
                     X_data = X_train,
                     response_distribution, quadratic_effects,random_factors,
-                    nb_neighbours, set_shrink, name_cv,
-                    run_python = T, save_path_cv)
-      
+                    nb_neighbours, set_shrink, test_null_model, name_cv,
+                    run_python = run_python, save_path_cv)
+
       list(X_train, Y_train, X_test, Y_test)
       
       }) # END OF TRAIN CROSS-VAL MODEL
@@ -352,7 +362,7 @@ fit_hmsc_crossvalidation <- function(k_fold = 5,
     #deplace all files and rename them
     for (file in crossval) {
       destination_file <- file.path(paste0(path, model_name),
-                                    paste0(str_extract(file, "CV[0-9]+"), ".rds"))
+                                    paste0(stringr::str_extract(file, "CV[0-9]+"), ".rds"))
       
       file.rename(file.path(path, file),
                   destination_file
@@ -408,6 +418,12 @@ plot_hmsc_result <- function(metadata = metadata,
                                c("n_fishing_vessels", "gravtot2", "gdp", "neartt"))
                             ){
   
+  color_grad = c("#A50026", "#D73027", "#FDAE61", "#FEE090","white",
+                 "#D8DAEB", "#B2ABD2", "#8073AC", "#542788")
+  color_grad_soft <- colorspace::desaturate(color_grad, amount = 0.3)
+  RdBu = c("#67001F", "#B2182B", 
+           "#D6604D", "#F4A582", "#FDDBC7", "#FFFFFF", "#D1E5F0", 
+           "#92C5DE", "#4393C3", "#2166AC", "#053061")
   
   ##----Source packages and functions----
   
@@ -560,7 +576,7 @@ plot_hmsc_result <- function(metadata = metadata,
       Parameter = paste0(covariate, "-", response))
   
     
-  cov <- "n_fishing_vessels"
+  cov <- "median_5year_analysed_sst"
   S <- S_arranged |> dplyr::filter(grepl(cov, covariate))
   # # quick look on the distribution of the values and the shape of the posterior distribution.
   # ggmcmc::ggs_histogram(S)+facet_wrap(~ Parameter, ncol = 5)
@@ -617,6 +633,10 @@ plot_hmsc_result <- function(metadata = metadata,
     preds <- Hmsc::computePredictedValues(model_fit_mcmc)
     MF <- Hmsc::evaluateModelFit(hM=model_fit_mcmc, predY=preds)
     
+    MF_table <- as.data.frame(MF)
+    MF_table$responses <- model_fit_mcmc[["spNames"]]
+    save(MF_table, file = paste0(path_file,"/explanatory_power_data.Rdata"))
+    
     png(paste0(path_file,"/explanatory_power_", save_name,".png"),
         width = 20, height = 13, units = "cm", res = 300)
     par(mfrow=c(1,2), mar = c(4,4,10,4))
@@ -631,6 +651,9 @@ plot_hmsc_result <- function(metadata = metadata,
   
   if(plot_variance_partitioning){
     cat("Complute variance partitioning of the model... \n")
+    
+    preds <- Hmsc::computePredictedValues(model_fit_mcmc)
+    MF <- Hmsc::evaluateModelFit(hM=model_fit_mcmc, predY=preds)
     
     #### Variance partitioning ####
     VP <- computeVariancePartitioning(model_fit_mcmc)
@@ -650,8 +673,8 @@ plot_hmsc_result <- function(metadata = metadata,
       )
     
     #classify covariates
-    human <- c("gdp", "gravtot2", "effectiveness", #"natural_ressource_rent", 
-               "neartt","n_fishing_vessels")
+    human <- c("gdp", "gravtot2", "effectiveness", "natural_ressource_rent", 
+               "neartt","n_fishing_vessels", "hdi", "marine_ecosystem_dependency")
     
     habitat <- c("depth", #"algae",
                  "coral", "Sand", #"seagrass", "microalgal_mats",
@@ -813,15 +836,17 @@ plot_hmsc_result <- function(metadata = metadata,
                color = "black",linewidth = 0.1) +
       scale_fill_manual(values = setNames(VP_long$color, VP_long$Covariate),
                         labels = unique(VP_long$labels)) +
-      labs(title = "", x = "", y = "") +
+      labs(title = "", x = "", y = "", fill ="Covariates") +
       theme_classic(base_size = 11,
                     base_line_size = 0.1) +
       theme(
         axis.text.x = element_text(angle = 50, hjust = 1, vjust = 1),
         legend.position = "right",
-        legend.text = element_text(size = 6))+
-      geom_text(data = dplyr::filter(VP_long, Value > 0.05),
-                aes(y = mid_y, label = Symbol), size = 2, color = "black") 
+        legend.title = element_text(size = 13, hjust = 0),
+        legend.text = element_text( size = 7))+
+      guides(fill = guide_legend(ncol = 2)) + 
+      geom_text(data = dplyr::filter(VP_long, Value > 0.04),
+                aes(y = mid_y, label = Symbol), size = 2.5, color = "black") 
     
     
     ggsave(filename =  paste0(path_file,"/variance_partitioning_", save_name,".jpg"),
@@ -838,14 +863,16 @@ plot_hmsc_result <- function(metadata = metadata,
                color = "black", linewidth = 0.1) +
       scale_fill_manual(values = setNames(VP_long_absolute$color, VP_long_absolute$Covariate),
                         labels = unique(VP_long_absolute$labels)) +
-      labs( title = "",x = "",y = "") +
+      labs(title = "", x = "", y = "", fill ="Covariates") +
       theme_classic(base_size = 11,
                     base_line_size = 0.1) +
       theme(
         axis.text.x = element_text(angle = 50, hjust = 1, vjust = 1),
         legend.position = "right",
-        legend.text = element_text(size = 6))+
-      geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.03),
+        legend.title = element_text(size = 13, hjust = 0),
+        legend.text = element_text( size = 7))+
+      guides(fill = guide_legend(ncol = 2)) + 
+      geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02),
                 aes(y = mid_y, label = Symbol), size = 2, color = "black") 
     
     ggsave(filename =  paste0(path_file,"/variance_partitioning_absolute_values_", save_name,".jpg"),
@@ -891,6 +918,7 @@ plot_hmsc_result <- function(metadata = metadata,
     OmegaCor <- Hmsc::computeAssociations(model_fit_mcmc)
     supportLevel <- 0.95
     
+    list_corr <- list()
     for(i in 1:length(OmegaCor)){
       #i=1
       toPlot <- ((OmegaCor[[i]]$support>supportLevel) +
@@ -900,7 +928,7 @@ plot_hmsc_result <- function(metadata = metadata,
           width = 25, height = 15, units = "cm", res = 300)
       # par(mar = c(10,10,2,2))
       corrplot::corrplot(toPlot, method = "color",
-                         col=colorRampPalette(c("blue","white","red"))(200),
+                         col=colorRampPalette(RdBu)(200),
                          tl.cex=.6, tl.col="black",
                          order = "hclust",
                          title=paste("random effect level:", model_fit_mcmc$rLNames[i]), 
@@ -909,12 +937,56 @@ plot_hmsc_result <- function(metadata = metadata,
       # or by ecological interactions/similar life story and constraints.
       dev.off()
       
+      list_corr[[i]] <- toPlot
+      names(list_corr)[i] <- model_fit_mcmc$rLNames[i]
     }
     
     # etaPost=getPostEstimate(model_fit_mcmc, "Eta")
     # lambdaPost=getPostEstimate(model_fit_mcmc, "Lambda")
     # Hmsc::biPlot(model_fit_mcmc, etaPost = etaPost, lambdaPost = lambdaPost, 
     #              factors = c(1,2))
+    
+    
+    ## Plot 2 random levels together
+    corr_1 <- list_corr[[1]]
+    corplot_1 <- corrplot::corrplot(corr_1,order = "hclust", mar=c(0,0,0,0))
+    
+    corr_2 <- list_corr[[2]]
+    order_name <- colnames(corplot_1[["corr"]]) ; n <- nrow(corr_1) 
+    corr_2_ordered <- corr_2[match(order_name, rownames(corr_2)), 
+                             match(order_name, colnames(corr_2))]
+    
+    png(paste0(path_file,"/residual_associations_both_levels", save_name,".png"),
+        width = 25, height = 25, units = "cm", res = 300)
+      corrplot::corrplot(corr_1, method = "color", diag = T,
+                         col=colorRampPalette(color_grad_soft)(200),
+                         tl.cex=.6, tl.col="black", tl.srt = 60,
+                         order = "hclust",
+                         #title=paste("random effect level:", model_fit_mcmc$rLNames[1]), 
+                         mar=c(4,5,5,0))   
+      corrplot::corrplot(corr_2_ordered, method = "color", type = "lower", diag = F,
+                         col=colorRampPalette(color_grad_soft)(200),
+                         tl.pos='n', tl.col="black",order = "original",
+                         cl.pos = 'n',
+                         #title=paste("random effect level:", model_fit_mcmc$rLNames[2]), 
+                         add= T)
+      polygon(x = c(0.5, n + 0.5), y = c(n + 0.5, 0.5), border = "white",lwd = 4)
+      polygon(x = c(0.6, n + 0.5, n + 0.5), y = c(n + 0.5, n + 0.5, 0.6), 
+              border = "grey10", #border = color_grad[1], 
+              lwd = 3)
+      polygon(x = c(0.5, 0.5, n + 0.4), y = c(0.5, n + 0.4, 0.5), 
+              border = "grey50", #border = color_grad[length(color_grad)], 
+              lwd = 3)
+      
+      mtext(paste("random effect level:", model_fit_mcmc$rLNames[1]), side = 3, 
+            line = 0, cex = 1.5, font = 2, 
+            col ="grey10" )# color_grad[1]) 
+      mtext(paste("random effect level:", model_fit_mcmc$rLNames[2]), side = 2,
+            line = 0, cex = 1.5, font = 2, las = 3,
+            col = "grey50")# color_grad[length(color_grad)]) 
+ 
+    dev.off()
+
     
   } #END OF PLOT RESIDUAL ASSOCIATIONS
   
@@ -929,9 +1001,10 @@ plot_hmsc_result <- function(metadata = metadata,
         width = 30, height = 20, units = "cm", res = 300)
     par(mar = c(15,10,2,2))
     # Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Mean", supportLevel = 0.95)
-    Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Sign", supportLevel = 0.95)
+    Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Sign",
+                   supportLevel = 0.95, colors = colorRampPalette(c("#2166AC", "white", "#A50026")))
     dev.off()
-    
+
     
     ##### ridges plot  #####
     # S <- ggmcmc::ggs(mpost$Beta) # Need to run "check_convergence" part.
@@ -1008,6 +1081,11 @@ plot_hmsc_result <- function(metadata = metadata,
     #                                                              function(x) x[1]), "\\["), function(x) x[2]), " "),
     #                              function(x) x[1]))
     
+    # support_estimates <- postBeta[["support"]]
+    # rownames(support_estimates) <- model_fit_mcmc[["covNames"]]
+    # support_estimates[support_estimates > 0.95] <- 1
+    # support_estimates[support_estimates < 0.95] <- NA
+    
     mean_estimate <- S_arranged |> 
       dplyr::group_by(covariate, response) |> 
       dplyr::summarise(mean_posterior_distrib  = mean(value)) |> 
@@ -1022,6 +1100,12 @@ plot_hmsc_result <- function(metadata = metadata,
       tibble::column_to_rownames("covariate") |> 
       as.matrix()
     
+    # for(i in rownames(coef_matrix)){
+    #   for(j in colnames(coef_matrix)){
+    #     coef_matrix[i,j] <- coef_matrix[i,j] * support_estimates[i,j]
+    #   }
+    # }
+    
     jpeg(filename = paste0(path_file,"/heatmap_estimates_", save_name,".jpg"),
          units = "cm", width = 20, height = 20, res = 400 )
     stats::heatmap(coef_matrix,  Colv=T,
@@ -1031,66 +1115,66 @@ plot_hmsc_result <- function(metadata = metadata,
     
     
     
-    ##### Estimate distribution #####
-    # Classification of covariates
-    covariates <- unique(mean_estimate$covariate)
-    envir <- c(grep("median", covariates, value = T))
-    habitat <- c(grep("500m", covariates, value = T),
-                 "depth", "algae", "coral", "Sand", "seagrass", "microalgal_mats",
-                 "other_sessile_invert", "Rock", "coralline_algae", "coral_rubble")
-    human <- setdiff(covariates, c(envir, habitat))
-    
-    # Classification of contributions
-    cont_list <- unique(mean_estimate$response)
-    NP <- c("available_biomass", "selenium", "zinc", "omega_3" , "calcium",  "iron",                       
-            "vitamin_A", "available_biomass_turnover", "NP_score")
-    NN <- setdiff(cont_list, NP)
-    
-    #Resume data
-    coeff_plot <- mean_estimate |> 
-      dplyr::mutate(cov_class = ifelse(covariate %in% envir, "environmental",
-                                       ifelse(covariate %in% habitat, "habitat", "human"))) |> 
-      dplyr::mutate(contrib_class = ifelse(response %in% NP, "Nature-for-People",
-                                           "Nature-for-Nature"))
-    
-    # Plot estimate distribution
-    
-    plot_distri <- function(category = "Nature-for-Nature"){
-      
-      data <- dplyr::filter(coeff_plot, contrib_class ==  category)
-      
-      # order covariates
-      df_ordered <- data |> 
-        dplyr::group_by(covariate) |> 
-        dplyr::summarise(mean_estimate = median(mean_posterior_distrib)) |> 
-        dplyr::arrange(mean_estimate) |> 
-        dplyr::pull(covariate)
-      
-      
-      # Boxplot of estimates
-      ggplot(data) +
-        geom_vline(xintercept = 0, linetype = "dashed")+
-        geom_boxplot(aes(y=factor(covariate, levels = df_ordered), 
-                         x = mean_posterior_distrib, fill = cov_class),
-                     alpha = 0.7) +
-        hrbrthemes::theme_ipsum() +
-        # scale_fill_manual(values = c("#9467bd", "#ff7f0e", "#2ca02c"))+
-        harrypotter::scale_fill_hp_d(option = "Ravenclaw") +
-        # facet_wrap(~ contrib_class, scales = "free_x") +
-        xlab("Regression coefficient estimates") +
-        ylab("Predictors") +
-        labs(title = paste("Estimate distribution on", category, " contributions"))+
-        theme( axis.title.x = element_text(size = 10),
-               axis.title.y = element_text(size = 10),
-               axis.text.y = element_text(size = 10),
-               plot.title = element_text(size = 12),
-               legend.position = "bottom" 
-        )
-    }
-    
-    plot_distri(category = "Nature-for-Nature") + plot_distri(category = "Nature-for-People")
-    ggsave(filename =paste0(path_file,"/mean_estimate_distribution_", save_name,".jpg"),
-           width = 15, height = 8)
+    # ##### Estimate distribution #####
+    # # Classification of covariates
+    # covariates <- unique(mean_estimate$covariate)
+    # envir <- c(grep("median", covariates, value = T))
+    # habitat <- c(grep("500m", covariates, value = T),
+    #              "depth", "algae", "coral", "Sand", "seagrass", "microalgal_mats",
+    #              "other_sessile_invert", "Rock", "coralline_algae", "coral_rubble")
+    # human <- setdiff(covariates, c(envir, habitat))
+    # 
+    # # Classification of contributions
+    # cont_list <- unique(mean_estimate$response)
+    # NP <- c("available_biomass", "selenium", "zinc", "omega_3" , "calcium",  "iron",                       
+    #         "vitamin_A", "available_biomass_turnover", "NP_score")
+    # NN <- setdiff(cont_list, NP)
+    # 
+    # #Resume data
+    # coeff_plot <- mean_estimate |> 
+    #   dplyr::mutate(cov_class = ifelse(covariate %in% envir, "environmental",
+    #                                    ifelse(covariate %in% habitat, "habitat", "human"))) |> 
+    #   dplyr::mutate(contrib_class = ifelse(response %in% NP, "Nature-for-People",
+    #                                        "Nature-for-Nature"))
+    # 
+    # # Plot estimate distribution
+    # 
+    # plot_distri <- function(category = "Nature-for-Nature"){
+    #   
+    #   data <- dplyr::filter(coeff_plot, contrib_class ==  category)
+    #   
+    #   # order covariates
+    #   df_ordered <- data |> 
+    #     dplyr::group_by(covariate) |> 
+    #     dplyr::summarise(mean_estimate = median(mean_posterior_distrib)) |> 
+    #     dplyr::arrange(mean_estimate) |> 
+    #     dplyr::pull(covariate)
+    #   
+    #   
+    #   # Boxplot of estimates
+    #   ggplot(data) +
+    #     geom_vline(xintercept = 0, linetype = "dashed")+
+    #     geom_boxplot(aes(y=factor(covariate, levels = df_ordered), 
+    #                      x = mean_posterior_distrib, fill = cov_class),
+    #                  alpha = 0.7) +
+    #     hrbrthemes::theme_ipsum() +
+    #     # scale_fill_manual(values = c("#9467bd", "#ff7f0e", "#2ca02c"))+
+    #     harrypotter::scale_fill_hp_d(option = "Ravenclaw") +
+    #     # facet_wrap(~ contrib_class, scales = "free_x") +
+    #     xlab("Regression coefficient estimates") +
+    #     ylab("Predictors") +
+    #     labs(title = paste("Estimate distribution on", category, " contributions"))+
+    #     theme( axis.title.x = element_text(size = 10),
+    #            axis.title.y = element_text(size = 10),
+    #            axis.text.y = element_text(size = 10),
+    #            plot.title = element_text(size = 12),
+    #            legend.position = "bottom" 
+    #     )
+    # }
+    # 
+    # plot_distri(category = "Nature-for-Nature") + plot_distri(category = "Nature-for-People")
+    # ggsave(filename =paste0(path_file,"/mean_estimate_distribution_", save_name,".jpg"),
+    #        width = 15, height = 8)
     
   
   } # END OF PLOT ESTIMATES
@@ -1153,8 +1237,8 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::mutate(residuals = observation-prediction)
     
     
-    #histograms of residuals
-    distribution_plot(residuals, cols_plot = colnames(residuals))
+    # #histograms of residuals
+    # distribution_plot(residuals, cols_plot = colnames(residuals))
     
     #Predictions vs observations
     ggplot(compare_pred)+
@@ -1168,7 +1252,7 @@ plot_hmsc_result <- function(metadata = metadata,
                                         label = after_stat(rr.label)))   +
       facet_wrap(~response, scales = "free") +
       theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
-    ggsave(filename = paste0(path_file,"/Predictions_VS_Observations_", 
+    ggsave(filename = paste0(path_file,"/Predictions_VS_Observations_Inference_", 
                              save_name,".jpg"),
            width = 15, height = 8)
     
@@ -1226,6 +1310,61 @@ plot_hmsc_result <- function(metadata = metadata,
       
       ggsave(filename = paste0(path_file,"/residuals_VS_latitude_MoranI_", save_name,".jpg"),
              width = 15, height = 8)
+      
+      # Plot all variogramms
+      data <- metadata_model |> 
+        dplyr::select(longitude, latitude) |> 
+        dplyr::bind_cols(residuals)
+      
+      increment = 300
+      resamp= 30
+      contributions <- colnames(residuals)[order(colnames(residuals))]
+      
+      correlog_plot <- function(contrib = "calcium"){
+        
+        spatial_cor <- ncf::correlog(x= data$longitude, 
+                                     y= data$latitude, 
+                                     z = data[,contrib],
+                                     increment = increment, 
+                                     resamp= resamp, 
+                                     latlon = TRUE) #distance and increment are in km
+        ggplot() +
+          geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
+                         x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]),
+                     alpha = 0.6, size = 1) +
+          geom_smooth(aes(y = spatial_cor$correlation[ which(spatial_cor$mean.of.class < 15000) ], 
+                          x = spatial_cor$mean.of.class[ which(spatial_cor$mean.of.class < 15000) ]))+
+          
+          geom_point(aes(y = spatial_cor$correlation[ which(spatial_cor$p <= 0.05 &
+                                                              spatial_cor$mean.of.class < 15000) ] ,
+                         x = spatial_cor$mean.of.class[ which(spatial_cor$p <= 0.05 &
+                                                                spatial_cor$mean.of.class < 15000) ]),
+                     alpha = 0.8, size = 1, col ="red") +
+          geom_vline(xintercept = spatial_cor[["x.intercept"]], linetype="dashed", 
+                     color = "black", linewidth=1)+
+          
+          xlab("Distance class (in km)") + ylab("Moran Index")+
+          labs(title =  contrib,
+               subtitle = paste0("X intercept = ", round(spatial_cor[["x.intercept"]],1), "km"))+
+          # ylim(-0.7,0.9)+
+          theme_bw()
+      }
+      
+      cat("... Plot Variogramm ... \n") 
+      plots <- pbmcapply::pbmclapply(contributions, FUN = correlog_plot, 
+                                     mc.cores = 10)
+      
+      all_plot <- Reduce(`+`, plots) +
+        plot_layout(axis_titles = "collect")+
+        plot_annotation(tag_levels = "a",
+                        title = paste0("Increment = ", increment, "km, ", "permutations = ", resamp)) &
+        theme(plot.tag = element_text(face = 'bold'),
+              axis.title.x = element_text(size = 14),   
+              axis.title.y = element_text(size = 14),)
+      
+      ggsave(filename = paste0(path_file,"/Variogramms_residuals_", save_name,".jpg"),
+             all_plot, width = 22, height =14 )
+      
     }#END OF CHECK SPATIAL AUTOCORRELATION
     
   } #END OF CHECK RESIDUALS
@@ -1319,8 +1458,9 @@ plot_hmsc_result <- function(metadata = metadata,
 #' @examples
 #' 
 #' 
-make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
+make_crossval_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
                                  folder_name = "test",
+                                 concatenate_chains = F,
                                  conditional_prediction = T,
                                  mcmcStep_conditional = 1, #"should be set high enough to obtain appropriate conditional predictions."
                                  marginal_responses = c("actino_richness",
@@ -1337,13 +1477,16 @@ make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
   load(file.path(save_out,folder_name, "dataset_crossvalidation.Rdata"))
   cv_files <- cross_val[grep("CV", cross_val)]
   
+  if(concatenate_chains) cv_files <- unique(sub("_.*", "", cv_files))
   
   ## For each fold of crossvalidation, predict the Y responses on test dataset
   predictions_cv <- pbmcapply::pbmclapply(cv_files,
                                           mc.cores = 1, #parallelize the predict instead
                                           FUN = function(cv){
-    # cv <-cv_files[1]
-    
+    # cv <-cv_files[4]
+                                            
+    if(concatenate_chains) cv <- paste0(cv, ".rds")
+      
     # Initial data
     data <- train_model[[as.numeric(stringr::str_extract(cv, "(?<=CV)[0-9]+"))]]
     X_train <- data[[1]]
@@ -1371,7 +1514,7 @@ make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
       importFromHPC <- vector("list", nChains+1)
       for(cInd in 1:nChains){
         chain_file_path = file.path(
-          save_out, folder_name, paste0(cv, cInd, ".rds")) ### To check ###
+          save_out, folder_name, paste0(gsub(".rds","",cv), "_chain_", cInd, ".rds")) ### To check ###
         chainList[[cInd]] = jsonify::from_json(readRDS(file = chain_file_path)[[1]])[[1]]
       }
     }else{
@@ -1398,21 +1541,24 @@ make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
     ## Set study design of new data
     random_factors <- colnames(model_fit_mcmc[["studyDesign"]])
     studyDesign <- data.frame(sample_unit = as.factor(rownames(X_test)),
+                              site = as.factor(X_test$site_code),
                               spatial = as.factor(rownames(X_test)),
                               year = as.factor(X_test$year),
                               country = as.factor(X_test$country),
                               ecoregion = as.factor(X_test$ecoregion))
     
     rL_asso = Hmsc::HmscRandomLevel(units = studyDesign$sample_unit)
+    rL_site = Hmsc::HmscRandomLevel(units = unique(studyDesign$site))
     rL_year = Hmsc::HmscRandomLevel(units = studyDesign$year)
     rL_ecoregion = Hmsc::HmscRandomLevel(units = studyDesign$ecoregion)
     rL_country =  Hmsc::HmscRandomLevel(units = studyDesign$country)
     
     ranLevels = list(sample_unit = rL_asso,
+                     site = rL_site,
                      year = rL_year,
                      ecoregion = rL_ecoregion,
                      country = rL_country)
-    
+  
     studyDesign <- studyDesign |> dplyr::select(all_of(random_factors))
     ranLevels <- ranLevels[random_factors]
     
@@ -1456,7 +1602,6 @@ make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
                                         studyDesign = studyDesign,
                                         ranLevels = ranLevels, 
                                         expected = F,
-                                        
                                         #use conditional prediction
                                         # Yc = PredY_marg,
                                         Yc = as.matrix(Y_test),
@@ -1468,8 +1613,8 @@ make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
       PredY_conditional <- as.data.frame(
         Reduce("+", conditional_prediction) / length(conditional_prediction))
       
-      #Replace conditional prediction for the initial predicted responses
-      PredY_conditional[,marginal_responses] <- PredY_marg[,marginal_responses]
+      # #Replace conditional prediction for the initial predicted responses
+      # PredY_conditional[,marginal_responses] <- PredY_marg[,marginal_responses]
     }
     
     #save data
@@ -1482,7 +1627,7 @@ make_prediction_hmsc <- function(path = here::here("outputs/models/hmsc"),
   save(predictions_cv, file = file.path(save_out,folder_name, "prediction_results.Rdata"))
   # load(file = file.path(save_out,folder_name, "prediction_results.Rdata"))
   
-} # END OF FUNCION make_prediction_hmsc
+} # END OF FUNCION make_crossval_prediction_hmsc
                    
 
 
@@ -1516,6 +1661,9 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
   if(!dir.exists(path_file)) dir.create(path_file)
   
   
+  # load explanatory power
+  load(file.path(path_file, "explanatory_power_data.Rdata"))    
+  
   # load predictions
   save_out <- file.path(path, "cross_validation/out_multi")
   load(file = file.path(save_out,folder_name, "prediction_results.Rdata"))
@@ -1548,7 +1696,8 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
   predictive_power_summary <- prediction |> 
     dplyr::group_by(responses) |> 
     dplyr::summarise(r_squared_marginal = summary(lm(marginal_prediction ~ observed))[["r.squared"]],
-                     r_squared_conditional = summary(lm(conditional_prediction ~ observed))[["r.squared"]])
+                     r_squared_conditional = summary(lm(conditional_prediction ~ observed))[["r.squared"]]) |> 
+    dplyr::left_join(MF_table)
   
   
   ### Predictive power ###
@@ -1558,7 +1707,7 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     geom_point(aes(x = observed, y = marginal_prediction, fill = responses),
                color = "grey40", alpha = 0.2, shape = 21) +
     hrbrthemes::theme_ipsum() +
-    xlab("Observed contributions") + ylab("Marginal conditions")+
+    xlab("Observed contributions") + ylab("Joint predictions")+
     geom_abline(slope = 1) + 
     ggpubr::stat_regline_equation(data = prediction,
                                   aes(x = observed, y = marginal_prediction,
@@ -1566,27 +1715,27 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     facet_wrap(~responses, scales = "free") +
     theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
   
-  ggsave(filename = paste0(path_file, "/Marginal_predictions_", folder_name, ".jpg"),
+  ggsave(filename = paste0(path_file, "/Joint_predictions_", folder_name, ".jpg"),
          width = 15, height = 8)
   
   
   
   
-  ## 2) Conditional predictions
-  ggplot(prediction)+
-    geom_point(aes(x = observed, y = conditional_prediction, fill = responses),
-               color = "grey40", alpha = 0.2, shape = 21) +
-    hrbrthemes::theme_ipsum() +
-    xlab("Observed contributions") + ylab("Conditional conditions")+
-    geom_abline(slope = 1) + 
-    ggpubr::stat_regline_equation(data = prediction,
-                                  aes(x = observed, y = conditional_prediction,
-                                      label = after_stat(rr.label)))   +
-    facet_wrap(~responses, scales = "free") +
-    theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
-  
-  ggsave(filename = paste0(path_file, "/Conditional_predictions_", folder_name, ".jpg"),
-         width = 15, height = 8)
+  # ## 2) Conditional predictions
+  # ggplot(prediction)+
+  #   geom_point(aes(x = observed, y = conditional_prediction, fill = responses),
+  #              color = "grey40", alpha = 0.2, shape = 21) +
+  #   hrbrthemes::theme_ipsum() +
+  #   xlab("Observed contributions") + ylab("Conditional conditions")+
+  #   geom_abline(slope = 1) + 
+  #   ggpubr::stat_regline_equation(data = prediction,
+  #                                 aes(x = observed, y = conditional_prediction,
+  #                                     label = after_stat(rr.label)))   +
+  #   facet_wrap(~responses, scales = "free") +
+  #   theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
+  # 
+  # ggsave(filename = paste0(path_file, "/Conditional_predictions_", folder_name, ".jpg"),
+  #        width = 15, height = 8)
   
   
   ## 3) Summary
@@ -1615,32 +1764,49 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
   #        width = 15, height = 8)
   
   
+  ## 5) R_squared summary
+  
   predictive_power_summary <- predictive_power_summary |> 
-    dplyr::arrange(r_squared_conditional) |> 
+    dplyr::arrange(R2) |> 
     dplyr::mutate(responses = factor(responses, levels = responses))
   
   ggplot(predictive_power_summary, aes(y = responses)) +
-    geom_point(aes(x = r_squared_marginal, color = "Marginal"), size = 3) + 
+    geom_point(aes(x = r_squared_marginal, color = "Joint"), size = 3) + 
     geom_point(aes(x = r_squared_conditional, color = "Conditional"), size = 3) + 
+    geom_point(aes(x = R2, color = "Inference"), size = 3) + 
     
     geom_vline(xintercept = mean(predictive_power_summary$r_squared_marginal),
                linetype = "dashed", color = "skyblue") + 
     geom_vline(xintercept = mean(predictive_power_summary$r_squared_conditional),
                linetype = "dashed", color = "orange") +
+    geom_vline(xintercept = mean(predictive_power_summary$R2),
+               linetype = "dashed", color = "grey50") +
+    
+    annotate("text", x = mean(predictive_power_summary$r_squared_marginal) + 0.015, y = -Inf, 
+             label = round(mean(predictive_power_summary$r_squared_marginal), 2), 
+             vjust = -1.5, color = "skyblue", size = 4) +
+    annotate("text", x = mean(predictive_power_summary$r_squared_conditional) + 0.015, y = -Inf, 
+             label = round(mean(predictive_power_summary$r_squared_conditional), 2), 
+             vjust = -1.5, color = "orange", size = 4) +
+    annotate("text", x = mean(predictive_power_summary$R2)+ 0.015, y = -Inf, 
+             # label = paste0("Explanatory power: R² = ",round(mean(predictive_power_summary$R2), 2)), 
+             label = round(mean(predictive_power_summary$R2), 2), 
+             vjust =-1.5, color = "grey50", size = 4) +
     
     labs(x = "R_squared", y = "Responses", 
-         title = "R_squared Marginal vs Conditional",
+         title = "R_squared Joint vs Conditional predictions",
          color = "R_squared Type") +
-    scale_color_manual(values = c("Marginal" = "skyblue", "Conditional" = "orange")) +
+    scale_color_manual(values = c("Joint" = "skyblue", "Conditional" = "orange",
+                                  "Inference" = "grey50")) +
     theme_minimal()
   
-  ggsave(filename = paste0(path_file, "/Marginal_vs_Conditional_pred_power_", folder_name, ".jpg"),
+  ggsave(filename = paste0(path_file, "/Joint_vs_Conditional_pred_power_", folder_name, ".jpg"),
          width = 15, height = 8)
   
   ##### TO DO: test spatial autocorrmapping = ##### TO DO: test spatial autocorrelations of residuals ######
   
   
-} # END OF FUNCION make_prediction_hmsc
+} # END OF FUNCION plot_predictive_power
 
 
 ##--------------------------HMSC CONTERFACTUAL PREDICTION-----------------------------------##
@@ -1660,47 +1826,108 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
 
 
 
-run_hmsc_prediction <- function(X_data = X,
-                                model_fit_mcmc = model_fit_mcmc,
-                                metadata = NULL,
-                                new_surveys = NULL,
-                                X_new_data = NULL
+run_hmsc_prediction <- function(path = path,
+                                model_name = file_name,
+                                concatenate_chains =F,
+                                X_new_data = NULL,
+                                metadata = NULL
 ){
+  ## Paths
+  save_init <- file.path(path, "init_multi")
+  save_out <- file.path(path, "out_multi")
+  localDir <- file.path(path, "multivariate")
+  
+  
+  ## Import initial object
+  
+  #Model design
+  load(file = file.path(localDir, paste0("model_fit_", model_name, ".Rdata")))
+  
+  #Initial hmsc object
+  init_obj_rds <- readRDS(file.path(save_init, paste0("init_", model_name)))
+  init_obj <- jsonify::from_json(init_obj_rds)
+  
+  nSamples = init_obj[["samples"]]
+  thin = init_obj[["thin"]]
+  nChains = init_obj[["nChains"]]
+  transient = init_obj[["transient"]]
+  
+  
+  ## Import posterior probability
+  if(concatenate_chains){
+    chainList = vector("list", nChains)
+    importFromHPC <- vector("list", nChains+1)
+    for(cInd in 1:nChains){
+      chain_file_path = file.path(
+        paste0(save_out,"output_", model_name, "/chain_", cInd, ".rds"))
+      chainList[[cInd]] = jsonify::from_json(readRDS(file = chain_file_path)[[1]])[[1]]
+    }
+  }else{
+    all_chains <- readRDS(file = file.path(save_out, paste0("output_", model_name)))[[1]]
+    importFromHPC <- jsonify::from_json(all_chains)
+    chainList <- importFromHPC[1:nChains]
+    ##Result model
+    cat(sprintf("fitting time %.1f h\n", importFromHPC[[nChains+1]] / 3600))
+    
+  }
+  
+  ##Export and merge chains
+  model_fit_mcmc <- Hmsc::importPosteriorFromHPC(model_fit,
+                                                 chainList, 
+                                                 nSamples, 
+                                                 thin, 
+                                                 transient)
+  
+  ## Initial data
+  Y_train <- as.data.frame(model_fit_mcmc$Y)
+  X_train <- model_fit_mcmc$XData
+  # metadata_model <- metadata[rownames(X_train),]
+  
+  
   ## Run prediction on original data
   studyDesign <- model_fit_mcmc$studyDesign
   ranLevels <- model_fit_mcmc$ranLevels
   
   
   predY <- predict(model_fit_mcmc, 
-                   XData = X_data, 
+                   XData = X_train, 
                    studyDesign = studyDesign,
-                   ranLevels = ranLevels, 
-                   expected = T)
+                   ranLevels = ranLevels)
   
   PredY_mean <- as.data.frame(Reduce("+", predY) / length(predY))
   
   
   ## Run prediction in conterfactual scenarios
   if(!is.null(X_new_data)){
+    # X_new_data = X_train
+    # metadata = metadata_sites
     
+    ## Identify new conditions
+    X_new_data <- X_new_data[, colnames(X_train)]
+    rows_with_changes <- names(which(rowSums(X_new_data != X_train)>0))
+    cat("Conditions have been changed in", length(rows_with_changes), "locations \n")
+    
+    ## Run new predictions
     predY_new_scenario <- predict(model_fit_mcmc, 
                                   XData = X_new_data, 
                                   studyDesign = studyDesign,
-                                  ranLevels = ranLevels, 
-                                  expected = F)
+                                  ranLevels = ranLevels)
     
     PredY_new_scenario_mean <- as.data.frame(
       Reduce("+", predY_new_scenario) / length(predY_new_scenario))
     
     
     ## Observe changes
-    
-    changes_matrix <- PredY_new_scenario_mean - PredY_mean
-    
-    effective_change <- changes_matrix[new_surveys,] |> 
-      tibble::rownames_to_column("survey_id") |> 
-      tidyr::pivot_longer(cols = -survey_id, names_to = "index", values_to = "values")|> 
-      dplyr::left_join( data.frame(survey_id = rownames(metadata),
+    effective_change <- PredY_mean[rows_with_changes,] |> 
+      tibble::rownames_to_column("id") |> 
+      tidyr::pivot_longer(cols = -id, names_to = "contribution", values_to = "original_prediction")|> 
+      dplyr::left_join( 
+        PredY_new_scenario_mean[rows_with_changes,] |> 
+          tibble::rownames_to_column("id") |> 
+          tidyr::pivot_longer(cols = -id, names_to = "contribution", values_to = "conterfactual")
+        ) |> 
+      dplyr::mutate(change = conterfactual - original_prediction)|> 
+      dplyr::left_join( data.frame(id = rownames(metadata),
                                    country = metadata$country)
       )
     
@@ -1712,4 +1939,228 @@ run_hmsc_prediction <- function(X_data = X,
   list(predictions = PredY_mean, 
        new_scenario = PredY_new_scenario_mean,
        effective_change =effective_change)
-} ## END OF FUNCTION PLOT_HMSC_RESULT
+} ## END OF FUNCTION RUN_HMSC_PREDICTION
+
+
+
+
+
+
+
+
+
+#' Plot conterfactual scenarios
+#'
+#' @param 
+#'
+#' @return save hmsc plots in figures/hmsc/file_name directory
+#' @export
+#'
+#' @examples
+#' 
+
+
+
+plot_conterfactual_scenarios <- function(path = path,
+                                         model_name = model_name,
+                                         concatenate_chains =F,
+                                         X_new_data = X_new_mpa,
+                                         metadata = metadata_sites,
+                                         save_name = "effectiveness_high",
+                                         selected_countries = selected_countries
+){
+  # Create folder
+  folder_name <- gsub(".rds", "", model_name)
+  path_file <- here::here("figures","models","hmsc", "conterfactuals", folder_name)    
+
+  if(!dir.exists(path_file)) dir.create(path_file)
+  
+  # Predict all contributions
+  new_predictions <- run_hmsc_prediction(path,
+                                         model_name,
+                                         concatenate_chains,
+                                         X_new_data,
+                                         metadata)
+  
+  preds <- new_predictions[["predictions"]]
+  conterfactual <- new_predictions[["new_scenario"]]
+  effective_change <- new_predictions[["effective_change"]]
+  
+  #---- Plot conterfactual VS original predictions ---
+  plot_interaction(effective_change, var_facet_wrap = "contribution",
+                   X_values = "original_prediction", Y_values = "conterfactual",
+                   xlabel = "Original predictions", ylabel = paste("Conterfactual predictions in", save_name))
+
+  ggsave( width = 15, height = 8, filename = file.path(
+    path_file,paste0("Conterfactual_VS_predictions_", save_name, folder_name, ".jpg"))
+        )
+  
+  
+  #---- Plot distributions of contribution changes ---
+  distrib_boxplot <- function(data, x, y, fill, hline = 0, title = NULL){
+    ggplot(data) +
+      aes_string(x= x, y= y, fill = fill)+
+      geom_boxplot() +
+      stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "text",
+                   aes(label = paste(round(after_stat(y), 2))),
+                   position = position_dodge(width = 0.75), vjust = 0.5, size = 3,
+                   color = "grey50") +
+      geom_hline(yintercept = hline, linetype = "dashed", color = "coral3") +
+      xlab("") + ylab("Contributions change in counterfactual scenarios") +
+      labs(title=title)+
+      theme_minimal() +
+      theme(legend.position = "none",
+            panel.grid.minor = element_blank(),
+            axis.text = element_text(color = "black"),
+            axis.title = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1,size = 10))+
+      coord_flip()
+  }
+  
+  effective_change <- effective_change  |> 
+    dplyr::mutate(contribution = reorder(contribution, change, FUN = median))
+  
+  distrib_boxplot(effective_change, x = "contribution", y = "change", fill = "contribution",
+                  title = save_name )
+  ggsave(width = 8, height = 8, filename = file.path(
+    path_file,paste0("Changes_distrib_", save_name, folder_name, ".jpg"))
+  )
+  
+  
+  #---- Plot changes in each countries ---
+  
+  # #obs heterogeneity by country
+  # data_1_contrib <- effective_change |>  
+  #   dplyr::filter(contribution == "available_biomass") |> 
+  #   dplyr::mutate(country = reorder(country, change, FUN = median))
+  # 
+  # distrib_boxplot(data_1_contrib, x = "country", y = "change", fill = "country",
+  #                 hline = mean(data_1_contrib$change))
+  
+  # # Select countries we want to plot
+  # selected_countries <- metadata |> 
+  #   dplyr::count(country) |> 
+  #   dplyr::filter(n > threshold_nb_sites) |> 
+  #   dplyr::pull(country)
+
+  
+  
+  # Original PCA
+  pca <- FactoMineR::PCA(preds, scale.unit = T, graph=F, ncp=15)
+  
+  factoextra::fviz_screeplot(pca, ncp=15)
+  
+  pca_plot <- factoextra::fviz_pca_biplot(pca,
+                                          axes = c(1,2),
+                                          title="",
+                                          label = "var",
+                                          labelsize = 4, 
+                                          geom=c("point"), 
+                                          pointshape=21,
+                                          stroke=0, pointsize=2,
+                                          alpha.ind = 0.7,
+                                          alpha.var = 0.7,
+                                          fill.ind = "grey",    
+                                          repel = TRUE)
+  
+  pca_plot_no_labels <- factoextra::fviz_pca_biplot(pca,
+                                          axes = c(1,2),title="",
+                                          label = "none",
+                                          geom=c("point"), 
+                                          pointshape=21,
+                                          stroke=0, pointsize=2,
+                                          alpha.ind = 0.7,
+                                          alpha.var = 0.7,
+                                          fill.ind = "grey",    
+                                          repel = TRUE)
+  
+  
+  # Calculate barycenters (centroids) for each country in the 6 first dimensions
+  new_conditions <- unique(effective_change$id)
+  coord_old_points <- as.data.frame(pca$ind$coord[, 1:6]) |> 
+    tibble::rownames_to_column("id") |> 
+    dplyr::filter(id %in% new_conditions) |> #Considering only points that will change
+    tibble::column_to_rownames("id")
+  
+  countries <- metadata[rownames(coord_old_points),]$country
+  
+  barycenters <- aggregate(coord_old_points, 
+                           by = list(countries), FUN = mean) |> 
+    dplyr::filter(Group.1 %in% selected_countries)
+  colnames(barycenters) <- c("country", "PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
+  
+  absent_countries <- selected_countries[!selected_countries %in% countries]
+  missing_rows <- data.frame(country = absent_countries,
+    PC1 = NA, PC2 = NA, PC3 = NA, PC4 = NA, PC5 = NA, PC6 = NA)
+  barycenters <- rbind(barycenters, missing_rows)
+  
+  # Add barycenters to the plot
+  pca_plot_barycenter <- pca_plot + 
+    geom_point(data = barycenters, aes(x = PC1, y = PC2, fill = country), 
+               shape = 23, size = 4, color = "black", stroke = 1)
+  
+  
+  ### Observe new scenario ###
+  # (1) Project the new predictions in the same space
+  projected_points <- predict(pca, newdata = conterfactual)
+  
+  # (2) calculate new barycenters
+  coord_new_points <- as.data.frame(projected_points$coord[, 1:6]) |> 
+    tibble::rownames_to_column("id") |> 
+    dplyr::filter(id %in% new_conditions) |> 
+    tibble::column_to_rownames("id")
+  
+  barycenters_new <- aggregate(coord_new_points, 
+                               by = list(countries), FUN = mean) |> 
+    dplyr::filter(Group.1 %in% selected_countries)
+  colnames(barycenters_new) <- c("country", "PC1", "PC2", "PC3", "PC4", "PC5", "PC6")
+  barycenters_new <- rbind(barycenters_new, missing_rows)
+  
+  barycenters_movement <- merge(barycenters, barycenters_new, 
+                                by = "country", suffixes = c("_old", "_new"))
+  
+  
+  plot_mvt <- pca_plot_barycenter + 
+    geom_point(data = barycenters_new, aes(x = PC1, y = PC2, fill = country),
+               shape = 23, size = 3, color = "black", alpha = 0.5)+
+    geom_segment(data = barycenters_movement, 
+                 aes(x = PC1_old, y = PC2_old, 
+                     xend = PC1_new, yend = PC2_new,
+                     color = country), 
+                 # arrow = arrow(length = unit(0.3, "cm")),
+                 linewidth = 1, linetype = "dotted")+
+    labs(title = save_name)+
+    guides(fill = guide_legend(ncol = 1))
+    
+  
+  ggsave(plot = plot_mvt, width=15, height= 8, filename = file.path(
+    path_file,paste0("Barycenters_movement_", save_name, folder_name, ".jpg"))
+  )
+  
+  
+  # ## General barycenter:
+  # barycenter_tot <- apply(pca$ind$coord[, 1:2], 2, mean) # 0, 0 by construction
+  # barycenters_new <- t(as.data.frame(apply(projected_points$coord[, 1:2], 2, mean)))
+  # pca_plot + geom_segment(data = barycenters_new, 
+  #                         aes(x = 0, y = 0, 
+  #                             xend = Dim.1, yend = Dim.2), 
+  #                         arrow = arrow(length = unit(0.3, "cm")),
+  #                         linewidth = 1)+
+  #   labs(title = save_name)
+  no_labels <- pca_plot_no_labels +
+    geom_point(data = barycenters, aes(x = PC1, y = PC2, fill = country), 
+               shape = 23, size = 4, color = "black", stroke = 1)+
+    geom_point(data = barycenters_new, aes(x = PC1, y = PC2, fill = country),
+               shape = 23, size = 3, color = "black", alpha = 0.5)+
+    geom_segment(data = barycenters_movement, 
+                 aes(x = PC1_old, y = PC2_old, 
+                     xend = PC1_new, yend = PC2_new,
+                     color = country), 
+                 # arrow = arrow(length = unit(0.3, "cm")),
+                 linewidth = 1, linetype = "dotted")
+  
+  list(plot_mvt, no_labels)
+} #END OF plot_conterfactual_scenarios
+
+
+

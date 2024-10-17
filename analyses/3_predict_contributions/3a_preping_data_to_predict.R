@@ -249,10 +249,10 @@ cov_to_select2 <- cov_to_select[-which(cov_to_select %in%
                                             "no_violence", #correlated to hdi
                                             "control_of_corruption",
                                             "voice",
-                                            "hdi",  #country level covariates
-                                            "marine_ecosystem_dependency",  #country level covariates
-                                            "ngo", #country level covariates
-                                            "natural_ressource_rent" #country level covariates
+                                            # "hdi",  #country level covariates
+                                            # "marine_ecosystem_dependency",  #country level covariates
+                                            "ngo" #country level covariates
+                                            # "natural_ressource_rent" #country level covariates
                                             ))]
 
 
@@ -287,7 +287,7 @@ ggsave( width=15, height= 10,
 cov_to_log_transformed <- 
   c("Back_Reef_Slope_500m", "Deep_Lagoon_500m", "gdp", "gravtot2",
     "Inner_Reef_Flat_500m", 
-    # "marine_ecosystem_dependency", "natural_ressource_rent", "ngo",
+    "marine_ecosystem_dependency", "natural_ressource_rent",
     "median_1year_degree_heating_week", "median_5year_chl",
     "median_5year_degree_heating_week", "median_7days_chl",
     "median_7days_degree_heating_week", "median_7days_degree_heating_week",
@@ -388,29 +388,29 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 
 
-##------------------- Cross-validation -------------------
-n_CV = 3
-
-id <- all_covariates_benthos_inferred |> 
-  dplyr::select(survey_id, site_code) |> 
-  dplyr::filter(survey_id %in% rownames(observations_final))
-
-folds <- rsample::vfold_cv(id,  v = n_CV)
-# folds <- rsample::vfold_cv(id, strata = survey_id, v = n_CV)
-
-datasets <- lapply(c(1:n_CV), FUN = function(i){
-  sample <- folds$splits[[i]]
-  
-  test_id <- rsample::testing(sample)$survey_id
-  train_id <-  rsample::training(sample)$survey_id
-  
-  test <- observations_final[test_id,]
-  # tested_sites <- unique(test$site_code)
-  train <- observations_final[train_id,] 
-    # dplyr::filter(!site_code %in% tested_sites)
-
-  list(train, test)
-})
+# ##------------------- Cross-validation -------------------
+# n_CV = 3
+# 
+# id <- all_covariates_benthos_inferred |> 
+#   dplyr::select(survey_id, site_code) |> 
+#   dplyr::filter(survey_id %in% rownames(observations_final))
+# 
+# folds <- rsample::vfold_cv(id,  v = n_CV)
+# # folds <- rsample::vfold_cv(id, strata = survey_id, v = n_CV)
+# 
+# datasets <- lapply(c(1:n_CV), FUN = function(i){
+#   sample <- folds$splits[[i]]
+#   
+#   test_id <- rsample::testing(sample)$survey_id
+#   train_id <-  rsample::training(sample)$survey_id
+#   
+#   test <- observations_final[test_id,]
+#   # tested_sites <- unique(test$site_code)
+#   train <- observations_final[train_id,] 
+#     # dplyr::filter(!site_code %in% tested_sites)
+# 
+#   list(train, test)
+# })
 
 
 
@@ -420,7 +420,7 @@ save(observations_final, file = here::here("data", "derived_data", "3_all_contri
 save(observations_final_aggregated_score, 
      file = here::here("data", "derived_data", "3_NN_NP_scores_to_predict.Rdata"))
 
-save(datasets, file = here::here("data", "derived_data", "3_datasets_for_predict_CV_66_33.Rdata"))
+# save(datasets, file = here::here("data", "derived_data", "3_datasets_for_predict_CV_66_33.Rdata"))
 
 save(covariates_final_without_Allen, file = here::here("data", "derived_data", "3_covariates_without_Allen_to_predict.Rdata"))
 save(observations_final_without_Allen, file = here::here("data", "derived_data", "3_contributions_without_Allen_to_predict.Rdata"))
@@ -559,17 +559,17 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 
 
-##------------------- Rough cross-validation -------------------
-n_CV = 3
-
-datasets_site <- lapply(c(1:n_CV), FUN = function(i){
-  sample <- sample.int(nrow(observations_site_final), round(0.2*nrow(observations_site_final),0))
-
-  train <- observations_site_final[-sample,]
-  test <- observations_site_final[sample,]
-
-  list(train, test)
-})
+# ##------------------- Rough cross-validation -------------------
+# n_CV = 3
+# 
+# datasets_site <- lapply(c(1:n_CV), FUN = function(i){
+#   sample <- sample.int(nrow(observations_site_final), round(0.2*nrow(observations_site_final),0))
+# 
+#   train <- observations_site_final[-sample,]
+#   test <- observations_site_final[sample,]
+# 
+#   list(train, test)
+# })
 
 
 
@@ -577,5 +577,5 @@ datasets_site <- lapply(c(1:n_CV), FUN = function(i){
 save(covariates_site_final, file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
 save(observations_site_final, file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
 
-save(datasets_site, file = here::here("data", "derived_data", "3_sites_datasets_for_predict_CV_66_33.Rdata"))
+# save(datasets_site, file = here::here("data", "derived_data", "3_sites_datasets_for_predict_CV_66_33.Rdata"))
 

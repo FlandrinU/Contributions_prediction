@@ -42,8 +42,8 @@ X_data_site = covariates_site_final[rownames(Y_data_site),]
 
 
 ## Only Australia
-X_data_aust = covariates_final |> dplyr::filter(country == "Australia")
-Y_data_aust =  observations_final[rownames(X_data_aust),]
+X_data_aust = covariates_site_final |> dplyr::filter(country == "Australia")
+Y_data_aust =  observations_site_final[rownames(X_data_aust),]
 
 
 ##----------------------------- Set-up parameters ------------------------------
@@ -59,6 +59,7 @@ response_distribution <- rep("normal", ncol(Y_data))
 #response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
 
 quadratic_effects = NULL
+test_null_model = NULL
 # quadratic_effects = colnames(
 #   dplyr::select(X_data,-longitude,-latitude,-year,-country, -ecoregion,-realm,
 #                 -hdi,-marine_ecosystem_dependency,-ngo,-natural_ressource_rent))
@@ -67,6 +68,30 @@ quadratic_effects = NULL
 save_path = here::here("outputs/models/hmsc")
 
 ##----------------------------- Fit HMSC models ------------------------------
+
+#### FULL MODEL SITES ####
+name = "FULL_model_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+##--------------------------- Sensitivity analyses -----------------------------
 
 #### FULL MODEL SURVEYS ####
 name = "FULL_survey_site_country_in_rL"
@@ -77,7 +102,7 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
               Y_data,
               X_data,
               response_distribution, quadratic_effects,random_factors,
-              nb_neighbours, set_shrink, name,
+              nb_neighbours, set_shrink, test_null_model, name,
               run_python = T, save_path)
 
 #Fit crossvalidation
@@ -86,21 +111,63 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          Y_data = Y_data,
                          X_data = X_data,
                          response_distribution, quadratic_effects,random_factors,
-                         nb_neighbours, set_shrink, name,
+                         nb_neighbours, set_shrink, test_null_model, name,
                          run_python = T, save_path)
 
 
-#### FULL MODEL SITES ####
-name = "FULL_SITE_SCALE_site_country_in_rL"
+
+
+#### FULL MODEL SITES, QUADRATIC EFFECTS ####
+quadratic_effects_all = colnames(
+  dplyr::select(X_data_site,- site_code, -longitude,-latitude,-year,-country, 
+                -ecoregion,-realm))
+
 random_factors = c("sample_unit", "country")
+
+name = "Quadratic_SITE_SCALE_site_country_in_rL"
+
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, 
+              quadratic_effects = quadratic_effects_all,
+              random_factors, nb_neighbours, set_shrink, test_null_model, name,
+              run_python = F, save_path)
+
+
+
+#### FULL MODEL SITES HIGH SHRINK ####
+name = "test_1000shrink_var_SITE_SCALE_site_country_in_rL"
+random_factors = c("sample_unit", "country")
+set_shrink = 1000
+quadratic_effects = NULL
+
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = F, save_path)
+
+
+
+
+
+
+#### NULL MODEL, SITES ####
+name = "Null_model_SITE_SCALE_site_country_in_rL"
+random_factors = c("sample_unit", "country")
+set_shrink = NULL
+test_null_model = TRUE
 
 #Fit full model
 hmsc_function(nSamples, thin, nChains, verbose, transient,
               Y_data = Y_data_site,
               X_data = X_data_site,
               response_distribution, quadratic_effects,random_factors,
-              nb_neighbours, set_shrink, name,
-              run_python = T, save_path)
+              nb_neighbours, set_shrink,
+              test_null_model = test_null_model,
+              name, run_python = F, save_path)
 
 #Fit crossvalidation
 fit_hmsc_crossvalidation(k_fold = 5, 
@@ -108,26 +175,105 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          Y_data = Y_data_site,
                          X_data = X_data_site,
                          response_distribution, quadratic_effects,random_factors,
-                         nb_neighbours, set_shrink, name,
+                         nb_neighbours, set_shrink, test_null_model = test_null_model, 
+                         name, run_python = F, save_path)
+
+
+
+
+
+#### UNIVARIATES MODEL SITES ####
+# Y <- Y_data_site |> dplyr::select(invertivores_biomass, public_interest )
+Y <- Y_data_site |> dplyr::select(actino_richness)
+response_distribution <- rep("normal", ncol(Y))
+name = "test_univariate_SITE_SCALE_site_country_in_rL"
+random_factors = c("sample_unit", "country")
+
+#Fit model -> around 1h40 for each response
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
                          run_python = T, save_path)
 
 
 
-#### FULL MODEL SITES, QUADRATIC EFFECTS ####
-quadratic_effects_all = colnames(
-  dplyr::select(X_data,-longitude,-latitude,-year,-country, -ecoregion,-realm,
-                -hdi,-marine_ecosystem_dependency,-ngo,-natural_ressource_rent))
+#### RANDOM ASSOCIATIONS BETWEEN CONTRIBUTIONS ####
+name = "test_RANDOM_contrib_except_actino_SITE_SCALE"
+random_factors = c("sample_unit", "country")
 
-name = "quadratic_SITE_SCALE_site_country_in_rL"
+Y_random <- Y_data_site |> 
+  dplyr::mutate(across(-actino_richness, .fns = sample, .names = "{.col}"))
+cor.test(Y_random$actino_richness, Y_random$mean_endemism)
+cor.test(Y_data_site$actino_richness, Y_data_site$mean_endemism)
+cor.test(Y_random$actino_richness, Y_data_site$actino_richness)
 
+
+#Fit full model
 hmsc_function(nSamples, thin, nChains, verbose, transient,
-              Y_data = Y_data_site,
+              Y_data = Y_random,
               X_data = X_data_site,
-              response_distribution, 
-              quadratic_effects = quadratic_effects_all,
-              random_factors, nb_neighbours, set_shrink, name,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
               run_python = T, save_path)
 
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_random,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+
+
+
+
+#### AUSTRALIA MODEL SITES ####
+name = "Australia_only_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_aust,
+              X_data = X_data_aust,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+
+#### WITHOUT ALLEN MODEL SURVEYS ####
+name = "Without_Allen_survey_site_country_in_rL"
+random_factors = c("sample_unit", "site", "country")
+
+
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data_wo_allen,
+              X_data_wo_allen,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_wo_allen,
+                         X_data = X_data_wo_allen,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
 
 
 
