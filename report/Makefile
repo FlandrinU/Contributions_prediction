@@ -1,10 +1,10 @@
 all:
 	quarto render .
 
-html: quarto_report_CHAP_2.qmd
+html: quarto_MS2_UFlandrin.qmd
 	quarto render . --to html
 
-pdf: quarto_report_CHAP_2.qmd
+pdf: quarto_MS2_UFlandrin.qmd
 	quarto render . --to pdf
 
 

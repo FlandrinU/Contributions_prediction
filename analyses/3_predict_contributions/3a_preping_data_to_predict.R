@@ -28,9 +28,14 @@ load(file = here::here("data", "raw_data", "environmental_covariates",
 # Contributions matrix
 load(file = here::here("outputs", "2_all_contributions.Rdata"))
 load(file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))
+load(file = here::here("outputs", "2_metadata_backtransformation_contrib.Rdata") )
+
 
 # Contribution matrix at the site scale
 load(file = here::here("outputs", "2_contributions_site&date.Rdata"))
+
+#Coastline
+coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
 
 ## Load functions ##
 source(here::here("R","evaluation_prediction_model.R"))
@@ -59,8 +64,20 @@ observations <- contributions_with_synthetic_score |>
   dplyr::mutate(across(-c(iucn_species_richness), scale)) |> 
   dplyr::mutate(across(everything(), as.numeric))
 
+means <- contributions_with_synthetic_score[rownames(observations),] |> 
+  dplyr::summarise(across(-iucn_species_richness, mean)) |> 
+  tidyr::pivot_longer(cols = everything(), names_to = "contribution", values_to = "mean_survey")
 
+sd <- contributions_with_synthetic_score[rownames(observations),] |> 
+  dplyr::summarise(across(-iucn_species_richness, ~sd(.)))|> 
+  tidyr::pivot_longer(cols = everything(), names_to = "contribution", values_to = "sd_survey")
 
+#Metadata back-scaling
+contributions_transformation <- contributions_transformation |> 
+  dplyr::mutate(scaled = ifelse(contribution != "iucn_species_richness", T, F)) |> 
+  dplyr::left_join(means)|> 
+  dplyr::left_join(sd)
+  
 
 #### FILTER COVARIATES ####
 colnames(all_covariates_benthos_inferred)
@@ -215,45 +232,46 @@ dev.off()
 
 
 ### REFINE THE SELECTION
-cov_to_select2 <- cov_to_select[-which(cov_to_select %in% 
-                                          c("median_5year_nppv",
-                                            "median_7days_nppv", # correlated to chlorophyll
-                                            "median_7days_o2",
-                                            "median_5year_o2",
-                                            "median_7days_so_mean",
-                                            # "median_5year_ph", #correlated with sst, low ecological meaning
-                                            "q05_5year_nppv",
-                                            "q05_5year_chl",
-                                            "q95_5year_chl",
-                                            "q95_5year_o2",
-                                            "q05_5year_o2",
-                                            "q95_5year_ph",
-                                            "q05_5year_ph", # correlated at the median_5year_pH
-                                            "q95_5year_nppv",
-                                            "q95_5year_so_mean",
-                                            "q05_5year_so_mean",
-                                            "q95_5year_analysed_sst",
-                                            "q05_5year_analysed_sst",
-                                            "q05_7days_degree_heating_week",
-                                            "q95_7days_degree_heating_week",
-                                            "q05_1year_degree_heating_week", #no influence in models
-                                            "q95_1year_degree_heating_week", # low contribution to variance explained, correlated at 0.5 with q95_5year_DHW
-                                            "median_7days_analysed_sst", #correlated with median_5year_sst, low ecological relevance
-                                            
-                                            "Outer_Reef_Flat_500m", # correlated to Rock_500m
-                                            "Shallow_Lagoon_500m", #correlated to Sand_500m
-                                            "seagrass", #no influence in models
-                                            "microalgal_mats", #no influence in models
-                                            "algae", #highly negatively correlated with coral, and less influence in variance explained
-                                            
-                                            "no_violence", #correlated to hdi
-                                            "control_of_corruption",
-                                            "voice",
-                                            # "hdi",  #country level covariates
-                                            # "marine_ecosystem_dependency",  #country level covariates
-                                            "ngo" #country level covariates
-                                            # "natural_ressource_rent" #country level covariates
-                                            ))]
+cov_to_select2 <- 
+  cov_to_select[-which(cov_to_select %in% 
+                         c("median_5year_nppv",
+                           "median_7days_nppv", # correlated to chlorophyll
+                           "median_7days_o2",
+                           "median_5year_o2",
+                           "median_7days_so_mean",
+                           # "median_5year_ph", #correlated with sst, low ecological meaning
+                           "q05_5year_nppv",
+                           "q05_5year_chl",
+                           "q95_5year_chl",
+                           "q95_5year_o2",
+                           "q05_5year_o2",
+                           "q95_5year_ph",
+                           "q05_5year_ph", # correlated at the median_5year_pH
+                           "q95_5year_nppv",
+                           "q95_5year_so_mean",
+                           "q05_5year_so_mean",
+                           "q95_5year_analysed_sst",
+                           "q05_5year_analysed_sst",
+                           "q05_7days_degree_heating_week",
+                           "q95_7days_degree_heating_week",
+                           "q05_1year_degree_heating_week", #no influence in models
+                           "q95_1year_degree_heating_week", # low contribution to variance explained, correlated at 0.5 with q95_5year_DHW
+                           "median_7days_analysed_sst", #correlated with median_5year_sst, low ecological relevance
+                           
+                           "Outer_Reef_Flat_500m", # correlated to Rock_500m
+                           "Shallow_Lagoon_500m", #correlated to Sand_500m
+                           "seagrass", #no influence in models
+                           "microalgal_mats", #no influence in models
+                           "algae", #highly negatively correlated with coral, and less influence in variance explained
+                           
+                           "no_violence", #correlated to hdi
+                           "control_of_corruption",
+                           "voice",
+                           # "hdi",  #country level covariates
+                           # "marine_ecosystem_dependency",  #country level covariates
+                           "ngo" #country level covariates
+                           # "natural_ressource_rent" #country level covariates
+                         ))]
 
 
 selection2 <- as.data.frame(data_to_filter) |> dplyr::select(all_of(cov_to_select2))
@@ -346,8 +364,12 @@ ggsave(plot = last_plot(), width=15, height= 10,
        filename = here::here("figures/models/covariates", 
                              "covariates_distribution_log_transformed_and_scaled.jpg"))
 
-
-
+# ## Check covariates with low heterogeneity
+# low_hetero <- c("median_7days_degree_heating_week", "Patch_Reefs_500m",
+#                 "Seagrass_500m", "Terrestrial_Reef_Flat_500m")
+# summary(covariates_final[,low_hetero])
+# distribution_plot(covariates_final, longer = T, cols_plot = low_hetero )+
+#   ylim(c(0,5))
 
 
 #### COMMON SURVEYS FOR COVARIATES AND OBSERVATIONS ####
@@ -385,33 +407,6 @@ pca <- FactoMineR::PCA(cbind(observations_final,observations_final_aggregated_sc
 factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
                             stroke=0, pointsize=3, alpha.ind = 0.7, 
                             fill.ind = "grey", col.quanti.sup = "firebrick")
-
-
-
-# ##------------------- Cross-validation -------------------
-# n_CV = 3
-# 
-# id <- all_covariates_benthos_inferred |> 
-#   dplyr::select(survey_id, site_code) |> 
-#   dplyr::filter(survey_id %in% rownames(observations_final))
-# 
-# folds <- rsample::vfold_cv(id,  v = n_CV)
-# # folds <- rsample::vfold_cv(id, strata = survey_id, v = n_CV)
-# 
-# datasets <- lapply(c(1:n_CV), FUN = function(i){
-#   sample <- folds$splits[[i]]
-#   
-#   test_id <- rsample::testing(sample)$survey_id
-#   train_id <-  rsample::training(sample)$survey_id
-#   
-#   test <- observations_final[test_id,]
-#   # tested_sites <- unique(test$site_code)
-#   train <- observations_final[train_id,] 
-#     # dplyr::filter(!site_code %in% tested_sites)
-# 
-#   list(train, test)
-# })
-
 
 
 ##------------------- save datasets -------------------
@@ -463,6 +458,19 @@ observations_site <- contributions_sites_date |>
   tidyr::drop_na() |> 
   dplyr::mutate(across(-c(iucn_species_richness), scale)) |> 
   dplyr::mutate(across(everything(), as.numeric))
+
+means <- contributions_sites_date[rownames(observations_site),] |> 
+  dplyr::summarise(across(-iucn_species_richness, mean)) |> 
+  tidyr::pivot_longer(cols = everything(), names_to = "contribution", values_to = "mean_site")
+
+sd <- contributions_sites_date[rownames(observations_site),] |> 
+  dplyr::summarise(across(-iucn_species_richness, ~sd(.)))|> 
+  tidyr::pivot_longer(cols = everything(), names_to = "contribution", values_to = "sd_site")
+
+#Metadata back-scaling
+contributions_transformation <- contributions_transformation |> 
+  dplyr::left_join(means)|> 
+  dplyr::left_join(sd)
 
 
 ##------------------- Mean covariates -------------------
@@ -559,23 +567,68 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 
 
-# ##------------------- Rough cross-validation -------------------
-# n_CV = 3
-# 
-# datasets_site <- lapply(c(1:n_CV), FUN = function(i){
-#   sample <- sample.int(nrow(observations_site_final), round(0.2*nrow(observations_site_final),0))
-# 
-#   train <- observations_site_final[-sample,]
-#   test <- observations_site_final[sample,]
-# 
-#   list(train, test)
-# })
+##------------------- Map and caracterize RLS sites -------------------
 
+table(covariates_site_final$effectiveness)
+length(unique(covariates_site_final$country))
+
+plot_mpa <-function(covariates_site_final, xlim=c(-180,180), ylim = c(-36, 31),
+                    legend_pos = "none", jitter = 0.2){
+  ggplot(covariates_site_final) +
+    geom_sf(data = coast, color = "grey30", fill = "lightgrey",
+            aes(size=0.1)) +
+    
+    geom_point(size = 2, na.rm = T,
+               position = position_jitter(width =jitter, height =jitter),
+               alpha = 0.8,
+               colour = "black",
+               stroke=0.1,
+               shape = 21,
+               aes(x = longitude, y = latitude,
+                   fill=effectiveness)) +
+    
+    coord_sf(xlim, ylim , expand = FALSE) +
+    guides(alpha = "none", size = "none", colour = "none") +
+    # scale_shape_manual(values=c(21,24,23))+
+    
+    theme_minimal()+
+    labs(title = "",
+         x="", y= "") +
+    theme(legend.position = legend_pos,
+          plot.title = element_text(size=15, face="bold"),
+          legend.text = element_text(size=13),
+          legend.title = element_text(size=15),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          plot.margin = unit(c(0.000,0.000,0.000,0.000), units = , "cm")
+    )
+}
+
+mpa <-  plot_mpa(covariates_site_final , xlim=c(-180,180), ylim = c(-36, 31),
+                 legend_pos = "none", jitter = 1)+
+  geom_rect(aes(xmin = 110, xmax = 160, ymin = -32, ymax = -7), color = "black", fill= "transparent")+
+  geom_rect(aes(xmin = -95, xmax = -67, ymin = -3, ymax = 18), color = "black", fill= "transparent")
+
+gold_coast_mpa<- plot_mpa( covariates_site_final,ylim = c(-32, -7),
+                           xlim= c(110,160), legend_pos = "right", jitter = 0.5)
+
+caraib_mpa <- plot_mpa( covariates_site_final, ylim = c(-3, 18),
+                        xlim= c(-95,-67), legend_pos = "none", jitter = 0.5)
+
+ggpubr::ggarrange(mpa, # First row with world map
+                  ggpubr::ggarrange(caraib_mpa, gold_coast_mpa,  
+                                    ncol = 2, labels = c("B", "C"), widths = c(1, 1.3)), # Second row with zooms
+                  nrow = 2, labels = "A") 
+ggsave(plot = last_plot(), width = 14, height = 7,
+       filename = here::here("figures","RLS sites with protection and zoom.jpg"))
+       
 
 
 ##------------------- save datasets -------------------
 save(covariates_site_final, file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
 save(observations_site_final, file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
 
-# save(datasets_site, file = here::here("data", "derived_data", "3_sites_datasets_for_predict_CV_66_33.Rdata"))
+# load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
 
+save(contributions_transformation,
+     file = here::here("outputs", "3_metadata_backtransformation_contrib.Rdata") )

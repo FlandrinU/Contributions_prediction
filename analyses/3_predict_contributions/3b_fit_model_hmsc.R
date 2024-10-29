@@ -41,10 +41,12 @@ Y_data_site =  observations_site_final
 X_data_site = covariates_site_final[rownames(Y_data_site),]
 
 
-## Only Australia
+## Only/Without Australia
 X_data_aust = covariates_site_final |> dplyr::filter(country == "Australia")
 Y_data_aust =  observations_site_final[rownames(X_data_aust),]
 
+X_data_no_aust = covariates_site_final |> dplyr::filter(country != "Australia")
+Y_data_no_aust =  observations_site_final[rownames(X_data_no_aust),]
 
 ##----------------------------- Set-up parameters ------------------------------
 nSamples = 100
@@ -182,32 +184,32 @@ fit_hmsc_crossvalidation(k_fold = 5,
 
 
 
-#### UNIVARIATES MODEL SITES ####
-# Y <- Y_data_site |> dplyr::select(invertivores_biomass, public_interest )
-Y <- Y_data_site |> dplyr::select(actino_richness)
-response_distribution <- rep("normal", ncol(Y))
-name = "test_univariate_SITE_SCALE_site_country_in_rL"
-random_factors = c("sample_unit", "country")
-
-#Fit model -> around 1h40 for each response
-hmsc_function(nSamples, thin, nChains, verbose, transient,
-              Y_data = Y,
-              X_data = X_data_site,
-              response_distribution, quadratic_effects,random_factors,
-              nb_neighbours, set_shrink, test_null_model, name,
-              run_python = T, save_path)
-
-#Fit crossvalidation
-fit_hmsc_crossvalidation(k_fold = 5, 
-                         nSamples, thin, nChains, verbose, transient,
-                         Y_data = Y,
-                         X_data = X_data_site,
-                         response_distribution, quadratic_effects,random_factors,
-                         nb_neighbours, set_shrink, test_null_model, name,
-                         run_python = T, save_path)
-
-
-
+# #### UNIVARIATES MODEL SITES ####
+# # Y <- Y_data_site |> dplyr::select(invertivores_biomass, public_interest )
+# Y <- Y_data_site |> dplyr::select(actino_richness)
+# response_distribution <- rep("normal", ncol(Y))
+# name = "test_univariate_SITE_SCALE_site_country_in_rL"
+# random_factors = c("sample_unit", "country")
+# 
+# #Fit model -> around 1h40 for each response
+# hmsc_function(nSamples, thin, nChains, verbose, transient,
+#               Y_data = Y,
+#               X_data = X_data_site,
+#               response_distribution, quadratic_effects,random_factors,
+#               nb_neighbours, set_shrink, test_null_model, name,
+#               run_python = T, save_path)
+# 
+# #Fit crossvalidation
+# fit_hmsc_crossvalidation(k_fold = 5, 
+#                          nSamples, thin, nChains, verbose, transient,
+#                          Y_data = Y,
+#                          X_data = X_data_site,
+#                          response_distribution, quadratic_effects,random_factors,
+#                          nb_neighbours, set_shrink, test_null_model, name,
+#                          run_python = T, save_path)
+# 
+# 
+# 
 #### RANDOM ASSOCIATIONS BETWEEN CONTRIBUTIONS ####
 name = "test_RANDOM_contrib_except_actino_SITE_SCALE"
 random_factors = c("sample_unit", "country")
@@ -243,8 +245,9 @@ fit_hmsc_crossvalidation(k_fold = 5,
 
 #### AUSTRALIA MODEL SITES ####
 name = "Australia_only_SITE_SCALE"
-random_factors = c("sample_unit", "country")
-
+random_factors = c("sample_unit")
+X_data_aust <- X_data_aust |> dplyr::select(-hdi, -marine_ecosystem_dependency,
+                                            -natural_ressource_rent)
 #Fit full model
 hmsc_function(nSamples, thin, nChains, verbose, transient,
               Y_data = Y_data_aust,
@@ -252,6 +255,20 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
               response_distribution, quadratic_effects,random_factors,
               nb_neighbours, set_shrink, test_null_model, name,
               run_python = T, save_path)
+
+#### WITHOUT AUSTRALIA MODEL SITES ####
+name = "Without_Australia_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+X_data_no_aust <- dplyr::select(X_data_no_aust, -Patch_Reefs_500m)
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_no_aust,
+              X_data = X_data_no_aust,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
 
 
 #### WITHOUT ALLEN MODEL SURVEYS ####
@@ -278,39 +295,7 @@ fit_hmsc_crossvalidation(k_fold = 5,
 
 
 
-
-
-# ##--------------------------- Sensitivity analyses -----------------------------
-#  source("R/evaluation_prediction_model.R")
-# ##### Quadratic effects ####
-# full_data <- cbind(X_data, Y_data) |> 
-#   tidyr::pivot_longer(cols = colnames(Y_data), names_to = "contributions")
-# 
-# plot_interaction(full_data,
-#                  var_facet_wrap = "contributions",
-#                  X_values = "median_5year_analysed_sst",
-#                  Y_values = "value",
-#                  add_curve = T) # (mgcv::gam() is used with formula = y ~ s(x, bs = "cs") with method = "REML".)
-# 
-# ggsave(filename = here::here("figures/models/hmsc/sensitivity_analyses/contributions_VS_SST.jpg"),
-#        width = 15, height = 8)
-# 
-# 
-# 
-# 
 # ##### fit on several realms ####
-# 
-# nSamples = 300 #1000 
-# thin = 3000 #100
-# nChains = 3 
-# verbose = 100 
-# nb_neighbours = 10
-# 
-# random_factors = c("sample_unit","country")
-# response_distribution <- rep("normal", ncol(Y_data))
-# 
-# 
-# # Run on the realms separately
 # realms <- unique(X_data$realm)
 # 
 # for(rlm in realms){
@@ -336,6 +321,17 @@ fit_hmsc_crossvalidation(k_fold = 5,
 #                 save_path = here::here("outputs/models/hmsc/sensitivity_analysis"))
 #   }
 
-
-
-
+# ##--------------------------- Sensitivity analyses -----------------------------
+#  source("R/evaluation_prediction_model.R")
+# full_data <- cbind(X_data, Y_data) |> 
+#   tidyr::pivot_longer(cols = colnames(Y_data), names_to = "contributions")
+# 
+# plot_interaction(full_data,
+#                  var_facet_wrap = "contributions",
+#                  X_values = "median_5year_analysed_sst",
+#                  Y_values = "value",
+#                  add_curve = T) # (mgcv::gam() is used with formula = y ~ s(x, bs = "cs") with method = "REML".)
+# 
+# ggsave(filename = here::here("figures/models/hmsc/sensitivity_analyses/contributions_VS_SST.jpg"),
+#        width = 15, height = 8)
+# 

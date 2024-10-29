@@ -6,7 +6,7 @@ execute:
   freeze: auto
 
 manuscript:
-  article: quarto_report_CHAP_2.qmd
+  article: quarto_MS2_UFlandrin.qmd
 
 # Table of contents
 toc: true
@@ -26,6 +26,7 @@ format:
 
   pdf:
     documentclass: scrartcl
+    #documentclass: article
     papersize: a4
     geometry:
       - margin=1in
@@ -33,5 +34,7 @@ format:
     fontfamily: roboto
     keep-tex: true
     colorlinks: true
+    
+
 
   docx: default

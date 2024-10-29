@@ -136,6 +136,10 @@ to_log <- c("herbivores_biomass", "invertivores_biomass", "piscivores_biomass",
 
 zero_values <- c("herbivores_biomass", "piscivores_biomass")
 
+contributions_transformation <- data.frame(contribution = names(median)) |> 
+  dplyr::mutate(add_1 = ifelse(contribution %in% zero_values, T,F),
+                log_transformed =  ifelse(contribution %in% to_log, T,F))
+
 
 # Log transformation
 contributions_surveys_log <- contributions_surveys |>
@@ -374,8 +378,11 @@ contributions_with_synthetic_score <- as.data.frame( contributions ) |>
 # Save #
 save(contributions_with_synthetic_score, 
      file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))
-
 # load(file = here::here("outputs", "2_all_contributions_with_synthetic_score.Rdata"))
+
+#metadata for back transformation 
+save(contributions_transformation,
+     file = here::here("outputs", "2_metadata_backtransformation_contrib.Rdata") )
 
 
 

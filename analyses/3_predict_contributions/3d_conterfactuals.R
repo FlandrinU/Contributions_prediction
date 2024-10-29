@@ -19,6 +19,7 @@ rm(list=ls())
 # nip <- lapply(nip, install.packages, dependencies = TRUE)
 # # ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 library(ggplot2)
+library(patchwork)
 
 source(here::here("R/HMSC_function.R"))
 source(here::here("R","evaluation_prediction_model.R"))
@@ -70,11 +71,11 @@ path = here::here("outputs/models/hmsc")
 ## List all files in the directory and choose the model
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-model_name <- gsub("output_", "", list_files[2]) #choose the wanted file
+model_name <- gsub("output_", "", list_files[3]) #choose the wanted file
 concatenate_chains = F
 
 
-##----------------------- Counterfactual scenarios -----------------------------
+##------------- New conditions in counterfactual scenarios ---------------------
 
 ### Initial conditions ###
 X <- X_data_site
@@ -121,7 +122,20 @@ new_pristine <- rownames(X_new_pristine)
 X_new_pristine[new_pristine, "gravtot2"] <- min(X_new_pristine$gravtot2)
 X_new_pristine[new_pristine, "neartt"] <- max(X_new_pristine$neartt)
 
+#(7) Change effectiveness only: from "out" to "low protection"
+X_new_low_mpa <- X
+new_low_mpa <- rownames(X_new_low_mpa |> dplyr::filter(effectiveness == "out"))
+X_new_low_mpa[new_low_mpa, "effectiveness"] <- as.factor("Low")
 
+#(8) Change effectiveness only: from "out" to "medium protection"
+X_new_medium_mpa <- X
+new_medium_mpa <- rownames(X_new_medium_mpa |> dplyr::filter(effectiveness == "out"))
+X_new_medium_mpa[new_medium_mpa, "effectiveness"] <- as.factor("Medium")
+
+#(9) Effect of current MPAs: from protected to "out"
+X_remove_mpa <- X
+new_rm_mpa <- rownames(X_remove_mpa |> dplyr::filter(effectiveness == "High"))
+X_remove_mpa[new_rm_mpa, "effectiveness"] <- as.factor("out")
 
 ##----------------------------- Plot changes -----------------------------------
 
@@ -138,7 +152,8 @@ plot_conterfactual_scenarios(path, model_name, concatenate_chains,
                              X_new_data = X_new_mpa,
                              metadata,
                              save_name = "High_effectiveness",
-                             selected_countries)
+                             selected_countries,
+                             plot_responders_on_map = T)
 
 #(2) Change fishing pressure only: set the number of fishing vessel to the minimum known.
 plot_conterfactual_scenarios(path, model_name, concatenate_chains,
@@ -148,11 +163,12 @@ plot_conterfactual_scenarios(path, model_name, concatenate_chains,
                              selected_countries)
 
 #(3) Change fishing pressure (minimal fishing vessels) and high effectiveness MPA => real protection
-protected <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                                          X_new_data = X_new_mpa_no_vessels,
-                                          metadata,
-                                          save_name = "Total_protection-MPA&vessels",
-                                          selected_countries)
+plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                             X_new_data = X_new_mpa_no_vessels,
+                             metadata,
+                             save_name = "Total_protection-MPA&vessels",
+                             selected_countries,
+                             plot_responders_on_map = T)
 
 #(4) Change human "pollution": minimal gravity 
 plot_conterfactual_scenarios(path, model_name, concatenate_chains,
@@ -162,41 +178,108 @@ plot_conterfactual_scenarios(path, model_name, concatenate_chains,
                              selected_countries)
 
 #(5) Change human pressure: minimal gravity and maximal neartt (travel time to the nearest market)
-no_human <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                                         X_new_data = X_no_human,
-                                         metadata,
-                                         save_name = "No_human-gravity&neartt",
-                                         selected_countries)
+plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                             X_new_data = X_no_human,
+                             metadata,
+                             save_name = "No_human-gravity&neartt",
+                             selected_countries)
 
 #(6) Pristine sites: total protection and no human around
-pristine <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                                         X_new_data = X_new_pristine,
-                                         metadata,
-                                         save_name = "Pristine-lowgravity&neartt&MPA&vessels",
-                                         selected_countries)
+plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                             X_new_data = X_new_pristine,
+                             metadata,
+                             save_name = "Pristine-lowgravity&neartt&MPA&vessels",
+                             selected_countries,
+                             plot_responders_on_map = T)
 
+# #(7) Change effectiveness only: from "out" to "low protection" -> only 79 sites to fit the model
+# plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_new_low_mpa,
+#                              metadata,
+#                              save_name = "Low_effectiveness",
+#                              selected_countries)
+
+#(8) Change effectiveness only: from "out" to "Medium protection"
+plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                             X_new_data = X_new_medium_mpa,
+                             metadata,
+                             save_name = "Medium_effectiveness",
+                             selected_countries)
+
+
+#(9) Effect of current MPAs: from protected to "out"
+plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                             X_new_data = X_remove_mpa,
+                             metadata,
+                             save_name = "Remove_high_effectiveness_MPAs",
+                             selected_countries)
 
 ##----------------------------- Plot panel -----------------------------------
-A <- pristine[[1]] + labs(title = "Pristine conditions")+
-  xlim(-6,8)
+set_ids = new_mpa_no_vessels #look only at currently unprotected sites
+# set_ids = new_pristine
+# set_ids = new_no_human
 
-B <- protected[[2]] + labs(title = "Protected sites") + 
+protected <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                                          X_new_data = X_new_mpa_no_vessels,
+                                          metadata, save_name = "",
+                                          selected_countries,
+                                          set_ids = set_ids)
+
+no_human <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                                         X_new_data = X_no_human,
+                                         metadata, save_name = "",
+                                         selected_countries,
+                                         set_ids = set_ids)
+
+pristine <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                                         X_new_data = X_new_pristine,
+                                         metadata, save_name = "",
+                                         selected_countries,
+                                         set_ids = set_ids)
+
+
+A <- pristine[[1]] + labs(title = "")+
   theme(legend.position = "none")+
-  xlim(-6,8)
+  xlim(-8,8)+
+  annotate("text", x = -7.3, y = Inf, 
+           label = expression(bold("A)")~"Pristine conditions"), 
+           size = 6, vjust = 1, fontface = "bold")
 
-C <- no_human[[2]] + labs(title = "No human pollutions") +
+
+B <- protected[[2]] + labs(title = "") + 
   theme(legend.position = "none")+
-  xlim(-6,8)
+  xlim(-8,8)+
+  annotate("text", x = -6.7, y = Inf, 
+           label = expression(bold("B)")~"Protected sites"), 
+           size = 6, vjust = 1, fontface = "bold")
 
-panel <- A / (B | C) + 
-  plot_annotation(tag_levels = "A")+
-  plot_layout(heights = c(3, 2), guides = "collect") &
+C <- no_human[[2]] + labs(title = "") +
+  theme(legend.position = "none")+
+  xlim(-8,8)+
+  annotate("text", x = -5.7, y = Inf, 
+           label = expression(bold("C)")~"No human degradations"), 
+           size = 6, vjust = 1, fontface = "bold")
+
+
+# Get legend
+pristine_with_larger_legend <- pristine[[1]] +
+  theme(legend.text = element_text(size = 15),
+        legend.title =  element_text(size = 20),
+        legend.key.height = unit(1, 'cm'))  
+legend <- ggpubr::get_legend(pristine_with_larger_legend)
+
+
+
+
+panel <- (A + legend + plot_layout(widths = c(4, 1))) / 
+  (B | C) + 
+  # plot_annotation(tag_levels = "A") +
+  plot_layout(heights = c(1.6, 1)) &
   theme(
-    legend.text =  element_text(size = 13),
+    legend.text = element_text(size = 13),
     plot.title = element_text(size = 16),       
-    plot.tag = element_text(face = 'bold', size = 14)  
+    plot.tag = element_text(face = 'bold', size = 14)
   )
-
 
 # Save panel
 path_file <- here::here("figures","models","hmsc", "conterfactuals", gsub(".rds", "", model_name))    
