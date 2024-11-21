@@ -29,6 +29,7 @@ report/docs/
 #remove large data files ----> to include in a data repo.
 data_rfishbase.RData
 data/raw_data/phylogeny/
+data/raw_data/World_EEZ_v12_20231025/
 
 
 #png files of species for new aesthetic scores

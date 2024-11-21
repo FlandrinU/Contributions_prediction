@@ -418,17 +418,36 @@ plot_hmsc_result <- function(metadata = metadata,
                                c("n_fishing_vessels", "gravtot2", "gdp", "neartt"))
                             ){
   
-  color_grad = c("#A50026", "#D73027", "#FDAE61", "#FEE090","white",
-                 "#D8DAEB", "#B2ABD2", "#8073AC", "#542788")
+  color_grad = rev(c("#A50026", "#D73027", "#FDAE61", "#FEE090","white",
+                 "#D8DAEB", "#B2ABD2", "#8073AC", "#542788"))
   color_grad_soft <- colorspace::desaturate(color_grad, amount = 0.3)
-  RdBu = c("#67001F", "#B2182B", 
+  RdBu = rev(c("#67001F", "#B2182B", 
            "#D6604D", "#F4A582", "#FDDBC7", "#FFFFFF", "#D1E5F0", 
-           "#92C5DE", "#4393C3", "#2166AC", "#053061")
+           "#92C5DE", "#4393C3", "#2166AC", "#053061"))
+  
+  #Coastline
+  coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
+  
+  # Contributions classifications
+  grp_NN_NP <- data.frame(
+    contribution = c("actino_richness","functional_distinctiveness",
+                      "iucn_species_richness" ,"mean_endemism",
+                      "evolutionary_distinctiveness","functional_entropy",
+                      "phylogenetic_entropy","herbivores_biomass",
+                      "invertivores_biomass",  "piscivores_biomass",
+                      "trophic_web_robustness", "mean_trophic_level",
+      
+                      "public_interest", "aesthetic",
+                      "available_biomass", "selenium",
+                      "zinc",   "omega_3", "calcium",
+                      "iron","vitamin_A", "available_biomass_turnover"),
+    group = c(rep("NN", 12), rep("NP", 10)))
   
   ##----Source packages and functions----
   
   library(ggplot2)
   library(patchwork)
+  library(stringr)
   
   source("R/evaluation_prediction_model.R")
   
@@ -486,15 +505,53 @@ plot_hmsc_result <- function(metadata = metadata,
                                                  thin, 
                                                  transient)
   
+  ## Initial data
+  Y_data <- as.data.frame(model_fit_mcmc$Y)
+  X_data <- model_fit_mcmc$XData
+  metadata_model <- metadata[rownames(X_data),]
+  
+  
   ## Estimates for each chains
   mpost <- Hmsc::convertToCodaObject(model_fit_mcmc)
   
   postBeta <- Hmsc::getPostEstimate(model_fit_mcmc, parName = "Beta")
   
-  ## Initial data
-  Y_data <- as.data.frame(model_fit_mcmc$Y)
-  X_data <- model_fit_mcmc$XData
-  metadata_model <- metadata[rownames(X_data),]
+  S_raw <- ggmcmc::ggs(mpost$Beta)
+  
+  #Arrange S table
+  S_arranged <- S_raw |>
+    dplyr::mutate(
+      # Extract the covariates
+      covariate = dplyr::case_when(
+        # Handle polynomial terms like poly(reef_500m, degree = 2)
+        grepl("poly\\(", Parameter) ~ str_replace(
+          str_replace(str_extract(Parameter, "poly\\(([^,]+),"), "poly\\(", ""), 
+          "\\,", ""),
+        # Handle with Intercept
+        grepl("Intercept", Parameter) ~ str_extract(Parameter, "(?<=\\()[a-zA-Z]+(?=\\))"),
+        # Handle other cases without poly
+        TRUE ~ str_extract(Parameter, "[a-zA-Z0-9_]+(?=\\s*\\()")
+      ),
+      # Extract the responses
+      response = dplyr::case_when(
+        # Handle polynomial terms like poly(reef_500m, omega_3)
+        grepl("poly\\(", Parameter) ~ str_replace(
+          str_replace(
+            str_extract(Parameter, ",\\s*([a-zA-Z0-9_]+)\\s*\\("), ",\\s*", ""), 
+          " \\(", ""),
+        # Handle other cases without poly
+        TRUE ~ str_extract(Parameter, "(?<=,\\s)[a-zA-Z0-9_]+")
+      ),
+      #Extract the polynomial degree
+      degree = dplyr::case_when(
+        grepl("poly\\(", Parameter) ~ str_replace(str_extract(Parameter, "\\)\\d+"), "\\)", ""),
+        TRUE ~ ""
+      ))|>
+    dplyr::mutate(covariate = dplyr::case_when(
+      grepl("poly\\(", Parameter) ~ paste0(covariate,"_Deg",degree),
+      TRUE ~ covariate),
+      Parameter = paste0(covariate, "-", response))
+  
   
   
   ##---- create directory to save figures ----
@@ -535,47 +592,6 @@ plot_hmsc_result <- function(metadata = metadata,
   # library("ggmcmc")
   # see help at : http://xavier-fim.net/post/using_ggmcmc/
   
-  library(stringr)
-  
-  S_raw <- ggmcmc::ggs(mpost$Beta)
-  
-  #Arrange S table
-  S_arranged <- S_raw |>
-    dplyr::mutate(
-      # Extract the covariates
-      covariate = dplyr::case_when(
-        # Handle polynomial terms like poly(reef_500m, degree = 2)
-        grepl("poly\\(", Parameter) ~ str_replace(
-          str_replace(str_extract(Parameter, "poly\\(([^,]+),"), "poly\\(", ""), 
-          "\\,", ""),
-        # Handle with Intercept
-        grepl("Intercept", Parameter) ~ str_extract(Parameter, "(?<=\\()[a-zA-Z]+(?=\\))"),
-        # Handle other cases without poly
-        TRUE ~ str_extract(Parameter, "[a-zA-Z0-9_]+(?=\\s*\\()")
-      ),
-      
-      # Extract the responses
-      response = dplyr::case_when(
-        # Handle polynomial terms like poly(reef_500m, omega_3)
-        grepl("poly\\(", Parameter) ~ str_replace(
-          str_replace(
-            str_extract(Parameter, ",\\s*([a-zA-Z0-9_]+)\\s*\\("), ",\\s*", ""), 
-          " \\(", ""),
-        # Handle other cases without poly
-        TRUE ~ str_extract(Parameter, "(?<=,\\s)[a-zA-Z0-9_]+")
-      ),
-      
-        #Extract the polynomial degree
-       degree = dplyr::case_when(
-         grepl("poly\\(", Parameter) ~ str_replace(str_extract(Parameter, "\\)\\d+"), "\\)", ""),
-         TRUE ~ ""
-      ))|>
-    dplyr::mutate(covariate = dplyr::case_when(
-      grepl("poly\\(", Parameter) ~ paste0(covariate,"_Deg",degree),
-      TRUE ~ covariate),
-      Parameter = paste0(covariate, "-", response))
-  
-    
   cov <- "median_5year_analysed_sst"
   S <- S_arranged |> dplyr::filter(grepl(cov, covariate))
   # # quick look on the distribution of the values and the shape of the posterior distribution.
@@ -645,9 +661,109 @@ plot_hmsc_result <- function(metadata = metadata,
     mtext(paste0("WAIC = ", AIC, "     Computing Time: ", comput_time, "h"),
           side = 3, line = -2.5, outer = TRUE, cex = 1.1, font = 2)
     dev.off()
+    
+    
+    
+    ### R² per ecoregions ###
+    predY <- predict(model_fit_mcmc, 
+                     XData = X_data, 
+                     studyDesign = model_fit_mcmc$studyDesign,
+                     ranLevels = model_fit_mcmc$ranLevels)
+    
+    PredY_mean <- as.data.frame(Reduce("+", predY) / length(predY))
+    
+    predictions <- PredY_mean |> 
+      tibble::rownames_to_column("id") |> 
+      tidyr::pivot_longer(cols = -id, names_to = "contributions", values_to = "predicted") |> 
+      dplyr::left_join(
+        tidyr::pivot_longer(
+          tibble::rownames_to_column(Y_data, "id"),
+          cols = -id, names_to = "contributions", values_to = "observed")
+      ) |> 
+      dplyr::left_join(
+        tibble::rownames_to_column(metadata_model, "id")
+      ) 
+    
+    
+    ### R² per ecoregions ###
+    sf::sf_use_s2(FALSE)
+    ecoregions <- sf::st_read(here::here("data/raw_data/MEOW/meow_ecos.shp"))
+   
+    points_sf <- sf::st_as_sf(predictions, 
+                              coords = c("longitude", "latitude"), crs = 4326) |> 
+      dplyr::select(id, geometry) |> 
+      unique()
+    
+    points_in_ecoreg <- sf::st_join(points_sf, ecoregions, join = sf::st_within)
+    
+    predictions_ecoreg <- predictions |> 
+      dplyr::left_join(points_in_ecoreg) |> 
+      dplyr::group_by(ECOREGION, contributions) |> 
+      dplyr::summarise(R_squared = cor(observed, predicted)^2)|> 
+      dplyr::group_by(ECOREGION) |> 
+      dplyr::summarise(R_squared_ecoreg = mean(R_squared, na.rm =T))
+    
+    ecoregions_Rsqu <- ecoregions |> 
+      dplyr::left_join(predictions_ecoreg)
+    
+    ggplot() +
+      geom_sf(data = ecoregions_Rsqu, aes(fill = R_squared_ecoreg), color = "grey50")+
+      geom_sf(data = coast, fill = "grey60", color = "grey40")+
+      coord_sf(c(-180,180), c(-40, 40) , expand = FALSE) +
+      scico::scale_fill_scico(palette = "davos", direction = -1, 
+                              na.value = "lightgrey", end = 0.7 )+
+      theme_minimal()+
+      labs(title = "",x="", y= "", fill = "Mean R²") +
+      theme(plot.title = element_text(size=15, face="bold"),
+            legend.text = element_text(size=13),
+            legend.title = element_text(size=15),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            plot.margin = unit(c(0,0,0,0), units = , "cm")
+      )
+    
+    ggsave(filename = paste0(path_file,"/Explanatory_power_per_ecoregion_",
+                             save_name,".jpg"), width = 15, height = 5)
+    
+    
+    
+    # ### R² per contry ###
+    # predictions_country <- predictions |> 
+    #   dplyr::group_by(country, contributions) |> 
+    #   dplyr::summarise(R_squared = cor(observed, predicted)^2) |> 
+    #   dplyr::group_by(country) |> 
+    #   dplyr::summarise(R_squared_country = mean(R_squared, na.rm =T)) |> 
+    #   dplyr::mutate(country = dplyr::recode(country,
+    #                                         "United States" = "United States of America",
+    #                                         "Caribbean Sea" ="Colombia")) |> 
+    #   dplyr::rename(name_en = "country") 
+    # 
+    # coast_rsquared <- coast|> 
+    #   dplyr::left_join(predictions_country)
+    # 
+    # ggplot() +
+    #   geom_sf(data = ecoregions_Rsqu, aes(fill = R_squared_ecoreg), color = "grey30")+
+    #   geom_sf(data = coast_rsquared, aes(fill = R_squared_country), color = "grey30")+
+    #   coord_sf(c(-180,180), c(-36, 33) , expand = FALSE) +
+    #   scico::scale_fill_scico(palette = "davos", direction = -1, 
+    #                           na.value = "lightgrey", end = 0.7 )+
+    #   theme_minimal()+
+    #   labs(title = "",x="", y= "", fill = "Mean R²") +
+    #   theme(plot.title = element_text(size=15, face="bold"),
+    #         legend.text = element_text(size=13),
+    #         legend.title = element_text(size=15),
+    #         axis.text.x = element_blank(),
+    #         axis.ticks.x = element_blank(),
+    #         plot.margin = unit(c(0,0,0,0), units = , "cm")
+    #   )
+    # 
+    # ggsave(filename = paste0(path_file,"/Explanatory_power_per_country_",
+    #                          save_name,".jpg"), width = 15, height = 5)
+   
+    
   } #END OF PLOT EXPLANATORY POWER
   
-  ##----------------------------- Covariates estimates -----------------------------------
+  ##----------------------------- Covariates importance -----------------------------------
   
   if(plot_variance_partitioning){
     cat("Complute variance partitioning of the model... \n")
@@ -657,12 +773,7 @@ plot_hmsc_result <- function(metadata = metadata,
     
     #### Variance partitioning ####
     VP <- computeVariancePartitioning(model_fit_mcmc)
-    VP$R2T$Beta ############################################################## why 0????
-    
-    # svg("figures/models/hmsc/variance_partitioning.svg")
-    # Hmsc::plotVariancePartitioning(model_fit_mcmc, VP = VP)
-    # dev.off()
-    
+
     ##### Preping VP table #####
     VP_long <- as.data.frame(VP[["vals"]]) |> 
       tibble::rownames_to_column(var = "Covariate") |> 
@@ -673,7 +784,8 @@ plot_hmsc_result <- function(metadata = metadata,
       )
     
     #classify covariates
-    human <- c("gdp", "gravtot2", "effectiveness", "natural_ressource_rent", 
+    human <- c("gdp", "gravtot2", "protection_status", "natural_ressource_rent",
+               "protection_status2",
                "neartt","n_fishing_vessels", "hdi", "marine_ecosystem_dependency")
     
     habitat <- c("depth", #"algae",
@@ -819,7 +931,7 @@ plot_hmsc_result <- function(metadata = metadata,
     }
     
     ##### Plot VP #####
-    
+  
     ## Sum of VP per category
     
     ggplot(VP_aggregated) +
@@ -1036,47 +1148,36 @@ plot_hmsc_result <- function(metadata = metadata,
     png(paste0(path_file,"/estimate_significance_", save_name,".png"),
         width = 30, height = 20, units = "cm", res = 300)
     par(mar = c(15,10,2,2))
-    # Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Mean", supportLevel = 0.95)
+    # Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Mean", supportLevel = 0.5)
     Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Sign",
                    supportLevel = 0.95, colors = colorRampPalette(c("#2166AC", "white", "#A50026")),
                    mar = c(0,0,0,0) )
     dev.off()
-
+    
+    ## Keep support levels
+    support_estimates <- postBeta[["support"]]
+    rownames(support_estimates) <- model_fit_mcmc[["covNames"]]
+    support_estimates <- as.data.frame(support_estimates) |> 
+      tibble::rownames_to_column("covariate") |> 
+      tidyr::pivot_longer(cols = -covariate,
+                          names_to = "response", values_to = "support") |> 
+      dplyr::mutate(support = dplyr::case_when(support > 0.95 ~ 1, 
+                                               support < 0.05 ~ 1,
+                                               TRUE ~ 0 ))|> 
+      dplyr::mutate(support = factor(support, levels = c(0, 1)))
+    
     
     ##### ridges plot  #####
-    # S <- ggmcmc::ggs(mpost$Beta) # Need to run "check_convergence" part.
-    
-    # Extract one or some covariate(s)
-    unique(S$Parameter)
-    # drivers_to_plot <-  list(
-    #   c("gravtot2", "n_fishing_vessels", "q95_5year_degree_heating_week"),
-    #   c("effectiveness", "n_fishing_vessels")
-    #   )
-    
-
     for(drivers in drivers_to_plot){
       
+      #drivers = drivers_to_plot[[1]]
       drivers_name <- drivers
       drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
-      #Arrange S table
+      
+      #Filter estimates table
       df <- S_arranged |>
-        dplyr::filter(covariate %in% drivers)
-      
-      # df <- S[grep(paste(drivers, collapse = "|"), S$Parameter),] |> 
-      #   dplyr::mutate(
-      #     Parameter = as.character(Parameter),
-      #     resp_name = sapply(strsplit(sapply(strsplit(Parameter, ","),
-      #                                        function(x) x[2]), " "), function(x) x[2]),
-      #     driver = sapply(strsplit(sapply(strsplit(sapply(strsplit(Parameter, ","),
-      #                                                     function(x) x[1]), "\\["), function(x) x[2]), " "),
-      #                     function(x) x[1])) |> 
-      #   # #
-      #   # dplyr::mutate(driver = if(str_detect(driver, "poly\\(")){
-      #   #   paste(gsub("poly\\(", "", driver)), 
-      #   # }
-      #   #   gsub("poly\\(", "", driver))
-      #   dplyr::filter(driver %in% drivers) #remove composed names as "coral_rubble"
-      
+        dplyr::filter(covariate %in% drivers) |> 
+        dplyr::left_join(support_estimates)
       
       medians <- df  |> 
         dplyr::filter(covariate %in% c(drivers[1], paste0(drivers[1], "_Deg1"))) |> 
@@ -1085,18 +1186,28 @@ plot_hmsc_result <- function(metadata = metadata,
         dplyr::arrange(median_value)
       
       df <- df |> 
-        dplyr::mutate(response = factor(response, levels = medians$response))
+        dplyr::left_join(dplyr::rename(grp_NN_NP, response = "contribution"))|> 
+        dplyr::mutate(covariate = factor(covariate, levels = drivers)) |> 
+        dplyr::mutate(response = factor(response, levels = medians$response)) 
       
       ggplot(df) +
-        aes(y = response, x = value,  fill = response) +
-        ggridges::geom_density_ridges(alpha=0.3)+ #, bandwidth = 0.005) +
-        geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.6)+
+        aes(y = response, x = value,  fill = group) +
+        ggridges::geom_density_ridges(aes(alpha = support))+#alpha=0.5, bandwidth = 0.005) +
+        scale_fill_manual(values = c("forestgreen", "dodgerblue3"),
+                          labels = c("NN" = "Nature-for-Nature contributions",
+                                     "NP" = "Nature-for-People contributions"))+
+        geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5)+
+        scale_alpha_manual(values = c("0" = 0.25, "1" = 0.7), guide = "none") +
         hrbrthemes::theme_ipsum( axis_title_size = 0 ) +
         theme(
-          legend.position="none",
-          panel.spacing = unit(0.1, "lines"),
-          strip.text.x = element_text(size = 15)
-        ) +
+          legend.position="bottom",
+          legend.text = element_text(size = 15, margin = margin(r = 20)),
+          panel.spacing = unit(0.3, "lines"),
+          strip.text.x = element_text(size = 17),
+          axis.text.x = element_text(size = 13),
+          axis.text.y = element_text(size = 13)
+          ) +
+        labs(fill = "")+
         xlab(drivers) + ylab("Nature Contributions to People and Nature")+
         facet_wrap(~covariate, ncol = length(df$covariate)
                    , scales = "free_x"
@@ -1105,6 +1216,7 @@ plot_hmsc_result <- function(metadata = metadata,
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
                                paste(drivers_name, collapse = "-"), ".jpg"),
              width = 12, height = 8)
+      
       
     }
     
@@ -1857,11 +1969,17 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
 
 #' Run hmsc prediction.
 #'
-#' @param X_data dataframe of covariates
-#' @param model_fit_mcmc hmsc fitted model
-#' @param X_new_data same dataframe as X_data, but with different values to run conterfactual scenarios
-#' @param new_surveys list of survey_id that have been changed
-#'
+#' @param path 
+#' @param model_name 
+#' @param concatenate_chains 
+#' @param X_new_data
+#' @param metadata 
+#' @param is_counterfactual Precise if it is a couterfactual (change the past) or a
+#'  scenario (change for the future). If TRUE, change = observed_value - new_value,
+#'  i.e. current value - the one you should have in the "past". If FALSE, 
+#'  change = new_value - observed_value, i.e. future value - current value.
+#' 
+#' 
 #' @return save hmsc plots in figures/hmsc/file_name directory
 #' @export
 #'
@@ -1874,7 +1992,8 @@ run_hmsc_prediction <- function(path = path,
                                 model_name = file_name,
                                 concatenate_chains =F,
                                 X_new_data = NULL,
-                                metadata = NULL
+                                metadata = NULL,
+                                is_counterfactual = TRUE
 ){
   ## Paths
   save_init <- file.path(path, "init_multi")
@@ -1970,7 +2089,7 @@ run_hmsc_prediction <- function(path = path,
           tibble::rownames_to_column("id") |> 
           tidyr::pivot_longer(cols = -id, names_to = "contribution", values_to = "conterfactual")
         ) |> 
-      dplyr::mutate(change = conterfactual - original_prediction)|> 
+      dplyr::mutate(change = (-1)^is_counterfactual * (conterfactual - original_prediction))|> #if counterfactual: change = original_prediction-counterfactual, if it's ascenario, change = conterfactual - original_prediction.
       dplyr::left_join( data.frame(id = rownames(metadata),
                                    country = metadata$country)
       )
@@ -2012,9 +2131,25 @@ plot_conterfactual_scenarios <- function(path = path,
                                          metadata = metadata_sites,
                                          save_name = "effectiveness_high",
                                          selected_countries = selected_countries,
-                                         plot_responders_on_map = NULL,
-                                         set_ids = NULL
+                                         plot_responders_on_map = FALSE,
+                                         set_ids = NULL,
+                                         is_counterfactual = TRUE
 ){
+  #Contributions group
+  grp_NN_NP <- data.frame(
+    contribution = c("actino_richness","functional_distinctiveness",
+                     "iucn_species_richness" ,"mean_endemism",
+                     "evolutionary_distinctiveness","functional_entropy",
+                     "phylogenetic_entropy","herbivores_biomass",
+                     "invertivores_biomass",  "piscivores_biomass",
+                     "trophic_web_robustness", "mean_trophic_level",
+                     
+                     "public_interest", "aesthetic",
+                     "available_biomass", "selenium",
+                     "zinc",   "omega_3", "calcium",
+                     "iron","vitamin_A", "available_biomass_turnover"),
+    group = c(rep("NN", 12), rep("NP", 10)))
+  
   #Coastline
   coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
   
@@ -2033,11 +2168,17 @@ plot_conterfactual_scenarios <- function(path = path,
                                          model_name,
                                          concatenate_chains,
                                          X_new_data,
-                                         metadata)
+                                         metadata,
+                                         is_counterfactual)
   
   preds <- new_predictions[["predictions"]]
   conterfactual <- new_predictions[["new_scenario"]]
-  effective_change <- new_predictions[["effective_change"]]
+  effective_change <- new_predictions[["effective_change"]] |> 
+    dplyr::left_join(grp_NN_NP)
+  
+  if(!is.null(set_ids)){
+    effective_change <- effective_change |> dplyr::filter(id %in% set_ids)
+  }
   
   #Back-transformation to original data to plot percent change
   load(file = here::here("outputs", "3_metadata_backtransformation_contrib.Rdata") )
@@ -2062,119 +2203,213 @@ plot_conterfactual_scenarios <- function(path = path,
     dplyr::mutate(raw_conterfactual = ifelse(add_1, 
                                              raw_conterfactual+1,
                                              raw_conterfactual)) |> 
-    dplyr::mutate(raw_change_percent = 
-                    (raw_conterfactual - raw_original_prediction)/raw_original_prediction *100) 
+    dplyr::mutate(raw_change_values = 
+                    (-1)^is_counterfactual * (raw_conterfactual - raw_original_prediction),
+                  raw_change_percent = 
+                  ((-1)^is_counterfactual * (raw_conterfactual - raw_original_prediction))
+                  /raw_original_prediction *100) 
   
   # distribution_plot(raw_change, longer = F, index_values = c("contribution","raw_change_percent"))
   
   
-  if(is.null(set_ids)){ # if the ID are fixed to plot the barycenters, don't save theses
-    #barycenters alone because they don't necessarily represent the reefs with changes conditions.
       
-    #---- Plot conterfactual VS original predictions ---
-    plot_interaction(effective_change, var_facet_wrap = "contribution",
-                     X_values = "original_prediction", Y_values = "conterfactual",
-                     xlabel = "Original predictions", 
-                     ylabel = paste("Conterfactual predictions in", save_name))
+  # #---- Plot conterfactual VS original predictions ---
+  # plot_interaction(effective_change, var_facet_wrap = "contribution",
+  #                  X_values = "original_prediction", Y_values = "conterfactual",
+  #                  xlabel = "Original predictions", 
+  #                  ylabel = paste("Conterfactual predictions in", save_name))
+  # 
+  # ggsave( width = 15, height = 8, filename = file.path(
+  #   path_file,paste0("Conterfactual_VS_predictions_", save_name, folder_name, ".jpg"))
+  #       )
   
-    ggsave( width = 15, height = 8, filename = file.path(
-      path_file,paste0("Conterfactual_VS_predictions_", save_name, folder_name, ".jpg"))
-          )
+  #---- Plot histogramms of changes ---
+  distribution_plot(raw_change, longer = F,
+                    index_values =  c("contribution", "raw_change_values"))
+
+  ggsave( width = 15, height = 8, filename = file.path(
+    path_file,paste0("Raw_changes_histogramms_", save_name, folder_name, ".jpg"))
+        )
+  
+  #---- Plot distributions of contribution changes ---
+  distrib_boxplot <- function(data, x, y, fill, hline = 0, title = NULL,
+                              prop_outliers = 0,
+                              include_stat = TRUE){
+    p <- ggplot(data) +
+          geom_hline(yintercept = 0, color = "grey", size = 1) +
+          aes_string(x= x, y= y, fill = fill)+
+          scale_fill_manual(values = c("forestgreen", "dodgerblue3"),
+                            labels = c("NN" = "Nature-for-Nature contributions",
+                                       "NP" = "Nature-for-People contributions"))+
+          # geom_violin(trim = FALSE, position = position_dodge(width =1), alpha = 0.7) +
+          geom_boxplot(alpha = 0.7, outliers = T) +
+          
+          xlab("") + ylab("Contributions change in counterfactual scenarios") +
+          labs(title=title, fill = "")+
+          theme_minimal() +
+          theme(legend.position = "bottom",
+                panel.grid.minor = element_blank(),
+                legend.text = element_text(size = 15, margin = margin(r = 20)),
+                panel.spacing = unit(0.3, "lines"),
+                axis.text.y = element_text(size = 13),
+                axis.title = element_text(size = 13),
+                axis.text.x = element_text(angle = 0, hjust = 0.5,size = 13))+
+          
+          #Flip coordinates and cut outliers
+          coord_flip(ylim=c(quantile(data[,y][[1]], prop_outliers), 
+                            quantile(data[,y][[1]], 1-prop_outliers)))
     
-    
-    #---- Plot distributions of contribution changes ---
-    distrib_boxplot <- function(data, x, y, fill, hline = 0, title = NULL){
-      ggplot(data) +
-        aes_string(x= x, y= y, fill = fill)+
-        # geom_violin(trim = FALSE, position = position_dodge(width =1), alpha = 0.7) +
-        geom_boxplot(alpha = 0.7, outliers = T) +
-        stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "text",
-                     aes(label = paste(round(after_stat(y), 2))),
+    if(include_stat){ 
+      p <- p + 
+        stat_summary(fun = "median", geom = "text",
+                     aes(label = round(after_stat(y), 1)),
                      position = position_dodge(width = 0.75), vjust = 0.5,
-                     size = 3, color = "grey50") +
-        geom_hline(yintercept = hline, linetype = "dashed", color = "coral3") +
-        xlab("") + ylab("Contributions change in counterfactual scenarios") +
-        labs(title=title)+
-        theme_minimal() +
-        theme(legend.position = "none",
-              panel.grid.minor = element_blank(),
-              axis.text = element_text(color = "black"),
-              axis.title = element_text(size = 10),
-              axis.text.x = element_text(angle = 0, hjust = 0.5,size = 10))+
-        coord_flip()
+                     hjust = -0.2, size = 4, color = "grey50") +
+        
+        geom_hline(yintercept = hline,
+                   linetype = "dashed", color = "coral3") +
+        annotate("text", y = hline + 0.02, x = -Inf, 
+                 label = round(hline, 2), vjust = 0.05, hjust = -0.1,
+                 vjust = -1.5, color = "coral3", size = 4)
     }
-    
-    effective_change <- effective_change  |> 
-      dplyr::mutate(contribution = reorder(contribution, change, FUN = median))
-    
-    distrib_boxplot(effective_change, x = "contribution", y = "change",
-                    fill = "contribution", title = save_name)
-    ggsave(width = 8, height = 8, filename = file.path(
-      path_file,paste0("Changes_distrib_", save_name, folder_name, ".jpg")))
-    
-    
-    #Change in percent on raw values
-    raw_change <- raw_change  |> 
-      dplyr::mutate(contribution = reorder(contribution, raw_change_percent, FUN = median))
-    distrib_boxplot(raw_change, x = "contribution", y = "raw_change_percent",
-                    fill = "contribution", title = paste(save_name, "(change in percent)")) +
-      ylab("Percent change in contributions in counterfactual scenarios (%)")+
-      ylim(c(quantile(raw_change$raw_change_percent, 0.01), 
-             quantile(raw_change$raw_change_percent, 0.99)))
-    ggsave(width = 8, height = 8, filename = file.path(
-      path_file,paste0("Percent_changes_distrib_", save_name, folder_name, ".jpg")))
-      
-    
-  } # end of  if(is.null(set_ids))
   
+    p
+  }
+  
+  effective_change <- effective_change  |> 
+    dplyr::mutate(contribution = reorder(contribution, change, FUN = median))
+  
+  mean <- dplyr::group_by(effective_change, contribution) |> 
+    dplyr::summarise(change = median(change)) |> 
+    dplyr::summarise(mean = mean(change)) |> 
+    as.numeric()
+  
+  distrib_boxplot(effective_change, x = "contribution", y = "change",
+                  fill = "group", title = save_name, hline = mean,
+                  prop_outliers = 0)
+  
+  ggsave(width = 8, height = 8, filename = file.path(
+    path_file,paste0("Changes_distrib_", save_name, "_", folder_name, ".jpg")))
+  
+  
+  
+  ## Change in percent on raw values
+  raw_change <- raw_change  |> 
+    dplyr::mutate(contribution = reorder(contribution, raw_change_percent,
+                                         FUN = median))
+  
+  mean <- dplyr::group_by(raw_change, contribution) |> 
+    dplyr::summarise(change = median(raw_change_percent)) |> 
+    dplyr::summarise(mean = mean(change)) |> 
+    as.numeric()
+  
+  distrib_boxplot(raw_change, x = "contribution", y = "raw_change_percent",
+                  fill = "group", title = paste(save_name, "(change in percent)"),
+                  hline = mean, prop_outliers = 0.015) +
+    ylab("Percent change in contributions in counterfactual scenarios (%)")
+  
+  ggsave(width = 12, height = 10, filename = file.path(
+    path_file,paste0("Percent_changes_distrib_", save_name, "_", folder_name, ".jpg")))
+    
+  
+  
+  ## Log scale ##
+  raw_change_log_transformed <- raw_change |> 
+    dplyr::mutate(change_percent_log = dplyr::case_when(
+      raw_change_percent > 1 ~ log10(raw_change_percent),
+      raw_change_percent < -1 ~ -log10(-(raw_change_percent)),
+      T ~ raw_change_percent
+    )) |> 
+    dplyr::mutate(contribution = reorder(contribution, change_percent_log,
+                                         FUN = median))
+  
+  median_labels <- raw_change |> 
+    dplyr::group_by(contribution, group) |> 
+    dplyr::summarize(median_raw = median(raw_change_percent)) |> 
+    dplyr::mutate(median_position = dplyr::case_when(
+      median_raw > 0 ~ log10(median_raw+1),
+      median_raw < 0 ~ -log10(-(median_raw-1)),
+      T ~ 0))
+  
+  hline = sign(mean(median_labels$median_raw)) * 
+    abs(log10(abs(mean(median_labels$median_raw))))
+
+  distrib_boxplot(raw_change_log_transformed, x = "contribution", y = "change_percent_log",
+                 fill = "group", title = paste(save_name, "(change in percent, LOG-scale)"),
+                  hline = 0, prop_outliers = 0.005,
+                 include_stat = F) + 
+    geom_text(data = median_labels,
+              aes(x = contribution, y = median_position, 
+                  label = paste(signif(median_raw, 2), "")),
+              vjust = 0.5, hjust = -0.3, size = 4, color = "grey30") +
+    
+    geom_hline(yintercept = hline,
+               linetype = "dashed", color = "coral3") +
+    annotate("text", y = hline , x = -Inf, 
+             label = paste(round(mean(median_labels$median_raw), 2), "%"),
+             vjust = 0, hjust = -0.2, color = "coral3", size = 4)+
+    scale_y_continuous(
+      breaks = c(-3, -2, -1, 0, 1, 2, 3),      
+      labels = c("-1000%", "-100%", "-10%", "0", "+10%", "+100%", "+1000%")
+    )
+  
+  ggsave(width = 12, height = 10, filename = file.path(
+    path_file,paste0("Percent_changes_LOG_scale_", save_name, "_", folder_name, ".jpg")))
   
   #---- Plot changes in each countries ---
   
   # #obs heterogeneity by country
-  # data_1_contrib <- effective_change |>  
-  #   dplyr::filter(contribution == "available_biomass") |> 
+  # data_1_contrib <- effective_change |>
+  #   dplyr::filter(contribution == "available_biomass") |>
   #   dplyr::mutate(country = reorder(country, change, FUN = median))
-  # 
+  #
   # distrib_boxplot(data_1_contrib, x = "country", y = "change", fill = "country",
   #                 hline = mean(data_1_contrib$change))
-  
-  # # Select countries we want to plot
-  # selected_countries <- metadata |> 
-  #   dplyr::count(country) |> 
-  #   dplyr::filter(n > threshold_nb_sites) |> 
-  #   dplyr::pull(country)
 
-  
+
   
   # Original PCA
   pca <- FactoMineR::PCA(preds, scale.unit = T, graph=F, ncp=15)
   
   factoextra::fviz_screeplot(pca, ncp=15)
   
-  pca_plot <- factoextra::fviz_pca_biplot(pca,
-                                          axes = c(1,2),
-                                          title="",
-                                          label = "var",
-                                          labelsize = 4, 
-                                          geom=c("point"), 
-                                          pointshape=21,
-                                          stroke=0, pointsize=2,
-                                          alpha.ind = 0.7,
-                                          alpha.var = 0.7,
-                                          fill.ind = "grey",    
-                                          repel = TRUE)
-  
   pca_plot_no_labels <- factoextra::fviz_pca_biplot(pca,
                                           axes = c(1,2),title="",
                                           label = "none",
                                           geom=c("point"), 
+                                          select.var = list(cos2 = 0.3),
                                           pointshape=21,
                                           stroke=0, pointsize=2,
                                           alpha.ind = 0.7,
                                           alpha.var = 0.7,
-                                          fill.ind = "grey",    
+                                          fill.ind = "grey",  
+                                          col.var = "grey20",
                                           repel = TRUE)
   
+  #label position
+  data <- data.frame(obsnames=row.names(pca$ind$coord), pca$ind$coord)
+  datapc <- data.frame(varnames=rownames(pca$var$coord), pca$var$coord)
+  mult <- min(
+    (max(data[,"Dim.2"]) - min(data[,"Dim.2"])/(max(datapc[,"Dim.2"])-min(datapc[,"Dim.2"]))),
+    (max(data[,"Dim.1"]) - min(data[,"Dim.1"])/(max(datapc[,"Dim.1"])-min(datapc[,"Dim.1"])))
+  )
+  datapc <- transform(datapc,
+                      v1 = .7 * mult * (datapc$Dim.1),
+                      v2 = .7 * mult * (datapc$Dim.2) )
+  
+  #Add labels
+  pca_plot <- pca_plot_no_labels +
+    ggrepel::geom_text_repel(
+      data= datapc[which(factoextra::facto_summarize(
+                             pca, element= "var",axes = c(1,2))$cos2 > 0.3)
+                   ,], #extract cos2 of variables
+      aes(x= v1*1.05, y= v2*1.03, label= gsub("_"," ", varnames)),
+      size=3,
+      color =  "grey20", 
+      force_pull = 5,
+      direction = "both")
+    
+  pca_plot
   
   # Calculate barycenters (centroids) for each country in the 6 first dimensions
   if(!is.null(set_ids)){
@@ -2203,7 +2438,7 @@ plot_conterfactual_scenarios <- function(path = path,
   # Add barycenters to the plot
   pca_plot_barycenter <- pca_plot + 
     geom_point(data = barycenters, aes(x = PC1, y = PC2, fill = country), 
-               shape = 23, size = 4, color = "black", stroke = 1)
+               shape = 21, size = 5, color = "black", stroke = 1)
   
   
   ### Observe new scenario ###
@@ -2228,24 +2463,37 @@ plot_conterfactual_scenarios <- function(path = path,
   
   
   plot_mvt <- pca_plot_barycenter + 
-    geom_point(data = barycenters_new, aes(x = PC1, y = PC2, fill = country),
-               shape = 23, size = 3, color = "black", alpha = 0.5)+
     geom_segment(data = barycenters_movement, 
-                 aes(x = PC1_old, y = PC2_old, 
-                     xend = PC1_new, yend = PC2_new,
+                 aes(xend = PC1_old, yend = PC2_old, 
+                     x = PC1_new, y = PC2_new,
                      color = country), 
                  # arrow = arrow(length = unit(0.3, "cm")),
-                 linewidth = 1, linetype = "dotted")+
-    labs(title = save_name, fill = "Country")+
-    guides(fill = guide_legend(ncol = 1), color = "none")
-    
+                 linewidth = 1, linetype = "longdash")+ 
+    geom_point(data = barycenters, 
+               aes(x = PC1, y = PC2, fill = country, shape = "Current conditions"), 
+               size = 5, color = "black", stroke = 1) +
+    geom_point(data = barycenters_new, 
+               aes(x = PC1, y = PC2, fill = country, shape = "Counterfactual conditions"), 
+               size = 4, color = "black", alpha = 1) +
+    coord_cartesian(xlim= c(-7.5,7))+
+    labs(title = save_name, fill = "Country", shape = "Conditions", y = "", x="") +
+    scale_shape_manual(values = c("Current conditions" = 21, "Counterfactual conditions" = 24)) +
+    guides(
+      fill = guide_legend(nrow = 2, override.aes = list(shape = 21)),  
+      shape = guide_legend(nrow = 2, override.aes = list(fill = NA)),
+      color = "none"
+    )+
+    theme(legend.position = "bottom",
+          axis.text = element_text(size = 0),
+          axis.ticks = element_line(linewidth = 0))
+  plot_mvt
   
-  if(is.null(set_ids)){ # if the ID are fixed to plot the barycenters, don't save theses
+  # if(is.null(set_ids)){ # if the ID are fixed to plot the barycenters, don't save theses
     #barycenters alone because they don't necessarily represent the reefs with changes conditions.
-  ggsave(plot = plot_mvt, width=15, height= 8, filename = file.path(
-    path_file,paste0("Barycenters_movement_", save_name, folder_name, ".jpg"))
+  ggsave(plot = plot_mvt, width=13, height= 10, filename = file.path(
+    path_file,paste0("Barycenters_movement_", save_name,"_", folder_name, ".jpg"))
   )
-  }
+  # }
   
   
   # ## General barycenter:
@@ -2258,20 +2506,33 @@ plot_conterfactual_scenarios <- function(path = path,
   #                         linewidth = 1)+
   #   labs(title = save_name)
   no_labels <- pca_plot_no_labels +
-    geom_point(data = barycenters, aes(x = PC1, y = PC2, fill = country), 
-               shape = 23, size = 4, color = "black", stroke = 1)+
-    geom_point(data = barycenters_new, aes(x = PC1, y = PC2, fill = country),
-               shape = 23, size = 3, color = "black", alpha = 0.5)+
     geom_segment(data = barycenters_movement, 
-                 aes(x = PC1_old, y = PC2_old, 
-                     xend = PC1_new, yend = PC2_new,
+                 aes(xend = PC1_old, yend = PC2_old, 
+                     x = PC1_new, y = PC2_new,
                      color = country), 
                  # arrow = arrow(length = unit(0.3, "cm")),
-                 linewidth = 1, linetype = "dotted")
+                 linewidth = 1, linetype = "longdash")+ 
+    geom_point(data = barycenters, 
+               aes(x = PC1, y = PC2, fill = country, shape = "Current conditions"), 
+               size = 5, color = "black", stroke = 1) +
+    geom_point(data = barycenters_new, 
+               aes(x = PC1, y = PC2, fill = country, shape = "Counterfactual conditions"), 
+               size = 4, color = "black", alpha = 1) +
+    coord_cartesian(xlim= c(-7.5,7))+
+    labs(title = save_name, fill = "Country", shape = "Conditions", y = "", x="") +
+    scale_shape_manual(values = c("Current conditions" = 21, "Counterfactual conditions" = 24)) +
+    guides(
+      fill = guide_legend(nrow = 2, override.aes = list(shape = 21)),  
+      shape = guide_legend(nrow = 2, override.aes = list(fill = NA)),
+      color = "none"
+    )+
+    theme(legend.position = "bottom",
+          axis.text = element_text(size = 0),
+          axis.ticks = element_line(linewidth = 0))
   
   
   ## Plot the distances in the contribution multidimensional space
-  if(!is.null(plot_responders_on_map)){
+  if(plot_responders_on_map){
       
     distances <- data.frame(
       id = rownames(coord_old_points),
@@ -2339,7 +2600,7 @@ plot_conterfactual_scenarios <- function(path = path,
   
   
   #keep the plots in memory
-  return(list(plot_mvt, no_labels))
+  return(list(plot_mvt, no_labels, raw_change_log_transformed))
 } #END OF plot_conterfactual_scenarios
 
 

@@ -24,7 +24,6 @@ source("R/HMSC_function.R")
 ## Survey scale, all covariates
 load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
-load( here::here("data", "derived_data", "3_datasets_for_predict_CV_80_20.Rdata"))
 Y_data =  observations_final
 X_data = covariates_final[rownames(Y_data),]
 
@@ -70,7 +69,6 @@ test_null_model = NULL
 save_path = here::here("outputs/models/hmsc")
 
 ##----------------------------- Fit HMSC models ------------------------------
-
 #### FULL MODEL SITES ####
 name = "FULL_model_SITE_SCALE"
 random_factors = c("sample_unit", "country")
@@ -92,6 +90,54 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          nb_neighbours, set_shrink, test_null_model, name,
                          run_python = T, save_path)
 
+
+#### FULL MODEL SITES test mpa 2 ####
+name = "test_mpa2_FULL_model_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+
+table(X_data_site$protection_status2)
+X_data_site$protection_status <- NULL
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+#### FULL MODEL SITES test mpa####
+name = "test_mpa_FULL_model_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+
+X_data_site = covariates_site_final[rownames(Y_data_site),]
+X_data_site$protection_status2 <- NULL
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
 
 ##--------------------------- Sensitivity analyses -----------------------------
 
@@ -136,6 +182,19 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
               random_factors, nb_neighbours, set_shrink, test_null_model, name,
               run_python = F, save_path)
 
+
+
+#### FULL MODEL SITES, SPATIAL IN RRANDOM ####
+name = "Spatial_effect_SITE_SCALE"
+random_factors = c("sample_unit", "country", "spatial")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
 
 
 #### FULL MODEL SITES HIGH SHRINK ####
@@ -184,7 +243,7 @@ fit_hmsc_crossvalidation(k_fold = 5,
 
 
 
-# #### UNIVARIATES MODEL SITES ####
+#### UNIVARIATES MODEL SITES ####
 # # Y <- Y_data_site |> dplyr::select(invertivores_biomass, public_interest )
 # Y <- Y_data_site |> dplyr::select(actino_richness)
 # response_distribution <- rep("normal", ncol(Y))
@@ -320,6 +379,33 @@ fit_hmsc_crossvalidation(k_fold = 5,
 #                 run_python = TRUE,
 #                 save_path = here::here("outputs/models/hmsc/sensitivity_analysis"))
 #   }
+
+#### Test simple lm ####
+data <- cbind(X_data_site, Y_data_site)
+
+cov <- colnames(X_data_site)[8:46]
+formula <- as.formula(paste("available_biomass ~", paste(cov, collapse = " + ")))
+model <- lm(formula, data = data)
+
+summary(model)
+
+ggplot(data)+
+  geom_violin(aes(x=effectiveness, y=available_biomass))+
+  # geom_boxplot(aes(x=effectiveness, y=available_biomass))+
+  geom_hline(yintercept = median(data[data$effectiveness == "out", "available_biomass"]),
+             color = "red")
+
+ggplot(data)+
+  geom_boxplot(aes(x=effectiveness, y=n_fishing_vessels))+
+  geom_violin(aes(x=effectiveness, y=n_fishing_vessels))+
+  geom_hline(yintercept = median(data[data$effectiveness == "out", "n_fishing_vessels"]),
+             color = "red")
+
+ggplot(data)+
+  geom_boxplot(aes(x=effectiveness, y=gravtot2))+
+  geom_violin(aes(x=effectiveness, y=gravtot2))+
+  geom_hline(yintercept = median(data[data$effectiveness == "out", "gravtot2"]),
+             color = "red")
 
 # ##--------------------------- Sensitivity analyses -----------------------------
 #  source("R/evaluation_prediction_model.R")

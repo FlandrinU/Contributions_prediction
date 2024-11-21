@@ -40,15 +40,15 @@ worldmap <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
 # functions #
 source(here::here("R","evaluation_prediction_model.R"))
 
- ##------------- Filtering tropical fishes -------------
- ### filtering to keep only RLS data for sub-tropical and tropical sites ######
- ##  i.e with min(SST)>=17°C over the 5 years before the survey
+##------------- Filtering tropical fishes -------------
+### filtering to keep only RLS data for sub-tropical and tropical sites ######
+##  i.e with min(SST)>=17°C over the 5 years before the survey
 
- sites_upper_17SST <- all_covariates_benthos_inferred |>
+sites_upper_17SST <- all_covariates_benthos_inferred |>
    dplyr::filter(min_5year_analysed_sst >= 17) |> 
-    dplyr::filter(latitude > -30) # Approximatelly the limit of the Allen Atlas
+   dplyr::filter(latitude > -30) # Approximatelly the limit of the Allen Atlas
 
- # check filter
+# check filter
 NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
                       xlim = c(-180,180),ylim = c(-50,50),
                       jitter = 0, lat_line = 30, 
@@ -60,17 +60,17 @@ NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
    dplyr::filter(survey_id %in% sites_upper_17SST$survey_id) 
  
  # diversity remaining
- dplyr::n_distinct(rls_actino_trop$survey_id) # 6002 surveys
- dplyr::n_distinct(rls_actino_trop$site_code) # 1977 sites
- dplyr::n_distinct(rls_actino_trop$rls_species_name) # 1609 taxa
- dplyr::n_distinct(rls_actino_trop$family) # 81 families
+ dplyr::n_distinct(rls_actino_trop$survey_id) # 6936 surveys
+ dplyr::n_distinct(rls_actino_trop$site_code) # 2194 sites
+ dplyr::n_distinct(rls_actino_trop$rls_species_name) # 1655 taxa
+ dplyr::n_distinct(rls_actino_trop$family) # 84 families
 
 
  ### Elasmobranch observations ###
  rls_elasmo_trop <- RLS_elamsobranchii_data |>
    dplyr::filter(survey_id %in% unique(rls_actino_trop$survey_id))
  
- dplyr::n_distinct(rls_elasmo_trop$rls_species_name) # 54 taxa
+ dplyr::n_distinct(rls_elasmo_trop$rls_species_name) # 60 taxa
  dplyr::n_distinct(rls_elasmo_trop$family) # 16 families
  
 
@@ -85,9 +85,9 @@ tropical_species_traits <- species_traits_contrib |>
   dplyr::filter(rls_species_name %in% observed_species$rls_species_name)
 
 # diversity remaining
-dplyr::n_distinct(tropical_species_traits$family) # 97 families (81 actino)
-dplyr::n_distinct(tropical_species_traits$rls_species_name) # 1663 taxa (1609 actino)
-dplyr::n_distinct(tropical_species_traits$fishbase_name) # 1658 taxa -> 5 duplicates
+dplyr::n_distinct(tropical_species_traits$family) # 99 families (84 actino)
+dplyr::n_distinct(tropical_species_traits$rls_species_name) # 1715 taxa (1655 actino)
+dplyr::n_distinct(tropical_species_traits$fishbase_name) # 1695 taxa -> 20 duplicates
 
 
 ##-------------Observe data with missing values-------------
@@ -103,10 +103,19 @@ ggsave(plot= last_plot(), file= here::here("figures", "1_percent_species_per_tra
 
 # ### espèces manquantes pour l'esthétique
 # sp_missing_aest <- tropical_species_traits[is.na(tropical_species_traits$aesthetic),]
-# species_list_aesthetic_Feuille_1 <- read_csv("~/Téléchargements/species_list_aesthetic - Feuille 1.csv")
-# a_faire <- dplyr::filter(sp_missing_aest, fishbase_name %in% species_list_aesthetic_Feuille_1$scientific_name)
-# write_csv(a_faire, file="~/Téléchargements/trop_species_list_aesthetic.csv")
+# added_sp_aest <- readr::read_csv(here::here("outputs/2g_aesthetic_inference_new_sp.csv")) |> 
+#    dplyr::mutate(name = gsub("([A-Za-z]+)\\_([A-Za-z]+).*", "\\1 \\2", image_name))
+# a_faire <- dplyr::filter(sp_missing_aest, !fishbase_name %in% added_sp_aest$name) |> 
+#    dplyr::filter(class != "Elasmobranchii",
+#                  order != "Pleuronectiformes",
+#                  order != "Syngnathiformes")
+# readr::write_csv(a_faire, file="~/Téléchargements/missing_species_aesthetic.csv")
 # ###
+# ### espèces manquantes pour le public attention
+# sp_missing_hum_int <- tropical_species_traits[is.na(tropical_species_traits$public_interest),]
+# readr::write_csv(sp_missing_hum_int, file="~/Téléchargements/missing_species_human_interst.csv")
+# ###
+
 
 ##-------------Save tropical data-------------
 # RLS data #

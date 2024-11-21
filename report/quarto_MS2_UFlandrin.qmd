@@ -1,14 +1,23 @@
 ---
 title: "**Inference of Nature's Contributions**"
-subtitle: "*What drives the Nature's Contributions to Nature and People? How to protect them?*"
+subtitle: "**The human footprint and the conservation legacy on 22 forms of Nature's Contributions**"
 author:
   - name: Ulysse Flandrin 
     email: ulysse.flandrin@gmail.com
     affiliation: University of Montpellier
     orcid: 0009-0005-2371-9127
 date: today
-abstract: | 
-  Abstract...
+abstract: |
+  To what extent has humanity degraded ecosystems? This is a crucial question we need to ask ourselves if we are to reconcile our relationship with nature and imagine a more desirable future. Although everyone has heard anecdotal accounts of once-abundant species from previous generations, systematic quantification of ecosystem degradation over time is difficult to achieve due to limited historical data. Instead, it is possible to use the most pristine ecosystems known today to estimate the lower bound of our current impact on nature. By measuring 22 potential contributions of fish communities to nature and people in over 2000 tropical reefs, we have explored the impact of anthropogenic activities and conservation measures on fish communities. By explaining these contributions by more than 40 environmental, habitat and human covariates, we conducted counterfactual scenarios on unprotected and protected reefs to measure the effect of anthropogenic activities and conservation measures on contributions to Nature and People. We show that anthropogenic activities have massively reduced the biomass and diversity of fish communities on tropical reefs, reducing the total measured contributions by an average of 10%. Despite a non-negligible impact on biomass and IUCN species richness, conservation efforts to date have only been able to offset the decline by a few percent. Our results show that despite the undoubted benefits of current protected areas, reef protection cannot and will not compensate for all our extraction, pollution and ecosystem destruction. A change in our relationship with nature is therefore urgent and imperative if we are to imagine an enviable future for nature and people.
+  
+  
+  
+  
+    **What is the impact of human activities on ecosystems, (compared with known minimum impact conditions)?**
+    **Given current human populations, what gains have protected areas brought?**
+    
+    *Other idea: The global deficit of fish contributions to nature and people on impacted coral reefs*
+  
 
 crossref:
   fig-title: '**Figure**'
@@ -56,23 +65,65 @@ for(files in dest_files){
 # Introduction
 
 ##### **Societal meaning** {.unnumbered}
+“Le monde du silence” Jacques Cousteau (1956)
+“Silent spring” Rachel Carson (1962)
 
-##### **Infer and predict fish community contributions directly through SDM or jSDM** {.unnumbered}
+Man has a profound and pervasive impact on every ecosystem on Earth. Archival documents remind us of the extent to which most ecosystems, particularly terrestrial ones, have been depleted of biomass by direct exploitation, or by various forms of pollution, as denounced by Rachel Carson in “Silent Spring”.
+Pauly: baseline shifing: "we transform the world but we don't remember it"
+
+
+##### **Contributions** {.unnumbered}
+
+Today, these ecosystems are so depleted that they have difficulty maintaining their functioning and no longer provide as many contributions to people.
+ES -> NCP -> contribution scenarios and what kind of nature do we want for what kind of future? NFF
+
+##### **Identify inherent and environmental effects, and possible action levers** {.unnumbered}
+
+Les ecosystèmes terrestres sont en danger à cause de l'exploitation et polution chimiques (pesticides, herbicides, ...), changement climatique, ... les ecosystèmes marins le sont à causes en plus de l'exploitation directe silencieuse. + populations
+Certains dangers sont à mitiger sur le long terme comme l'effet du changement climatique, d'autre sont moralement impossible comme la population, et on a des leviers que l'on peut changer tout de suite: nos degé d'exploitation, de pollution, ... ie.e. notre relation avec la Nature.
+
+-Protected areas as a potential mitigation action or solution to
+preserve most of them, but remains not tested at large scale for many contributions simultaneously
+
+- Les aires protégées sont des témoins des écosystèmes avec moins de pressions d'extraction anthropiques. et quelques réserves strictes donnent des résultats interessant, mais la majorité des autres endroits sont soumis aux pressions humaines et fortement dégradés. nous avons donc le devoir moral de se demander à quel point est ce qu'on les a dégradé/quelle est notre dette écologique envers la nature, et au regard de cet effet, quel a été l'intérêt des réserves protégées ?
+
+##### **Infer and predict community contributions directly through SDM or jSDM** {.unnumbered}
 
 - Thuiller 2024, Poggiato 2023 : "assemble first, predict later"
 
 - interest of jSDM: "JSDMs infer a residual covariance matrix that describes species co-occurrence patterns after accounting for the environment."
 
+-Yet, modelling human and climate impacts on species abundance and biodiversity is common in ecology but modelling patterns of multiple contributions as a function of social-environmental
+factors while considering synergies and trade offs is overdue
+
 - use of Hmsc (bayesian jSDM)
 
-
-##### **Identify inherent and environmental effects, and possible action levers** {.unnumbered}
-
 ##### **Conterfactual scenarios** {.unnumbered}
+
+-les données temporelles sont difficiles à obtenir et nous ne disposons pas de données quantitatives des écosystèmes il y a plusiqurs deccenies ou siècles. Une façon de comprendre comment ça pouvait être *a minima*, est de regarder ce qu'il se passe dans les ecosystèmes avec le minimum d'impact connu aujourd'hui. Malheureusement, aujourd'hui aucun écosystèmes n'est stritement pristine de l'activité humaine d^fait de notre éternelle volonté d'expansion, mais les écosystèmes avec le moins de pressions connues peuvent représenter un état minimal que nous devons chercher. En comparant ces ecosystèmes avec les autres, on peut faire une estimation de la borne basse de l'impact humain sur les écosystèmes. En symétrie, il est aussi possible de regarder les sites qui sont aujourd'hui protégés par rapport aux sites non protégés afin de voir quels ont été les apports de la mise en réserve par rapport la pression anthropique.
+-> une façon de faire ça est le contrefactuel... = space as time.
+
+Contrefactual sans impact humain: on enlève la pression anthropiques des sites actuellement pas protégés. -> quel serait l'état descommuneautés si on était resté au minimum de pression anthropique que l'on connait actuellement ? i.e. quel a été l'impact de l'humain pour l'instant par rapport aux conditions minimum d'impact connues.
 
 - Understand the benefits of current MPAs in terms of contributions, and what we can expect from them.
 
 - Not real prediction because we have only correlations between covariates and contributions, and without temporal data, it's difficult to say whether a change in one condition can lead to a certain result, because of the ecological history of the reefs.
+
+##### **Case study: the tropical reefs** {.unnumbered}
+
+au front des écossytèmes menacé par le changement clim, mais aussi par l'exploitation humaine. Des ecosystèmes qui soutiennent encore des populmations locales (contrairement aux ecosystemes terrestres)
+
+
+
+::: {.callout-note}
+## Questions
+**_What drives the Nature's Contributions to Nature and People?_**
+
+**_What is the cost of anthropogenic pressures on Nature's Contributiosn to Nature and People ?_**
+
+**_How to protect/improve them?_**
+
+:::
 
 
 
@@ -84,7 +135,7 @@ for(files in dest_files){
 
 - Socio-environnemental data: 39 covariates of environment, habitat, and anthropic activities. (Inference of the missing data in benthic compositions (~30%) by Missforest )
 
-- Each RLS site is categorized according to its level of protection (EOLI criteria). Out of the 2483 sites, we had 908 out of reserve, 79 low effectiveness, 514 medium effectiveness, 982 high effectiveness MPAs, spread over 33 countries.
+- Each RLS site is categorized according to its level of protection. Out of the 2483 sites, we had 655 out of reserve (no conservation measures), 1297 restricted mpa (all conservation measures), 531 full MPAs (no take mpa with high to medium compliance), spread over 33 countries.
 
 - Use of a Bayesian hierarchical model (Hmsc) to estimate the expected community contributions under different human pressure conditions, accounting for other habitat and environmental variables: use of the 39 covariates as linear fixed effects, **country** and **site_code levels** are used as random factors as *(1|site_code/country)*. 
 
@@ -98,7 +149,7 @@ HMSC (Hierarchical Modeling of Species Communities) is a jSDM that relies on a l
 
 ## Inference of contributions
 
-### Model performance {.unnumbered}
+### Model performance: half of contributions can be inferred with r² over 0.74 {.unnumbered}
 
   + Good convergence of the model with thin = 2000, samples = 100, chains = 2: effective sample size around Nsamples * Nchains (see @fig-convergence), and good chain convergence (see @fig-chains).
   
@@ -107,9 +158,9 @@ HMSC (Hierarchical Modeling of Species Communities) is a jSDM that relies on a l
   + The full model outperformed the null model (only with random levels) which has an average predictive power of r² = 0.24 (see @fig-power_null).
   
 
-### Partitioning of explained variance {.unnumbered}
+### Partitioning of explained variance: strong influence of ecological histories {.unnumbered}
 
-![**Variance partitioning of the full model.** *The total height of each bar correspond to the percent of the initial variance explained by the model (R² for each response variable).The importance of the covariates in the explained variance is represented by the height of the stacked bars.* ](img/variance_partitioning_absolute_values_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_full_model width=100%}
+![**Variance partitioning of the full model.** *The total height of each bar correspond to the percent of the initial variance explained by the model (R² for each response variable).The importance of the covariates in the explained variance is represented by the height of the stacked bars.* ](img/variance_partitioning_absolute_values_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_full_model width=100%}
 
 
 
@@ -129,19 +180,21 @@ HMSC (Hierarchical Modeling of Species Communities) is a jSDM that relies on a l
       
       - Among the environmental variables, *SST*, *chlorophyll* and *salinity* are the three most important because they deeply affect fish communities. Among the human variables, *gravity*, *marine ecosystem dependency* and *hdi* are the three most important variables, as they must correspond to the degree and type of anthropogenic pressure applied to the communities. Among the habitat variables, the depth and area of terrestrial reef flat within a 500m radius are the most important, as they must correspond to the amount of space available for the communities.
       
-      - In average, the MPAs effectiveness explains only 1% of the variance in contributions.
+      - In average, the MPAs protection_status explains only 1% of the variance in contributions.
   
 
 
 ### Effects of anthropic covariates on contributions {.unnumbered}
 
-![**Posterior distributions of anthropic covariates on community contributions.** * High effectiveness corresponds to MPA with whith good protection levels according to EOLI criteria. "gravtot2" is a proxy of the human pressure, accounting for population size and travel time to the reef. n_fishing_vessels" is the number of fishing vessels bigger than 12m within a 10km radius of the reef, detected by satellite imagery.* ](img/posterior_distribution_of_estimates_FULL_model_SITE_SCALE_2_chains_2000_thin_100_sampleseffectivenessHigh-n_fishing_vessels-gravtot2.jpg){#fig-ridge_estimates width=100%}
+<!-- level of statistical support measured by posterior probability for a positive or negative response -->
+
+![**Posterior distributions of anthropic covariates on community contributions.** * High protection_status corresponds to MPA with whith good protection levels according to EOLI criteria. "gravtot2" is a proxy of the human pressure, accounting for population size and travel time to the reef. n_fishing_vessels" is the number of fishing vessels bigger than 12m within a 10km radius of the reef, detected by satellite imagery.* ](img/posterior_distribution_of_estimates_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samplesprotection_status2full-gravtot2-n_fishing_vessels.jpg){#fig-ridge_estimates width=100%}
 
 **&rarr; Observations:**
 
   + Among human covariates, gravity is the most important variables (~2.5% of the explianed variance, @fig-imp_variable). The presence of large population close from the reef (i.e. high gravity) has a strong negative influence on piscivores and available biomass, trophic web robustness and IUCN species (@fig-ridge_estimates). On the contrary, gravity has a positive effect on biomass turnover, aesthetics and evolutionary distinctiveness, as some areas with large populations, such as the Caribbean, constitute areas with a particular evolutionary history, have a low biomass that is rapidly renewed due to human exploitation, and feature relatively attractive fish communities.
   
-  + Although reef protection (effectiveness) explains only 1% of the explained variance, we found a positive effect on community aesthetics and public attention, available, invertivores and herbivores biomass, as well as species richness and the presence of IUCN species (see @fig-heatmap-estimates-hmsc  to see the support level of each estimates). ...
+  + Although reef protection explains only 1% of the explained variance, we found a positive effect on community aesthetics and public attention, available, invertivores and herbivores biomass, as well as species richness and the presence of IUCN species (see @fig-heatmap-estimates-hmsc  to see the support level of each estimates). ...
   
   + ...
 
@@ -163,9 +216,37 @@ In the end, we have only a few levers available at political level to increase c
 These aren't really predictive scenarios, because we don't know the “activation energy” required to move from one evolutive path to another: we have to take into account the inertia of ecosystems. Here, we're measuring the “**ecological deficit of protection**”, i.e. what we'd have now if we'd protected all the sites (with the current level/efficiency of protection of our sites). -> Taking action now should take us in these directions, but we can't say how long it will take/ how easy it will be to reach these states. This kind of modeling helps to show what average gain we can expect.
 
 
-![**The ecological deficit of tropical reefs due to antrophic activities.** *In the multidimensional space of nature's contributions obtained by PCA, we plotted the barycenters of each country's unprotected reefs (deep colors), and the barycenters of the same reefs in the theoretical scenarios of **(B)** total protection (high effictiveness MPA and low fishing pressure), **(C)** low human pollution (low gravity and high neartt), or **(A)** pristine conditions (both *B* and *C* conditions combined). Country's barycenters in counterfactual scenarios are plotted in lighter colors. The dotted lines between each pair of barycenters represent the ecological deficit of each country in terms of contributions due to antrophic activities in unprotected sites. Only countries with at least 10 RLS sites are shown here.* ](img/Panel_conterfactuals_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.rds.jpg){#fig-counterfactuals width=100%}
+<!-- ![**The ecological deficit of tropical reefs due to antrophic activities.** *In the multidimensional space of nature's contributions obtained by PCA, we plotted the barycenters of each country's unprotected reefs (deep colors), and the barycenters of the same reefs in the theoretical scenarios of **(B)** total protection (high effictiveness MPA and low fishing pressure), **(C)** low human pollution (low gravity and high neartt), or **(A)** pristine conditions (both *B* and *C* conditions combined). Country's barycenters in counterfactual scenarios are plotted in lighter colors. The dotted lines between each pair of barycenters represent the ecological deficit of each country in terms of contributions due to antrophic activities in unprotected sites. Only countries with at least 10 RLS sites are shown here.* ](img/Panel_conterfactuals_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.rds.jpg){#fig-counterfactuals width=100%} -->
 
 
+  
+  <!-- ![**The potential changes in contributions of fish communities.** *Changes in percent of the current predicted contributions in a scenario of total protection (high effectiveness and low fishing pressure). Only sites currently unprotected are taken into account here.* ](img/Percent_changes_distrib_Total_protection-MPA&vesselsFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-conterfactuals_percent width=60%} -->
+  
+
+  
+  
+  
+::: {#fig-counterfactuals layout-ncol=2}
+
+![a) Human footprint.](img/Percent_changes_LOG_scale_Human_footprint_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![b) Conservation legacy.](img/Percent_changes_distrib_Conservation_legacy_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![c) Human footprint.](img/Barycenters_movement_Human_footprint_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![d) Conservation legacy.](img/Barycenters_movement_Conservation_legacy_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+**Percent changes in contributions according to different conterfactual scenarios.** *__(a and b)__ Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to pot the change in percent of the contributions. __(c and d)__ In the multidimensional space of nature's contributions obtained by PCA, we plotted the barycenters of each country's current reefs (circles), and the barycenters of the same reefs in the counterfactual scenarios (triangles). __Human footprint:__ currently unprotectedd sites are placed in conditions of minimum human impact known (full MPA, min fishing vessels, min gravity, max neartt). __Conservation legacy:__ currently protected sites are placed in conditions of non protection, given their human current human population: out MPA, mean fishing_vessels of out reserves sites.*
+
+:::
+
+
+**&rarr; Observations:**
+
+  +   Worldwide, a high level of protection in unprotected sites could bring an average increase of 3.9% in contributions, with significant variability between contributions (from -3.5% for the biomass turnover to +24.7% for the herbivore biomass) and very high variability between sites (@fig-conterfactuals). Overall, fish biomass and species richness would benefit the most from such protection, with an average gain of 14% in available biomass and 8% in actinopterygii richness. We also note a very strong gain of 20% in the presence of IUCN species, but with considerable variability, suggesting a strong contextual effect. The same contextual variability is found for piscivorous fish.
+  
+  
+  
 **&rarr; Observations:**
 
   + We observed that all countries have similar responses to anthropogenic activities, with tropical reef communities generally richer in species, biomass, aesthetics, etc. if they are placed in conditions of high protection and low anthropogenic pressure (@fig-counterfactuals (A)). 
@@ -174,10 +255,9 @@ These aren't really predictive scenarios, because we don't know the “activatio
   
   + ...
   
-::: {.callout-note}
-*other ideas...?*
-Do you prefer plots of contributions changes in the PCA or as percent in boxplot? mix of both ?
-:::
+  + Effet négatif des réserves sur l'endémisme car l'endémisme est surtout dans les îles, et les îles ne sont pas bien protégées: D'agata 2016
+  
+  
 
 # Discussion
 
@@ -194,10 +274,29 @@ Si estimates à 0 : les covariables n'ont pas d'effet sur cette contribution OU 
 ::: {.callout-note}
 ## Review Cyril
 "Another question that immediately came to mind was that with such a rich spatial dataset, why did the authors not examine whether there were any geographic trends in the importance of variables. Were climate factors more important in some regions than others or was it consistent globally?"
+
+-même si les réserves n'augmentent pas beaucoup les contributions, si ça les maintien dans le temps c''est déjà pas mal...
+
+-Peu d'effet des réserves peut être parce que ce sont surtout des réserves papiers, comme en Europe: Aminian-Biquet 2024
+
+-D'agata 2016: les réserves loin des hommes (>20h de trajets) sont plus efficaces que les réserves même les plus grandes, les plus vieilles, ou les plus restrictives. -> en accord avec ce que l'on trouve, la présence humaine est le facteur le plus prépondérant dans les écosystèmes. Si on veux conserver des contributions à la nature, il est important de garder les sites actuellment pristine en l'état, sans espérer que la protection d'uun site peut contrebalancer une gravité grandissante.
+
+-Importance de faire des réserves dans des endroits avec très peu d'impact humain (sud est Calédonie) pour garder leur statut, et empêcher tout de suite le développement de pressions anthropiques dans ces régions un peu mieux préservées. Ce sont des zonnes essentielles pour la Nature, comme des refuges de biodiversité, mais aussi des témoins pour ces écosyst-èmes qui peuvent permettre de garder en tête une baseline légèrement moins biaisée, où au moins qui décroit moins vite. (cf Daniel Pauly).
+
+-Attention, nous avons pris ici a priori les impact humains directs, mais notre actions est encore plus pervasive car aujourd'hui notre consommation d'énergies fossile en plus de la pollutions nous entraine vers un mode à +3°C , qui constitue une menace certaines pour les récifs coraliens d'ici la fin du siècle.
+
+-Nous trouvons ici une réduction d'au moins 10% des contributions, de 40% de la biomasse à cause des impact humains, en comparant avec les les conditions minimales d'impact actuellement. Imaginez si on comparait avec 1900... -> ce que 'on peut faire qualitativement en faisant une étude historique/d'archives (cf Paul 1995, le monde du silence Cousteau, ...)
+
+-On peut aussi regarder le gain potentiel des réserves que l'on pourrait installer. mais au vu des 10% de biomasse gagnés avec les réserves, l'objectif 30x30 ne suffira pas à garder un peu de biodiversité, il faut radicalement changer notre relation avec la nature et nos pratiques extractivites et destructives. 
+
+-En milieu terrestre, on a tout cassé, les relation matériel entre anture "sauvage" et homme sont quasi inexistante. En marin, les récifs semblent assez résilients (pour le moment ?), il reste une large population qui en dépend, on peut peut être encore changer quelque chose ?
+
+
 :::
 -->
 
-
+ - a large part is explained by ecological history, but despite this, SST + gravity are the 2 predominant predictors ( unfortunately, these two drivers will intensify in the coming years...)
+ 
 
 
 # Materials and methods
@@ -431,14 +530,14 @@ __Covariates inference:__
 
 ### Check convergence of the model {.unnumbered}
 
-![**Convergence diagnosis of the full bayesian model (2000 thin, 100 samples, 2 chains).** *Theoritical values are highlighed with red dashed lines ("ess" should be around Sample x Chain = 200, and "psrf" around 1). A good convergence is observed in this model*](img/convergence_estimates_effective_size_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){#fig-convergence width=70%}
+![**Convergence diagnosis of the full bayesian model (2000 thin, 100 samples, 2 chains).** *Theoritical values are highlighed with red dashed lines ("ess" should be around Sample x Chain = 200, and "psrf" around 1). A good convergence is observed in this model*](img/convergence_estimates_effective_size_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){#fig-convergence width=70%}
 
 ::: {#fig-chains layout-ncol=2}
 
-![a) Estimates autocorrelations.](img/autocorrelation_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Estimates autocorrelations.](img/autocorrelation_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 
-![b) Chains convergence.](img/Chain_convergence_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![b) Chains convergence.](img/Chain_convergence_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 **Quality of the chains convergence.**
 :::
@@ -446,15 +545,17 @@ __Covariates inference:__
 
 ### Explanatory and predictive power {.unnumbered}
 
-![**Predictive and explanatory power of the model** *For each contributions, the points represent the R² in case of inference (full model, explanatory power; in grey), joint prediction (predictive power in 5-fold crossvalidation; in blue), and conditional prediction (observed biomass of the test set was given to the model to take into account residual associations; in orange). Dotted lines represent the mean of all contributions. In crossvalidation, the sites at a given date in the train and test sets were separated so that no reefs were in common between the two sets.*](img/Joint_vs_Conditional_pred_power_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-power width=90%}
+![**Predictive and explanatory power of the model** *For each contributions, the points represent the R² in case of inference (full model, explanatory power; in grey), joint prediction (predictive power in 5-fold crossvalidation; in blue), and conditional prediction (observed biomass of the test set was given to the model to take into account residual associations; in orange). Dotted lines represent the mean of all contributions. In crossvalidation, the sites at a given date in the train and test sets were separated so that no reefs were in common between the two sets.*](img/Joint_vs_Conditional_pred_power_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-power width=90%}
+
+![**Mean explanatory power per country**](img/Explanatory_power_per_ecoregion_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-power width=100%}
 
 ### Variance partitioning and importance of covariables {.unnumbered}
 
 ::: {#fig-chains layout-ncol=2}
 
-![a) Mean importance of habitat, environment and human covariates, compared to random effects, in the explained variance.](img/variance_explained_per_category_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_agreg}
+![a) Mean importance of habitat, environment and human covariates, compared to random effects, in the explained variance.](img/variance_explained_per_category_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_agreg}
 
-![b) Importance of covariates in the explained variance.](img/contributions_of_covariate_in_variance_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-imp_variable}
+![b) Importance of covariates in the explained variance.](img/contributions_of_covariate_in_variance_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-imp_variable}
 
 **Importance of covariates in the full model**
 :::
@@ -462,8 +563,9 @@ __Covariates inference:__
 
 ### Estimates {.unnumbered}
 
-![**Mean of estimates statistically different from 0 (support level > 0.95).** *Estimates not different from 0 are not displayed. Overall positive effect of coral, algae cover, depth and low effectiveness MPA. Overall negative effect of degree heating week, gdp.*](img/estimate_significance_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){#fig-heatmap-estimates-hmsc width=100%}
+![**Mean of estimates statistically different from 0 (support level > 0.95).** *Estimates not different from 0 are not displayed. Overall positive effect of coral, algae cover, depth and MPA. Overall negative effect of degree heating week, gdp.*](img/estimate_significance_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){#fig-heatmap-estimates-hmsc width=100%}
 
+![**Posterior distributions of environmental and habitat covariates on community contributions.** *Local coral cover assessed by photoquadrats. Mean sea surface temperature over the 5 years befor the sampling date. Mean chlorophyll concentration over the 5 years befor the sampling date.* ](img/posterior_distribution_of_estimates_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samplesmedian_5year_analysed_sst-coral-median_5year_chl.jpg){#fig-ridge_supp width=70%}
 
 
 ### Residual associations of contributions {.unnumbered}
@@ -472,15 +574,15 @@ __Covariates inference:__
 
 ::: {#fig layout-ncol=2}
 
-![a) Residual associations at country level](img/residual_associations_countryFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
+![a) Residual associations at country level](img/residual_associations_countrytest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
 
-![b) Residual associations at sample unit level](img/residual_associations_sample_unitFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
+![b) Residual associations at sample unit level](img/residual_associations_sample_unittest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
 
 :::
 
 ::: {#fig layout-ncol=1 width=70%}
 
-![](img/residual_associations_both_levelsFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){width=100%}
+![](img/residual_associations_both_levelstest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){width=100%}
 
 :::
 
@@ -497,69 +599,76 @@ Residual covariations among contributions at country and site levels.
 
 ::: {#fig-residuals layout-ncol=2}
 
-![a) Predictions vs observations.](img/Predictions_VS_Observations_Inference_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Predictions vs observations.](img/Predictions_VS_Observations_Inference_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 
-![b) Residuals vs observations.](img/Residual_VS_Observations_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![b) Residuals vs observations.](img/Residual_VS_Observations_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 **Quality of prediction in the full model.** *Black lines represent in (a) the 1:1 proportion, and in (b) the y=0 axis.*
 :::
 
 #### __*Spatial autocorrelation of residuals*__ {.unnumbered}
 
-![**Residuals accross latitude and spatial autocorrelations.** *We don't observe any latitudinal gratient in residuals and Moran indices show low to moderate spatial autocorrelations.*](img/residuals_VS_latitude_MoranI_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-Moran width=100%}
+![**Residuals accross latitude and spatial autocorrelations.** *We don't observe any latitudinal gratient in residuals and Moran indices show low to moderate spatial autocorrelations.*](img/residuals_VS_latitude_MoranI_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-Moran width=100%}
 
-![**Geographical extent of spatial autocorrelations of residuals.** *Moran indices estimate the spatial dependence of scores at discrete distance classes (increment of 300 km). Moran indices significantly different from 0 are reported in red dots (p-value <0.01).The Epperson x-intercept, highlighted by the dashed line, is the distance at which the reefs can be considered to be no more similar than expected by-chance-alone across the map (compared with 30 random models, i.e when the effect size of autocorrelation is close to 0).*](img/Variogramms_residuals_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-vario width=100%}
+![**Geographical extent of spatial autocorrelations of residuals.** *Moran indices estimate the spatial dependence of scores at discrete distance classes (increment of 300 km). Moran indices significantly different from 0 are reported in red dots (p-value <0.01).The Epperson x-intercept, highlighted by the dashed line, is the distance at which the reefs can be considered to be no more similar than expected by-chance-alone across the map (compared with 30 random models, i.e when the effect size of autocorrelation is close to 0).*](img/Variogramms_residuals_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-vario width=100%}
 
 ### Latent factors {.unnumbered}
 
-![**Three first latent factors of the full model.** *We can't observe obvious patterns in these latent variables.*](img/Latent_factors_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-latent width=100%}
+![**Three first latent factors of the full model.** *We can't observe obvious patterns in these latent variables.*](img/Latent_factors_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-latent width=100%}
+
+
+
 
 ### Supp. results of conterfactual scenarios {.unnumbered}
 
+
+::: {.callout-note}
+Two option to plots these result: changes in scaled contributions as shown in Figure 3, or as percent of the initial contributions. -> easier to communicate but many outliers (due to value close to zero: percent = change / initial_value * 100 -> super high percents when initial_value is close to 0)
+Here the x-scale is constrained between the quantiles 1 and 99%.
+:::
+
+
+
+::: {#fig-percent_change layout-ncol=2}
+
+![a) Pristine conditions (total protection and no human pressure).](img/Percent_changes_distrib_Human_footprint_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+
+![b) Total protection (High protection_status MPA and low fishing pressure).](img/Percent_changes_distrib_Total_protection-MPA&vesselstest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![c) No human pressure (low gravity and high travel time).](img/Percent_changes_distrib_No_human-gravity&neartttest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![d) High protection_status MPA only.](img/Percent_changes_distrib_full_protection_potential_gains_of_out_sites_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![e)  Restricted MPA only.](img/Percent_changes_distrib_restricted_MPA_potential_gains_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![f)  Low fishing pressure only.](img/Percent_changes_distrib_Low_fishing_pressuretest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+**Percent changes in contributions according to different conterfactual scenarios.** *Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to pot the change in percent of the contributions.*
+
+:::
+
+
 ::: {#fig-change layout-ncol=2}
 
-![a) Pristine conditions (total protection and no human pressure).](img/Changes_distrib_Pristine-lowgravity&neartt&MPA&vesselsFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Pristine conditions (total protection and no human pressure).](img/Changes_distrib_Pristine-lowgravity&neartt&MPA&vesselstest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 
-![b) Total protection (High effectiveness MPA and low fishing pressure).](img/Changes_distrib_Total_protection-MPA&vesselsFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![b) Total protection (full MPA and low fishing pressure).](img/Changes_distrib_Total_protection-MPA&vesselstest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![c) No human pressure (low gravity and high travel time).](img/Changes_distrib_No_human-gravity&nearttFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![c) No human pressure (low gravity and high travel time).](img/Changes_distrib_No_human-gravity&neartttest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![d) High effectiveness MPA only.](img/Changes_distrib_High_effectivenessFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![d) full MPA only.](img/Changes_distrib_full_protection_potential_gains_of_out_sites_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![e)  Low effectiveness MPA only.](img/Changes_distrib_Low_effectivenessFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![e)  Restricted MPA only.](img/Changes_distrib_restricted_MPA__potential_gains_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![f)  Low fishing pressure only.](img/Changes_distrib_Low_fishing_pressureFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![f)  Low fishing pressure only.](img/Changes_distrib_Low_fishing_pressuretest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 **Potential changes in contributions according to different conterfactual scenarios.** *Quantitative difference of contributions at the site level. We remind that all contributions are scaled with a standard error of 1*
 
 :::
 
-::: {.callout-note}
-To option to plots these result: chnages in scaled contributions as shown in Figure 3, or as percent of the initial contributions. -> easier to communicate but many outliers (due to value close to zero: percent = change / initial_value * 100 -> super high percents when initial_value is close to 0)
-Here the x-scale is constrained between the quantiles 1 and 99%.
-:::
-
-
-::: {#fig-percent_change layout-ncol=2}
-
-![a) Pristine conditions (total protection and no human pressure).](img/Percent_changes_distrib_Pristine-lowgravity&neartt&MPA&vesselsFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-
-![b) Total protection (High effectiveness MPA and low fishing pressure).](img/Percent_changes_distrib_Total_protection-MPA&vesselsFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![c) No human pressure (low gravity and high travel time).](img/Percent_changes_distrib_No_human-gravity&nearttFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![d) High effectiveness MPA only.](img/Percent_changes_distrib_High_effectivenessFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![e)  Low effectiveness MPA only.](img/Percent_changes_distrib_Low_effectivenessFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![f)  Low fishing pressure only.](img/Percent_changes_distrib_Low_fishing_pressureFULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-**Percent changes in contributions according to different conterfactual scenarios.** *Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to pot the change in percent of the contributions.*
-
-:::
 
 ### Sensibility analysis {.unnumbered}
 
@@ -573,7 +682,7 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 ::: {#fig-quadractic layout-ncol=2}
 
-![a) Linear effects only.](img/explanatory_power_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
+![a) Linear effects only.](img/explanatory_power_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
 
 ![b) linear and quadratic effects for all covariates (degree 2).](img/explanatory_power_Quadratic_SITE_SCALE_site_country_in_rL_2_chains_2000_thin_100_samples.png)
 
@@ -583,7 +692,7 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 ::: {#fig-partial_plot layout-ncol=2}
 
-![a) Linear effects only.](img/Partial_plot_SST_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Linear effects only.](img/Partial_plot_SST_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 ![b) linear and quadratic effects for all covariates (degree 2).](img/Partial_plot_SST_Quadratic_SITE_SCALE_site_country_in_rL_2_chains_2000_thin_100_samples.jpg)
 
@@ -605,6 +714,12 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 ![**Sensibility analysis: variance partitioning in a model containing only australian sites.**](img/variance_partitioning_absolute_values_Australia_only_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_survey width=100%}
 
 ![**Sensibility analysis: Covariates influence on contributions in the australian model**](img/posterior_distribution_of_estimates_Australia_only_SITE_SCALE_2_chains_2000_thin_100_sampleseffectivenessHigh-effectivenessLow-n_fishing_vessels-gravtot2.jpg){#fig-VP_survey width=100%}
+
+##### __Without australia__ {.unnumbered}
+
+![**Sensibility analysis: variance partitioning in a model containing non australian sites.**](img/variance_partitioning_absolute_values_Without_Australia_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_wo_aust width=100%}
+
+![**Sensibility analysis: Covariates influence on contributions in the non australian model**](img/posterior_distribution_of_estimates_Without_Australia_SITE_SCALE_2_chains_2000_thin_100_sampleseffectivenessHigh-effectivenessLow-n_fishing_vessels-gravtot2.jpg){#fig-ridges_wo_aust width=100%}
 
 
 ## Species traits

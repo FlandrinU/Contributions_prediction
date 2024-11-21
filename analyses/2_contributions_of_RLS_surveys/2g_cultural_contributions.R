@@ -93,15 +93,16 @@ human_interest <- hum_int |>
 ### CHECK SCIENTIFIC NAMES ###
 
 cultural_sp_contrib <- dplyr::full_join(aesthetic_score, human_interest) |> 
-  dplyr::mutate(sp_name = gsub("_", " ", sp_name))
+  dplyr::mutate(sp_name = gsub("_", " ", sp_name)) 
 
-cultural_sp_contrib <- code_sp_check(cultural_sp_contrib, original_name = 'sp_name', mc_cores = 10)
+cultural_sp_contrib <- code_sp_check(cultural_sp_contrib, original_name = 'sp_name',
+                                     mc_cores = 15)|> 
+  dplyr::select(-worms_id, -sp_name, -file_name, -check)
 
 cultural_all_species <- inferred_species_traits |> 
   dplyr::select(-public_interest, -academic_knowledge ) |> 
   tibble::rownames_to_column("rls_species_name") |> 
   dplyr::left_join(cultural_sp_contrib) |> 
-  dplyr::select(-sp_name, -file_name) |> 
   dplyr::group_by(fishbase_name) |> 
   tidyr::fill(tidyr::everything(), .direction = 'updown') |> 
   dplyr::mutate(esthe_score = max(esthe_score)) |> 

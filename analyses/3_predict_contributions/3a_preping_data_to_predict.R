@@ -87,7 +87,7 @@ colnames(all_covariates_benthos_inferred) <- gsub(" ", "_", colnames(all_covaria
 sapply(all_covariates_benthos_inferred, class) 
 metadata_col <- c("survey_id", "country", "area", "ecoregion", "realm", "location",
                   "site_code", "site_name", "latitude", "longitude", "survey_date",
-                  "program", "hour", "effectiveness")
+                  "program", "hour", "protection_status", "protection_status2")
 
 data_to_filter <- all_covariates_benthos_inferred[,-which(names(
   all_covariates_benthos_inferred) %in% metadata_col)] |> 
@@ -108,7 +108,8 @@ M <- cor(env)
 
 png(filename = here::here("figures/models/covariates","corr_matrix_env_covariates.png"), 
     width= 40, height = 30, units = "cm", res = 1000)
-  corrplot::corrplot(M, order = 'AOE', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r', tl.cex = 0.5)
+  corrplot::corrplot(M, order = 'AOE', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r',
+                     tl.cex = 0.5, col = rev(corrplot::COL2('RdBu', 200)))
 dev.off() 
 
 # More observations of DHW:
@@ -140,7 +141,8 @@ others <- as.data.frame(data_to_filter) |>
 M <- cor(others)
 png(filename = here::here("figures/models/covariates","corr_matrix_others_covariates.png"), 
     width= 40, height = 30, units = "cm", res = 1000)
-corrplot::corrplot(M, order = 'AOE', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r', tl.cex = 0.7)
+corrplot::corrplot(M, order = 'AOE', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r', 
+                   tl.cex = 0.7, col = rev(corrplot::COL2('RdBu', 200)))
 dev.off() 
 
 #Importance of "country"
@@ -181,7 +183,7 @@ cov <- cov[order(cov)]
 metadata_to_select <- c("survey_id", "site_code", "latitude", "longitude",
                         "country", "ecoregion", "realm",
                         "depth", "year",
-                        "effectiveness")
+                        "protection_status", "protection_status2")
 
 cov_to_select <- c(#Environment
                      cov[grep("median_5year", cov)],
@@ -211,7 +213,8 @@ cor_matrix <- cor(as.data.frame(data_to_filter) |>
                     dplyr::select(all_of(cov_to_select)))
 png(filename = here::here("figures/models/covariates","corr_matrix_first_selection_covariates.png"),
     width= 40, height = 30, units = "cm", res = 1000)
-corrplot::corrplot(cor_matrix, order = 'AOE', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r', tl.cex = 0.7)
+corrplot::corrplot(cor_matrix, order = 'AOE', tl.pos = 'tp', tl.srt = 60, 
+                   cl.pos = 'r', tl.cex = 0.7, col = rev(corrplot::COL2('RdBu', 200)))
 dev.off()
 
 # Covariates network -> THRESHOLD r = 0.7 of correlation.
@@ -278,10 +281,12 @@ selection2 <- as.data.frame(data_to_filter) |> dplyr::select(all_of(cov_to_selec
 png("figures/models/covariates/Selected_covariates_correlation.png",
     width = 35, height = 25, units = "cm", res = 300)
 corrplot::corrplot(cor(selection2), order = 'AOE', tl.pos = 'tp', tl.srt = 60, 
-                   cl.pos = 'r', tl.cex = 0.7, tl.offset = 0.5)
+                   cl.pos = 'r', tl.cex = 0.7, tl.offset = 0.5, 
+                   col = rev(corrplot::COL2('RdBu', 200)))
 corrplot::corrplot(cor(selection2), add = TRUE, type = 'upper', method = 'number',
                    order = 'AOE', insig = 'p-value', diag = FALSE, tl.pos = 'n', 
-                   cl.pos = 'n', number.digits = 1, number.cex = 0.7)
+                   cl.pos = 'n', number.digits = 1, number.cex = 0.7, 
+                   col = rev(corrplot::COL2('RdBu', 200)))
 dev.off()
 
 pca <- FactoMineR::PCA(selection2, scale = T, graph=F, ncp=30)
@@ -342,19 +347,22 @@ covariates_final <- covariates |>
   #                                             "Medium" = 2,
   #                                             "High" = 3)) |>  
   
-  #Change the order of levels of effectiveness for the GLM
-  dplyr::mutate(effectiveness = factor(effectiveness, 
-                                       levels = c("out", "Low", "Medium", "High"))) |> 
+  #Change the order of levels of MPAs for the GLM
+  dplyr::mutate(protection_status = factor(protection_status, 
+                                       levels = c("out", "low", "medium", "high")),
+                protection_status2 =factor(protection_status2, 
+                                           levels = c("out", "restricted", "full")) ) |> 
   # tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |>
   dplyr::mutate(across(-c(longitude, latitude,
                           site_code,
-                          effectiveness,
+                          protection_status, protection_status2,
                           country,
                           realm,
                           ecoregion), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-c(site_code, effectiveness, country, realm, ecoregion), as.numeric))
+  dplyr::mutate(across(-c(site_code, protection_status, protection_status2,
+                          country, realm, ecoregion), as.numeric))
 
 
 
@@ -485,7 +493,7 @@ covariates_site <- all_covariates_benthos_inferred |>
   #Agregate at the site scale
   dplyr::select(-survey_id) |> 
   dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
-                  survey_date, year, effectiveness) |> 
+                  survey_date, year, protection_status, protection_status2) |> 
   dplyr::summarise(across(.cols = everything(),
                           .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
   dplyr::mutate(across(.cols = all_of(cov_to_select2),
@@ -514,19 +522,22 @@ covariates_site_final <- covariates_site |>
   #                                             "Medium" = 2,
   #                                             "High" = 3)) |>  
   
-  #Change the order of levels of effectiveness for the GLM
-  dplyr::mutate(effectiveness = factor(effectiveness, 
-                                       levels = c("out", "Low", "Medium", "High"))) |> 
+  #Change the order of levels of MPAs for the GLM
+  dplyr::mutate(protection_status = factor(protection_status, 
+                                           levels = c("out", "low", "medium", "high")),
+                protection_status2 =factor(protection_status2, 
+                                           levels = c("out", "restricted", "full")) ) |> 
   # tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(id %in% rownames(observations_site)) |> 
   tibble::column_to_rownames("id") |>
   dplyr::mutate(across(-c(longitude, latitude,
                           site_code,
-                          effectiveness,
+                          protection_status, protection_status2,
                           country,
                           realm,
                           ecoregion), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-c(site_code, effectiveness, country, realm, ecoregion), as.numeric))
+  dplyr::mutate(across(-c(site_code, protection_status, protection_status2,
+                          country, realm, ecoregion), as.numeric))
 
 
 
@@ -569,7 +580,7 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 ##------------------- Map and caracterize RLS sites -------------------
 
-table(covariates_site_final$effectiveness)
+table(covariates_site_final$protection_status2)
 length(unique(covariates_site_final$country))
 
 plot_mpa <-function(covariates_site_final, xlim=c(-180,180), ylim = c(-36, 31),
@@ -585,7 +596,7 @@ plot_mpa <-function(covariates_site_final, xlim=c(-180,180), ylim = c(-36, 31),
                stroke=0.1,
                shape = 21,
                aes(x = longitude, y = latitude,
-                   fill=effectiveness)) +
+                   fill=protection_status2)) +
     
     coord_sf(xlim, ylim , expand = FALSE) +
     guides(alpha = "none", size = "none", colour = "none") +
@@ -632,3 +643,4 @@ save(observations_site_final, file = here::here("data", "derived_data", "3_sites
 
 save(contributions_transformation,
      file = here::here("outputs", "3_metadata_backtransformation_contrib.Rdata") )
+
