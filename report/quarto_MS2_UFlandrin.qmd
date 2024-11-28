@@ -65,58 +65,80 @@ for(files in dest_files){
 # Introduction
 
 ##### **Societal meaning** {.unnumbered}
-“Le monde du silence” Jacques Cousteau (1956)
-“Silent spring” Rachel Carson (1962)
 
-Man has a profound and pervasive impact on every ecosystem on Earth. Archival documents remind us of the extent to which most ecosystems, particularly terrestrial ones, have been depleted of biomass by direct exploitation, or by various forms of pollution, as denounced by Rachel Carson in “Silent Spring”.
-Pauly: baseline shifing: "we transform the world but we don't remember it"
+  + “Silent spring” Rachel Carson (1962) -> serious threats to terrestrial ecosystems arising from our extensive farming practices.
+  
+  + Aujourd'hui, extinction des oiseaux, insectes, ....
+  
+  + “Le monde du silence” Jacques Cousteau (1956): montre la richesse des océans, qui depuis n'a pas cessée d'être exploitée et dégradée.
+
+  + = Man has a profound and pervasive impact on every ecosystem on Earth
 
 
 ##### **Contributions** {.unnumbered}
 
-Today, these ecosystems are so depleted that they have difficulty maintaining their functioning and no longer provide as many contributions to people.
-ES -> NCP -> contribution scenarios and what kind of nature do we want for what kind of future? NFF
+  + Chute de biomasse générale et dégradation des ecosystèmes -> ils ont aujourd'hui du mal à se maintenir et les contributions à l'homme ne cessent de diminuer.
+  
+  + Tellement qu'aujourd'hui les ecosytèmes terrestres sont majoritairement controller en agrosystèmes, optimisés pour la production.
+
+  + *Ces contributions de la nature, quelles soient bénéfiques à la nautre, aux sociétés, ou faisant partie de la culture des population locale, représentent le lien que nous entretenons avec la Nature. Le NFF nous questionne sur quelle relation nous voulons.*
+  
 
 ##### **Identify inherent and environmental effects, and possible action levers** {.unnumbered}
 
-Les ecosystèmes terrestres sont en danger à cause de l'exploitation et polution chimiques (pesticides, herbicides, ...), changement climatique, ... les ecosystèmes marins le sont à causes en plus de l'exploitation directe silencieuse. + populations
-Certains dangers sont à mitiger sur le long terme comme l'effet du changement climatique, d'autre sont moralement impossible comme la population, et on a des leviers que l'on peut changer tout de suite: nos degé d'exploitation, de pollution, ... ie.e. notre relation avec la Nature.
+  + pour se projetter, nous devons comprendre quels sont les drivers des contributions.
+  
+  + il existe des drivers inhérents (gradient latitudinal, ...), des modifications à long terme comme le changement climatique, et des drivers directs et immédiats comme nos activités d'exploitations et pollutions.
+  
+  + Certains dangers sont à mitiger sur le long terme comme l'effet du changement climatique, mais on a aussi des leviers que l'on peut changer tout de suite: nos degrés d'exploitation, de pollution, ... ie.e. notre relation avec la Nature.
+  
+  + Par exemple, les PA strictes semblent être un moyen efficace de préserver une partie des ecosystèmes ou de mitiger l'effet de l'homme, mais nous ne savons pas bien quels effets cela a sur diverses contributions à grande échelle.
 
--Protected areas as a potential mitigation action or solution to
-preserve most of them, but remains not tested at large scale for many contributions simultaneously
-
-- Les aires protégées sont des témoins des écosystèmes avec moins de pressions d'extraction anthropiques. et quelques réserves strictes donnent des résultats interessant, mais la majorité des autres endroits sont soumis aux pressions humaines et fortement dégradés. nous avons donc le devoir moral de se demander à quel point est ce qu'on les a dégradé/quelle est notre dette écologique envers la nature, et au regard de cet effet, quel a été l'intérêt des réserves protégées ?
-
+ + De plus, malgré les résultats interessant des PA par rapport aux zones non protégées, la plupart des ecosystèmes sont soumis à des pressions humaines, et nous pouvons nous demander à quel point des PA protège les ecosystèmes de la pression humaine?
+ 
+ + Comprendre l'effet des réserves sur les contributions permettrait de mieux ajuster les plans de management pour favoriser les relation homme-Nature, et permettrait de savoir ce à quoi on peut s'attendre en terme de contribution.
+ 
+ 
 ##### **Infer and predict community contributions directly through SDM or jSDM** {.unnumbered}
 
-- Thuiller 2024, Poggiato 2023 : "assemble first, predict later"
+ + Pour mieux comprendre l'influence anthropique sur les communeauté et leurs contributions on peut essayer de modéliser directement les contributions à partir du contexte socio-environnemental.
+ 
+ + Species Distribution Model directement appliqués aux métriques des communeautés comme les contributions, comme suggéré par Thuillier 2024 (+ Poggiato 2023)
 
-- interest of jSDM: "JSDMs infer a residual covariance matrix that describes species co-occurrence patterns after accounting for the environment."
+ + On peut même utiliser des jSDM pour mieux prendre en compte les covariations entre les contributions. 
 
--Yet, modelling human and climate impacts on species abundance and biodiversity is common in ecology but modelling patterns of multiple contributions as a function of social-environmental
-factors while considering synergies and trade offs is overdue
-
-- use of Hmsc (bayesian jSDM)
 
 ##### **Conterfactual scenarios** {.unnumbered}
 
--les données temporelles sont difficiles à obtenir et nous ne disposons pas de données quantitatives des écosystèmes il y a plusiqurs deccenies ou siècles. Une façon de comprendre comment ça pouvait être *a minima*, est de regarder ce qu'il se passe dans les ecosystèmes avec le minimum d'impact connu aujourd'hui. Malheureusement, aujourd'hui aucun écosystèmes n'est stritement pristine de l'activité humaine d^fait de notre éternelle volonté d'expansion, mais les écosystèmes avec le moins de pressions connues peuvent représenter un état minimal que nous devons chercher. En comparant ces ecosystèmes avec les autres, on peut faire une estimation de la borne basse de l'impact humain sur les écosystèmes. En symétrie, il est aussi possible de regarder les sites qui sont aujourd'hui protégés par rapport aux sites non protégés afin de voir quels ont été les apports de la mise en réserve par rapport la pression anthropique.
--> une façon de faire ça est le contrefactuel... = space as time.
+ + pour comprendre l'effet des réserves et de l'homme sur les contributions, les données temporelles quantitatives sont généralement manquantes ou difficile à exploiter. 
+ 
+ + Mais en utilisant les jSDM, nous pouvons comparer des sites protégés ou non, pour comprendre l'effet de la protection en tenant compte du contexte socio-environnemental.
+ 
+ + En utilisant la diversité des contextes d'un ecosystème observé aujourd'hui, nous pouvons nous demander quel serait l'état d'un ecosystème donné, s'il avait suivi une autre trajectoire de pression anthropique, par exemple d'un ecosytème protégé. C'est ce qu'on appel un contrefactuel (Caldwell 2024).
+ 
+ + de cette manière, nous pouvons regarder quel a été l'effet de la protection sur un ecosystèmes en prenant en compte ses spécificités locales, et regarder le gains en contributions apporté.
+ 
+ + à l'inverse, nous pouvons observer l'effet de la présence humaine en prenant en compte le contexte envronnemental, pour comprendre quelle a été notre empreinte écologique et quelles contributions en patissent.
+ 
+ + Aujourd'hui, aucun système n'a été épargner de l'activité humaine. Mais en étudiant les contributions dans les ecosystèmes les moins touchés par l'homme, i.e. "pseudo-pristine", on peut estimer l'effet qu'a eu *a minima* l'homme sur les écosystèmes anthropisés.
 
-Contrefactual sans impact humain: on enlève la pression anthropiques des sites actuellement pas protégés. -> quel serait l'état descommuneautés si on était resté au minimum de pression anthropique que l'on connait actuellement ? i.e. quel a été l'impact de l'humain pour l'instant par rapport aux conditions minimum d'impact connues.
+ + Ainsi on peut se demander: *Quels sont les bénéfices des réservess en terme de contributions ? quel serait les niveaux de contribution des communeautés si on était resté au minimum de pression anthropique que l'on connait actuellement ? i.e. quel a été l'impact de l'humain pour l'instant par rapport aux conditions minimum d'impact connues. Est ce que les plans de conservations apportent des bénéfices du même ordre de grandeur que les pertes angendrées par la dégradation anthropique ?*
 
-- Understand the benefits of current MPAs in terms of contributions, and what we can expect from them.
-
-- Not real prediction because we have only correlations between covariates and contributions, and without temporal data, it's difficult to say whether a change in one condition can lead to a certain result, because of the ecological history of the reefs.
 
 ##### **Case study: the tropical reefs** {.unnumbered}
 
-au front des écossytèmes menacé par le changement clim, mais aussi par l'exploitation humaine. Des ecosystèmes qui soutiennent encore des populmations locales (contrairement aux ecosystemes terrestres)
-
+ + Les récifs tropicaux sont de parfaits systèmes biologiques pour ce type d'étude:
+    
+    - menacés par le changement climatique, mais aussi par l'exploitationn humaine, pollution, ...
+    
+    - ce sont des écosystèmes qui soutiennent encore les populations locales, avec 1 milliard de personnes qui en dépendent, pour la pêche, nutriments, mais aussi comme inspiration culturelle...
+    
+    - ecosystèmes cruciaux pour la vie marine de tout le globe.
+ 
 
 
 ::: {.callout-note}
-## Questions
+
 **_What drives the Nature's Contributions to Nature and People?_**
 
 **_What is the cost of anthropogenic pressures on Nature's Contributiosn to Nature and People ?_**
@@ -125,6 +147,18 @@ au front des écossytèmes menacé par le changement clim, mais aussi par l'expl
 
 :::
 
+# Draft Introduction 
+
+In 1962, Rachel Carson denounced in her book Silent Spring the serious threats posed to terrestrial ecosystems by intensive agricultural practices. More than sixty years after her warnings, land-use changes -driven largely by intensive agriculture- have led to the extinction of over 75% of insect biomass (Hallman 2017) and at least a quarter of the abundance of common birds in Europe (Rigal 2023). A few years earlier, Jacques-Yves Cousteau introduced the general public to the richness of marine ecosystems in The Silent World (1956). Since then, these marine environments have faced relentless exploitation that continues to intensify [REF]. These archive documents remind us that within a few decades, nearly all terrestrial and marine ecosystems have undergone dramatic transformations, witnessing the pervasive and massive impact of human activities on the biosphere. Today, human activities have caused a drastic decline in global biomass and a drop in the capacity of ecosystems' ability to maintain their core functions. The contributions they provide to nature and people keep declining [REF Diaz]. On land, only a small proportion of the human population depends on wild ecosystems, as most have been transformed into agrosystems optimised for production. Conversely, marine ecosystems are still substantially harvested with nearly 1 billion people depending on reef ecosystems. However, evidence suggests that few of these fisheries are genuinely sustainable [REF]. The contributions ecosystems provide, whether material, cultural, or regulating, our most direct connection to the natural world. The Nature Futures Framework (NFF) invites us to reflect on our relationship with nature and the futures we wish to build. However, to chart sustainable pathways, it is crucial to understand the drivers of these contributions.
+
+
+It is now clear that terrestrial communities are primarily impacted by habitat transformation and direct exploitation, while marine communities are predominantly affected by direct exploitation and climate change (Jaureguiberry, 2022). The contributions of communities are shaped by a complex interplay of driver: inherent factors, such as the latitudinal gradient of biodiversity; systemic changes, such as climate change; and more immediate and direct pressures, like resource exploitation and pollution. In this context, our exploitation and transformation relationship with nature stands out as the main lever we have for mitigating our ecological impacts in the short term and fostering more sustainable relationships with nature. Protected areas (PAs) have emerged as a key strategy for mitigating human impacts on ecosystems and safeguarding their contributions to nature and people [REF Diaz?]. At a time when many governments are committed to establishing protected areas (PAs) covering 30% of their lands and oceans by 2030, it is legitimate to ask ourselves what benefits PAs can deliver in terms of contributions to nature and people. But also to what extent could these benefits offset the ongoing ecological degradation driven by human activities?
+
+
+To understand the negative or positive anthropogenic effects on community contributions, Species Distribution Models (SDMs) offer a powerful tool. Such models can predict contributions directly, bypassing the need to reconstruct entire species assemblages (Thuiller 2024, Deschamps 2023). A step further, joint SDMs (jSDMs), provide a better understanding of the synergies and trade-offs between multiple contributions by incorporating covariations among response variables while accounting for socio-environmental contexts (Paggiato 2023). Although modeling the impacts of human activities and climate change on species distributions and biodiversity is common practice, predicting patterns of multiple contributions as a function of social-environmental factors while considering synergies and trade-offs remains largely unexplored. These tools make it possible to understand the effects of protection plans and human activities on contributions, taking into account the local context. In addition to inference modelling, counterfactual scenarios allow us to explore the impacts of PAs and anthropogenic pressures by simulating alternative pasts. These scenarios enable researchers to reconstruct what ecosystems might look like in the case where an alternative past took place. For instance, by comparing protected and unprotected ecosystems, we can estimate the contributions of a protected ecosystem in a counterfactual scenario where no conservation measures were implemented. The difference between current contributions and those in this hypothetical scenario quantifies the conservation legacy of PAs—the benefits derived from protection, i.e. the benefits derived from protection. Conversely, for unprotected ecosystems, we can simulate a counterfactual scenario in which they experienced minimal human pressure, akin to that observed in ‘pseudo-pristine’ ecosystems, which are remote and relatively undisturbed. The difference between these simulated contributions and their current state reveals the human footprint on these ecosystems. For any ecosystem altered by human activity, we can then ask: How significant is our ecological footprint, and what steps can we take to minimize it? Alternatively, how substantial is the conservation legacy of protected areas, and how can it be amplified? An underlying question therefore emerges: Is the conservation legacy within protected areas comparable in magnitude to the human footprint left on unprotected sites?
+
+
+Tropical reefs underline the urgency and importance of these questions. Although they account for a small proportion of the world's marine surface area, these ecosystems are vital to almost a billion people through their fishing, nutrient supply and cultural heritage. Hosting about a third of marine biodiversity, tropical reefs are among the last ecosystems to provide direct support to local populations.However, their future is uncertain, threatened by overexploitation, pollution, and the accelerating effects of climate change. Understanding the impacts of marine protected areas (MPAs) on reef contributions - and considering scenarios of reduced anthropogenic pressure - could provide crucial guidance for conservation efforts and help foster a more harmonious relationship between people and nature.Using the case of fish community contributions in tropical reefs, we wondered: (i) What social-environmental factors drive fish contributions? (ii) What are the benefits of MPAs in terms of contributions? (iii) Are the benefits of MPAs sufficient to counterbalance the anthropogenic impact on contributions? To answer these questions, we took advantage of fish abundance data collected through visual census under the Reef Life Survey protocol across 2,480 reefs in tropical and subtropical oceans. We estimated 22 forms of contribution from fish communities and analyzed their relationships with 40 socio-environmental variables using a Bayesian hierarchical model. This approach allowed us to quantify the effects of protection and human activity on fish community contributions.
 
 
 # Results
@@ -243,7 +277,7 @@ These aren't really predictive scenarios, because we don't know the “activatio
 
 **&rarr; Observations:**
 
-  +   Worldwide, a high level of protection in unprotected sites could bring an average increase of 3.9% in contributions, with significant variability between contributions (from -3.5% for the biomass turnover to +24.7% for the herbivore biomass) and very high variability between sites (@fig-conterfactuals). Overall, fish biomass and species richness would benefit the most from such protection, with an average gain of 14% in available biomass and 8% in actinopterygii richness. We also note a very strong gain of 20% in the presence of IUCN species, but with considerable variability, suggesting a strong contextual effect. The same contextual variability is found for piscivorous fish.
+  +   Worldwide, a high level of protection in unprotected sites could bring an average increase of 3.9% in contributions, with significant variability between contributions (from -3.5% for the biomass turnover to +24.7% for the herbivore biomass) and very high variability between sites (@fig-counterfactuals). Overall, fish biomass and species richness would benefit the most from such protection, with an average gain of 14% in available biomass and 8% in actinopterygii richness. We also note a very strong gain of 20% in the presence of IUCN species, but with considerable variability, suggesting a strong contextual effect. The same contextual variability is found for piscivorous fish.
   
   
   
@@ -258,6 +292,34 @@ These aren't really predictive scenarios, because we don't know the “activatio
   + Effet négatif des réserves sur l'endémisme car l'endémisme est surtout dans les îles, et les îles ne sont pas bien protégées: D'agata 2016
   
   
+  
+::: {layout-ncol=2 layout-heights="[1fr, 2fr]" #fig-counterfactuals}
+
+![Counterfactuals procedure.](Current_reefs_2.png){#fig-workflow width=70%}
+
+![Median changes of human footprint and conservation legacy.](img/loliplot_human_footprint_conserv_legacy_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-loliplot}
+
+![Human footprint.](img/Barycenters_movement_Human_footprint_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+![Conservation legacy.](img/Barycenters_movement_Conservation_legacy_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+
+**Percent changes in contributions according to different conterfactual scenarios.** 
+
+:::
+
+
+<!-- ::: {#fig-panel layout-ncol=2} -->
+
+<!-- ::: {layout-column=4} -->
+<!-- ![Counterfactuals procedure.](Current_reefs_2.png){#fig-workflow} -->
+<!-- ::: -->
+
+<!-- ::: {layout-column=6} -->
+<!-- ![Median changes of human footprint and conservation legacy.](img/loliplot_human_footprint_conserv_legacy_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-loliplot} -->
+<!-- ::: -->
+
+<!-- ::: -->
+
 
 # Discussion
 
@@ -275,6 +337,9 @@ Si estimates à 0 : les covariables n'ont pas d'effet sur cette contribution OU 
 ## Review Cyril
 "Another question that immediately came to mind was that with such a rich spatial dataset, why did the authors not examine whether there were any geographic trends in the importance of variables. Were climate factors more important in some regions than others or was it consistent globally?"
 
+- problème de la définition de la baseline... -> Pauly: baseline shifing: "we transform the world but we don't remember it"
+
+
 -même si les réserves n'augmentent pas beaucoup les contributions, si ça les maintien dans le temps c''est déjà pas mal...
 
 -Peu d'effet des réserves peut être parce que ce sont surtout des réserves papiers, comme en Europe: Aminian-Biquet 2024
@@ -291,6 +356,8 @@ Si estimates à 0 : les covariables n'ont pas d'effet sur cette contribution OU 
 
 -En milieu terrestre, on a tout cassé, les relation matériel entre anture "sauvage" et homme sont quasi inexistante. En marin, les récifs semblent assez résilients (pour le moment ?), il reste une large population qui en dépend, on peut peut être encore changer quelque chose ?
 
+
+- Not real prediction because we have only correlations between covariates and contributions, and without temporal data, it's difficult to say whether a change in one condition can lead to a certain result, because of the ecological history of the reefs.
 
 :::
 -->
@@ -347,6 +414,8 @@ To avoid over-estimating fish abundance due to temporary fish aggregations or la
 All Elasmobranch occurences are kept for the **surveys** meeting all the above conditions (Elamsobranch abundance isn't used)
 
 
+##### __Protection status data__ {.unnumbered}
+We classified sites according to the protection status (No take, restricted measures, out of MPA), and the compliance of populations to the management plan. Data providers assigned each MPA site from a high to a low compliance category, based on their expert opinion surveying those sites. No take MPA, associated with a high or medium compliance were considered under **full protection**, no take MPA wsith low compliance and all other protection status were considered under **restricted protection**.
 
 
 
@@ -423,6 +492,8 @@ Cf Cyril...
 - *"I also would like more detail about why some of the covariates were specifically selected or how they were calculated, perhaps in the supplemental materials."*
 
 - *"the link between reef fish biomass and structural complexity is well established in the literature, and I was surprised not to see complexity as a covariate in the models. It did not seem that the Reef Life Surveys collected any rugosity or maximum height data, but did the authors consider any remotely-sensed metrics of complexity like the bathymetry products in the Allen Coral Atlas? "*
+
+- minimum gravity were found ..., minimum fishing pressure is..., maximum neartt ...
 
 :::
 
@@ -632,42 +703,22 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 ::: {#fig-percent_change layout-ncol=2}
 
-![a) Pristine conditions (total protection and no human pressure).](img/Percent_changes_distrib_Human_footprint_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Human footprint (compared with no humans, total protection).](img/Percent_changes_LOG_scale_Human_footprint_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 
-![b) Total protection (High protection_status MPA and low fishing pressure).](img/Percent_changes_distrib_Total_protection-MPA&vesselstest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![b) Conservation legacy (Compared with no protection).](img/Percent_changes_distrib_Conservation_legacy_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![c) No human pressure (low gravity and high travel time).](img/Percent_changes_distrib_No_human-gravity&neartttest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![c) Human presence footprint (compared with low gravity and high travel time).](img/Percent_changes_LOG_scale_Population_footprint-gravity&neartt_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![d) High protection_status MPA only.](img/Percent_changes_distrib_full_protection_potential_gains_of_out_sites_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![d)full MPA potential gains (on current unprotected reefs.)](img/Percent_changes_distrib_full_protection_potential_gains_of_out_sites_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![e)  Restricted MPA only.](img/Percent_changes_distrib_restricted_MPA_potential_gains_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![f)  Low fishing pressure only.](img/Percent_changes_distrib_Low_fishing_pressuretest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-**Percent changes in contributions according to different conterfactual scenarios.** *Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to pot the change in percent of the contributions.*
-
-:::
+![e) Restricted MPA potential gains (on current unprotected reefs).](img/Percent_changes_distrib_restricted_MPA_potential_gains_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
 
-::: {#fig-change layout-ncol=2}
-
-![a) Pristine conditions (total protection and no human pressure).](img/Changes_distrib_Pristine-lowgravity&neartt&MPA&vesselstest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-
-![b) Total protection (full MPA and low fishing pressure).](img/Changes_distrib_Total_protection-MPA&vesselstest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![c) No human pressure (low gravity and high travel time).](img/Changes_distrib_No_human-gravity&neartttest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![d) full MPA only.](img/Changes_distrib_full_protection_potential_gains_of_out_sites_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![e)  Restricted MPA only.](img/Changes_distrib_restricted_MPA__potential_gains_test_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![f)  Low fishing pressure only.](img/Changes_distrib_Low_fishing_pressuretest_mpa2_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-**Potential changes in contributions according to different conterfactual scenarios.** *Quantitative difference of contributions at the site level. We remind that all contributions are scaled with a standard error of 1*
+**Percent changes in contributions according to different conterfactual scenarios.** *Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to plot the change in percent of the contributions.*
 
 :::
+
 
 
 ### Sensibility analysis {.unnumbered}
@@ -728,33 +779,33 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 <!-- to generate table: https://www.tablesgenerator.com/markdown_tables -->
 
-| **Index** 	| **Description** 	| **Data sources** 	| **Rationale** 	|
-|:---:	|:---:	|:---:	|:---:	|
-| **_species_** 	| original species name 	| provided species list 	|  	|
-| **_fishbase_name_** 	| accepted latin name according to fishbase 	| rfishbase 	|  	|
-| **_spec_code_** 	| unique species code of fishbase 	| rfishbase 	|  	|
-| **_worms_id_** 	| unique species code of WoRMS 	| rfishbase 	|  	|
-| **_phylum - class - order - family_** 	| Accepted taxonomy 	| taxize 	|  	|
-| **_Length_** 	| Maximum length of the species 	| rfishbase 	| Check the observed sizes. Build the trophic metaweb. 	|
-| **_Troph (TL)_** 	| trophic level from fishbase 	| rfishbase 	| To check the guild inference 	|
-| **_DemersPelag_** 	| watercolumn position (reef-associated, benthopelagic, pelagic-oceanic, bathypelagic, demersal, pelagic, pelagic-neritic, bathydemersal) 	| rfishbase 	| co-occurence probability in the water column -&gt; build the metaweb 	|
-| **_a_** 	| weight-lenght relationship: W=a.L^b 	| rfishbase 	| Assess weight from the size 	|
-| **_b_** 	| weight-lenght relationship: W=a.L^b 	| rfishbase 	| Assess weight from the size 	|
-| **_K_** 	| growth constant 	| rfishbase 	| Assess individual biomass production 	|
-| **_TempPrefMean_** 	| Mean optimal temperature of the species 	| rfishbase 	|  	|
-| **_Schooling_** 	| schooling behaviour (0/1) 	| rfishbase 	|  	|
-| **_Vulnerability_** 	| Vulnerability to fishing 	| rfishbase 	|  	|
-| **_PriceCateg_** 	| Economic importance 	| rfishbase 	| highly depending on occidental/large fisheries practices 	|
-| **_Importance_** 	| interest for human consumption: highly commercial; commercial; minor commercial; subsistence fisheries; of potential interest; of no interest. 	| rfishbase 	| highly depending on occidental practices 	|
-| **_UsedforAquaculture_** 	| Interest in aquaculture 	| rfishbase 	|  	|
-| **_Aquarium_** 	| Interest in aquarium trade 	| rfishbase 	|  	|
-| **_IUCN_category_** 	| Conservation status assessed by IUCN 	| rredlist 	| Overall vulnerability of a species to the future. 	|
-| **_IUCN_inferred_Loiseau23_** 	| IUCN status resumed in 3 categories (Threatened, Non Threatened, No status), from redlist data, completed by multi-modelling approach.  	| Loiseau et al . 2023 	| More complete data on overall vulnerability of a species to the future. 	|
-| **_trophic_guild_** 	| trophic guild ("macroinvertivore" ,                  NA ,                          "planktivore"                        "Herbivores Microvores Detritivores", "microinvertivore"                   "corallivore" , "piscivore"                          "crustacivore", "sessile invertivores" ) inferred in tropical regions. 	| Parravicini et al. 2021 	| major trophic guild in tropical species. To build a trophic metaweb. 	|
-| **_Morphometry (body_depth_ratio, …)_** 	| morphometric measures (mouth and body): each measure done at the individual level, are divided by the total length of the individual, to obtain a mean morphometric trait at the species level. 	| Friedman et al. 2020 	|  	|
-| **_bathymetric range: depth_max / depth_min_** 	| range of bathymetry where the species live. These ranges are log10-transformed to avoid rightskewed distribution in inference model. 	| Duhamet et al. 2023 https://doi.org/10.6084/m9.figshare.20403111 	| Define the geometric ranges 	|
-| **_CilmateVulnearability (ClimVuln_SSP585, ClimVuln_SSP126)_** 	| Climate vulnerability estimated in SSP585 and SSP126 scenarios 	| Boyce 2022 https://doi.org/10.5061/dryad.7wm37pvwr 	| Sensibility of species to climate change 	|
-| **_Geographic range: geographic_range_Albouy19_** 	| intersection between GBIF occurrence data and spatial grid of 0.01 degree Geographic ranges defined as convex of the OBIS occurrences, refined by the watercolumn position and bathymetric ranges 	| Mouquet et al. 2023   Albouy 2019, Duhamet 2023 	|      Geographic extent of species , i.e 1-endemism. 	|
+<!-- | **Index** 	| **Description** 	| **Data sources** 	| **Rationale** 	| -->
+<!-- |:---:	|:---:	|:---:	|:---:	| -->
+<!-- | **_species_** 	| original species name 	| provided species list 	|  	| -->
+<!-- | **_fishbase_name_** 	| accepted latin name according to fishbase 	| rfishbase 	|  	| -->
+<!-- | **_spec_code_** 	| unique species code of fishbase 	| rfishbase 	|  	| -->
+<!-- | **_worms_id_** 	| unique species code of WoRMS 	| rfishbase 	|  	| -->
+<!-- | **_phylum - class - order - family_** 	| Accepted taxonomy 	| taxize 	|  	| -->
+<!-- | **_Length_** 	| Maximum length of the species 	| rfishbase 	| Check the observed sizes. Build the trophic metaweb. 	| -->
+<!-- | **_Troph (TL)_** 	| trophic level from fishbase 	| rfishbase 	| To check the guild inference 	| -->
+<!-- | **_DemersPelag_** 	| watercolumn position (reef-associated, benthopelagic, pelagic-oceanic, bathypelagic, demersal, pelagic, pelagic-neritic, bathydemersal) 	| rfishbase 	| co-occurence probability in the water column -&gt; build the metaweb 	| -->
+<!-- | **_a_** 	| weight-lenght relationship: W=a.L^b 	| rfishbase 	| Assess weight from the size 	| -->
+<!-- | **_b_** 	| weight-lenght relationship: W=a.L^b 	| rfishbase 	| Assess weight from the size 	| -->
+<!-- | **_K_** 	| growth constant 	| rfishbase 	| Assess individual biomass production 	| -->
+<!-- | **_TempPrefMean_** 	| Mean optimal temperature of the species 	| rfishbase 	|  	| -->
+<!-- | **_Schooling_** 	| schooling behaviour (0/1) 	| rfishbase 	|  	| -->
+<!-- | **_Vulnerability_** 	| Vulnerability to fishing 	| rfishbase 	|  	| -->
+<!-- | **_PriceCateg_** 	| Economic importance 	| rfishbase 	| highly depending on occidental/large fisheries practices 	| -->
+<!-- | **_Importance_** 	| interest for human consumption: highly commercial; commercial; minor commercial; subsistence fisheries; of potential interest; of no interest. 	| rfishbase 	| highly depending on occidental practices 	| -->
+<!-- | **_UsedforAquaculture_** 	| Interest in aquaculture 	| rfishbase 	|  	| -->
+<!-- | **_Aquarium_** 	| Interest in aquarium trade 	| rfishbase 	|  	| -->
+<!-- | **_IUCN_category_** 	| Conservation status assessed by IUCN 	| rredlist 	| Overall vulnerability of a species to the future. 	| -->
+<!-- | **_IUCN_inferred_Loiseau23_** 	| IUCN status resumed in 3 categories (Threatened, Non Threatened, No status), from redlist data, completed by multi-modelling approach.  	| Loiseau et al . 2023 	| More complete data on overall vulnerability of a species to the future. 	| -->
+<!-- | **_trophic_guild_** 	| trophic guild ("macroinvertivore" ,                  NA ,                          "planktivore"                        "Herbivores Microvores Detritivores", "microinvertivore"                   "corallivore" , "piscivore"                          "crustacivore", "sessile invertivores" ) inferred in tropical regions. 	| Parravicini et al. 2021 	| major trophic guild in tropical species. To build a trophic metaweb. 	| -->
+<!-- | **_Morphometry (body_depth_ratio, …)_** 	| morphometric measures (mouth and body): each measure done at the individual level, are divided by the total length of the individual, to obtain a mean morphometric trait at the species level. 	| Friedman et al. 2020 	|  	| -->
+<!-- | **_bathymetric range: depth_max / depth_min_** 	| range of bathymetry where the species live. These ranges are log10-transformed to avoid rightskewed distribution in inference model. 	| Duhamet et al. 2023 https://doi.org/10.6084/m9.figshare.20403111 	| Define the geometric ranges 	| -->
+<!-- | **_CilmateVulnearability (ClimVuln_SSP585, ClimVuln_SSP126)_** 	| Climate vulnerability estimated in SSP585 and SSP126 scenarios 	| Boyce 2022 https://doi.org/10.5061/dryad.7wm37pvwr 	| Sensibility of species to climate change 	| -->
+<!-- | **_Geographic range: geographic_range_Albouy19_** 	| intersection between GBIF occurrence data and spatial grid of 0.01 degree Geographic ranges defined as convex of the OBIS occurrences, refined by the watercolumn position and bathymetric ranges 	| Mouquet et al. 2023   Albouy 2019, Duhamet 2023 	|      Geographic extent of species , i.e 1-endemism. 	| -->
 
 
 ##### __Targeted families__ {.unnumbered}
@@ -784,90 +835,90 @@ This results in this decision table:
 ::: {.callout-note}
 NB: Targeted families by fisheries
 
-| family 	| **mean_size_indiv_in_survey** 	| **mean_relative_biom_in_survey** 	| **nb_surveys_observed** 	| **max_importance_of_family** 	| **mean_importance_of_family** 	| **max_MaxLength_of_family** 	| **min_MaxLength_of_family** 	| **nb_sp_in_family** 	| **target** 	|
-|---	|---	|---	|---	|---	|---	|---	|---	|---	|---	|
-| **Acanthuridae** 	| 17.5 	| 0.23 	| 4864 	| commercial 	| commercial 	| 100 	| 16 	| 67 	| targeted 	|
-| **Ambassidae** 	| 5 	| 0.013 	| 1 	| NA 	| NA 	| 7 	| 7 	| 1 	| untargeted 	|
-| **Aplodactylidae** 	| 27.6 	| 0.037 	| 58 	| NA 	| NA 	| 45 	| 45 	| 2 	| untargeted 	|
-| **Arripidae** 	| 45.4 	| 0.22 	| 4 	| NA 	| NA 	| 85 	| 85 	| 1 	| untargeted 	|
-| **Atherinidae** 	| 6.28 	| 0.14 	| 25 	| subsistence fisheries 	| subsistence fisheries 	| 20 	| 10 	| 2 	| targeted 	|
-| **Aulopidae** 	| 31.8 	| 0.0035 	| 4 	| NA 	| NA 	| 60 	| 60 	| 1 	| untargeted 	|
-| **Aulostomidae** 	| 39.7 	| 0.024 	| 800 	| minor commercial 	| minor commercial 	| 100 	| 75 	| 3 	| targeted>20cm 	|
-| **Balistidae** 	| 18.2 	| 0.048 	| 2391 	| commercial 	| minor commercial 	| 100 	| 22 	| 27 	| targeted>20cm 	|
-| **Batrachoididae** 	| 15 	| 0.034 	| 1 	| minor commercial 	| minor commercial 	| 40 	| 40 	| 1 	| targeted>20cm 	|
-| **Belonidae** 	| 56.1 	| 0.073 	| 31 	| commercial 	| commercial 	| 150 	| 100 	| 4 	| targeted 	|
-| **Bothidae** 	| 20.7 	| 0.0099 	| 28 	| commercial 	| commercial 	| 51 	| 23.5 	| 5 	| targeted 	|
-| **Caesionidae** 	| 17.1 	| 0.21 	| 1705 	| commercial 	| minor commercial 	| 60 	| 14 	| 18 	| targeted>20cm 	|
-| **Callanthiidae** 	| 7.5 	| 0.00025 	| 1 	| NA 	| NA 	| 49 	| 49 	| 1 	| untargeted 	|
-| **Caracanthidae** 	| 5 	| 0.0016 	| 8 	| NA 	| NA 	| 5 	| 2.9 	| 2 	| untargeted 	|
-| **Carangidae** 	| 35.1 	| 0.10 	| 1581 	| highly commercial 	| commercial 	| 250 	| 22 	| 53 	| targeted 	|
-| **Centriscidae** 	| 11.0 	| 0.010 	| 9 	| of no interest 	| of no interest 	| 15 	| 15 	| 1 	| untargeted 	|
-| **Centropomidae** 	| 50 	| 0.048 	| 1 	| commercial 	| commercial 	| 140 	| 140 	| 1 	| targeted 	|
-| **Chaetodontidae** 	| 10.7 	| 0.022 	| 5337 	| minor commercial 	| minor commercial 	| 30 	| 10 	| 93 	| targeted>20cm 	|
-| **Chanidae** 	| 60.8 	| 0.18 	| 10 	| highly commercial 	| highly commercial 	| 180 	| 180 	| 1 	| targeted 	|
-| **Cheilodactylidae** 	| 26.2 	| 0.039 	| 204 	| commercial 	| commercial 	| 100 	| 20 	| 8 	| targeted 	|
-| **Chironemidae** 	| 14.3 	| 0.0049	| 4 	| NA 	| NA 	| 40 	| 40 	| 1 	| untargeted 	|
-| **Cirrhitidae** 	| 8.69 	| 0.0042 	| 2084 	| commercial 	| of no interest 	| 60 	| 7 	| 20 	| untargeted 	|
-| **Clupeidae** 	| 9.28 	| 0.10 	| 14 	| highly commercial 	| highly commercial 	| 41 	| 10.5 	| 4 	| targeted 	|
-| **Dinolestidae** 	| 20 	| 0.00035 	| 1 	| NA 	| NA 	| 84 	| 84 	| 1 	| untargeted 	|
-| **Diodontidae** 	| 25.0 	| 0.046 	| 303 	| minor commercial 	| of no interest 	| 91 	| 30 	| 8 	| untargeted 	|
-| **Echeneidae** 	| 24.1 	| 0.0068 	| 122 	| commercial 	| commercial 	| 110 	| 75 	| 3 	| targeted 	|
-| **Elopidae** 	| 35 	| 0.0074 	| 1 	| minor commercial 	| minor commercial 	| 91 	| 91 	| 1 	| targeted>20cm 	|
-| **Enoplosidae** 	| 12.7 	| 0.00097 	| 9 	| minor commercial 	| minor commercial 	| 50 	| 50 	| 1 	| targeted>20cm 	|
-| **Ephippidae** 	| 35.7 	| 0.067 	| 254 	| minor commercial 	| minor commercial 	| 91 	| 40 	| 8 	| targeted>20cm 	|
-| **Fistulariidae** 	| 58.0 	| 0.029 	| 286 	| minor commercial 	| minor commercial 	| 200 	| 160 	| 3 	| targeted>20cm 	|
-| **Gerreidae** 	| 12.6	| 0.039 	| 40 	| minor commercial 	| minor commercial 	| 41 	| 20 	| 5 	| targeted>20cm 	|
-| **Glaucosomatidae** 	| 27.2 	| 0.035 	| 35 	| commercial 	| commercial 	| 122 	| 32 	| 2 	| targeted 	|
-| **Haemulidae** 	| 29.9 	| 0.092 	| 1710 	| commercial 	| minor commercial 	| 100 	| 13 	| 46 	| targeted>20cm 	|
-| **Hemiramphidae** 	| 18.5 	| 0.05 	| 4 	| commercial 	| commercial 	| 45 	| 34.5999984741211 	| 4 	| targeted 	|
-| **Holocentridae** 	| 18.3 	| 0.036 	| 2389 	| commercial 	| minor commercial 	| 61 	| 15.3999996185303 	| 36 	| targeted>20cm 	|
-| **Inermiidae** 	| 13.75 	| 0.077	| 5 	| minor commercial 	| minor commercial 	| 23 	| 23 	| 1 	| targeted>20cm 	|
-| **Kuhliidae** 	| 13.8 	| 0.019 	| 3 	| minor commercial 	| minor commercial 	| 40 	| 40 	| 1 	| targeted>20cm 	|
-| **Kyphosidae** 	| 26.5 	| 0.14 	| 897 	| commercial 	| commercial 	| 80 	| 11.2200002670288 	| 23 	| targeted 	|
-| **Labridae** 	| 11.1 	| 0.09 	| 5983 	| commercial 	| minor commercial 	| 229 	| 4.69999980926514 	| 233 	| targeted>20cm 	|
-| **Latidae** 	| 26.1 	| 0.06 	| 137 	| commercial 	| commercial 	| 47 	| 47 	| 1 	| targeted 	|
-| **Lethrinidae** 	| 23.7 	| 0.05 	| 2085 	| highly commercial 	| minor commercial 	| 100 	| 20 	| 26 	| targeted>20cm 	|
-| **Lutjanidae** 	| 25.8 	| 0.085 	| 3449 	| highly commercial 	| commercial 	| 170 	| 25 	| 51 	| targeted 	|
-| **Malacanthidae** 	| 22.9 	| 0.0088 	| 84 	| commercial 	| commercial 	| 102 	| 15.5 	| 6 	| targeted 	|
-| **Megalopidae** 	| 137.5 	| 0.63 	| 1 	| commercial 	| commercial 	| 250 	| 250 	| 1 	| targeted 	|
-| **Microdesmidae** 	| 6.9 	| 0.0010 	| 821 	| of no interest 	| of no interest 	| 15 	| 3.5 	| 12 	| untargeted 	|
-| **Molidae** 	| 162.5 	| 0.84 	| 1 	| minor commercial 	| minor commercial 	| 333 	| 333 	| 1 	| targeted>20cm 	|
-| **Monacanthidae** 	| 10.9 	| 0.0048	| 1460 	| minor commercial 	| minor commercial 	| 110 	| 6.19999980926514 	| 28 	| targeted>20cm 	|
-| **Monocentridae** 	| 15 	| 0.0012	| 1 	| of no interest 	| of no interest 	| 22 	| 22 	| 1 	| untargeted 	|
-| **Monodactylidae** 	| 11.70 	| 0.16 	| 33 	| minor commercial 	| minor commercial 	| 27 	| 20 	| 3 	| targeted>20cm 	|
-| **Moronidae** 	| 16.2	| 0.033 	| 2 	| commercial 	| commercial 	| 103 	| 103 	| 1 	| targeted 	|
-| **Mugilidae** 	| 28.5 	| 0.17	| 28 	| highly commercial 	| commercial 	| 100 	| 40 	| 7 	| targeted 	|
-| **Mullidae** 	| 16.5	| 0.025 	| 3268 	| commercial 	| commercial 	| 60 	| 16 	| 27 	| targeted 	|
-| **Nemipteridae** 	| 15.5 	| 0.023 	| 2383 	| commercial 	| subsistence fisheries 	| 38 	| 20 	| 21 	| targeted 	|
-| **Odacidae** 	| 16.09 	| 0.0087 	| 8 	| of no interest 	| of no interest 	| 35 	| 24 	| 2 	| untargeted 	|
-| **Ogcocephalidae** 	| 20 	| 0.00089 	| 1 	| of no interest 	| of no interest 	| 20.2999992370605 	| 20.2999992370605 	| 1 	| untargeted 	|
-| **Oplegnathidae** 	| 40 	| 0.024 	| 11 	| NA 	| NA 	| 66 	| 66 	| 1 	| untargeted 	|
-| **Ostraciidae** 	| 11.9 	| 0.0040	| 711 	| commercial 	| of no interest 	| 55 	| 12 	| 14 	| untargeted 	|
-| **Pempheridae** 	| 11.9 	| 0.01	| 467 	| minor commercial 	| minor commercial 	| 28 	| 10 	| 13 	| targeted>20cm 	|
-| **Percophidae** 	| 5 	| 3.8e-05 	| 1 	| NA 	| NA 	| 8 	| 8 	| 1 	| untargeted 	|
-| **Pinguipedidae** 	| 11.3 	| 0.0021 	| 1049 	| minor commercial 	| minor commercial 	| 29 	| 7.40999984741211 	| 16 	| targeted>20cm 	|
-| **Platycephalidae** 	| 39.8 	| 0.04 	| 9 	| commercial 	| commercial 	| 120 	| 50 	| 2 	| targeted 	|
-| **Plotosidae** 	| 21.8 	| 0.01 	| 101 	| commercial 	| commercial 	| 111.099998474121 	| 26.7999992370605 	| 5 	| targeted 	|
-| **Pomacanthidae** 	| 14.6 	| 0.027 	| 4231 	| commercial 	| minor commercial 	| 60 	| 7 	| 44 	| targeted>20cm 	|
-| **Pomacentridae** 	| 7.4 	| 0.13 	| 5950 	| highly commercial 	| of no interest 	| 31 	| 4 	| 245 	| untargeted 	|
-| **Pomatomidae** 	| 35 	| 0.01 	| 1 	| highly commercial 	| highly commercial 	| 130 	| 130 	| 1 	| targeted 	|
-| **Priacanthidae** 	| 22.2 	| 0.022 	| 154 	| minor commercial 	| minor commercial 	| 50.7000007629395 	| 36.0999984741211 	| 3 	| targeted>20cm 	|
-| **Rachycentridae** 	| 75 	| 0.019 	| 1 	| minor commercial 	| minor commercial 	| 200 	| 200 	| 1 	| targeted>20cm 	|
-| **Scaridae** 	| 21.9	| 0.17	| 5210 	| commercial 	| commercial 	| 130 	| 13 	| 75 	| targeted 	|
-| **Sciaenidae** 	| 14.8 	| 0.02 	| 91 	| minor commercial 	| minor commercial 	| 30 	| 23 	| 8 	| targeted>20cm 	|
-| **Scombridae** 	| 56.1 	| 0.098 	| 121 	| highly commercial 	| minor commercial 	| 250 	| 36 	| 17 	| targeted>20cm 	|
-| **Scorpaenidae** 	| 16.6 	| 0.0062 	| 275 	| commercial 	| commercial 	| 45.7000007629395 	| 9.5 	| 30 	| targeted 	|
-| **Serranidae** 	| 23.5 	| 0.08 	| 4860 	| highly commercial 	| minor commercial 	| 270 	| 3.98000001907349 	| 141 	| targeted>20cm 	|
-| **Siganidae** 	| 20.3	| 0.040 	| 1910 	| commercial 	| commercial 	| 53 	| 25 	| 20 	| targeted 	|
-| **Sillaginidae** 	| 28.7	| 0.010	| 8 	| highly commercial 	| highly commercial 	| 51 	| 30 	| 2 	| targeted 	|
-| **Sparidae** 	| 19.8 	| 0.14 	| 306 	| highly commercial 	| commercial 	| 130 	| 28 	| 27 	| targeted 	|
-| **Sphyraenidae** 	| 41.7	| 0.14 	| 175 	| commercial 	| commercial 	| 200 	| 55 	| 9 	| targeted 	|
-| **Synanceiidae** 	| 22.9 	| 0.056 	| 4 	| minor commercial 	| minor commercial 	| 60 	| 25 	| 4 	| targeted>20cm 	|
-| **Synodontidae** 	| 13.1 	| 0.0038 	| 984 	| commercial 	| commercial 	| 46 	| 16.5 	| 15 	| targeted 	|
-| **Terapontidae** 	| 12.2 	| 0.016 	| 4 	| minor commercial 	| minor commercial 	| 30 	| 15 	| 2 	| targeted>20cm 	|
-| **Tetraodontidae** 	| 10.6	| 0.013 	| 2471 	| commercial 	| of no interest 	| 120 	| 9 	| 30 	| untargeted 	|
-| **Zanclidae** 	| 17.3 	| 0.014 	| 1864 	| subsistence fisheries 	| subsistence fisheries 	| 23 	| 23 	| 1 	| targeted 	|
-:::
+<!-- | family 	| **mean_size_indiv_in_survey** 	| **mean_relative_biom_in_survey** 	| **nb_surveys_observed** 	| **max_importance_of_family** 	| **mean_importance_of_family** 	| **max_MaxLength_of_family** 	| **min_MaxLength_of_family** 	| **nb_sp_in_family** 	| **target** 	| -->
+<!-- |---	|---	|---	|---	|---	|---	|---	|---	|---	|---	| -->
+<!-- | **Acanthuridae** 	| 17.5 	| 0.23 	| 4864 	| commercial 	| commercial 	| 100 	| 16 	| 67 	| targeted 	| -->
+<!-- | **Ambassidae** 	| 5 	| 0.013 	| 1 	| NA 	| NA 	| 7 	| 7 	| 1 	| untargeted 	| -->
+<!-- | **Aplodactylidae** 	| 27.6 	| 0.037 	| 58 	| NA 	| NA 	| 45 	| 45 	| 2 	| untargeted 	| -->
+<!-- | **Arripidae** 	| 45.4 	| 0.22 	| 4 	| NA 	| NA 	| 85 	| 85 	| 1 	| untargeted 	| -->
+<!-- | **Atherinidae** 	| 6.28 	| 0.14 	| 25 	| subsistence fisheries 	| subsistence fisheries 	| 20 	| 10 	| 2 	| targeted 	| -->
+<!-- | **Aulopidae** 	| 31.8 	| 0.0035 	| 4 	| NA 	| NA 	| 60 	| 60 	| 1 	| untargeted 	| -->
+<!-- | **Aulostomidae** 	| 39.7 	| 0.024 	| 800 	| minor commercial 	| minor commercial 	| 100 	| 75 	| 3 	| targeted>20cm 	| -->
+<!-- | **Balistidae** 	| 18.2 	| 0.048 	| 2391 	| commercial 	| minor commercial 	| 100 	| 22 	| 27 	| targeted>20cm 	| -->
+<!-- | **Batrachoididae** 	| 15 	| 0.034 	| 1 	| minor commercial 	| minor commercial 	| 40 	| 40 	| 1 	| targeted>20cm 	| -->
+<!-- | **Belonidae** 	| 56.1 	| 0.073 	| 31 	| commercial 	| commercial 	| 150 	| 100 	| 4 	| targeted 	| -->
+<!-- | **Bothidae** 	| 20.7 	| 0.0099 	| 28 	| commercial 	| commercial 	| 51 	| 23.5 	| 5 	| targeted 	| -->
+<!-- | **Caesionidae** 	| 17.1 	| 0.21 	| 1705 	| commercial 	| minor commercial 	| 60 	| 14 	| 18 	| targeted>20cm 	| -->
+<!-- | **Callanthiidae** 	| 7.5 	| 0.00025 	| 1 	| NA 	| NA 	| 49 	| 49 	| 1 	| untargeted 	| -->
+<!-- | **Caracanthidae** 	| 5 	| 0.0016 	| 8 	| NA 	| NA 	| 5 	| 2.9 	| 2 	| untargeted 	| -->
+<!-- | **Carangidae** 	| 35.1 	| 0.10 	| 1581 	| highly commercial 	| commercial 	| 250 	| 22 	| 53 	| targeted 	| -->
+<!-- | **Centriscidae** 	| 11.0 	| 0.010 	| 9 	| of no interest 	| of no interest 	| 15 	| 15 	| 1 	| untargeted 	| -->
+<!-- | **Centropomidae** 	| 50 	| 0.048 	| 1 	| commercial 	| commercial 	| 140 	| 140 	| 1 	| targeted 	| -->
+<!-- | **Chaetodontidae** 	| 10.7 	| 0.022 	| 5337 	| minor commercial 	| minor commercial 	| 30 	| 10 	| 93 	| targeted>20cm 	| -->
+<!-- | **Chanidae** 	| 60.8 	| 0.18 	| 10 	| highly commercial 	| highly commercial 	| 180 	| 180 	| 1 	| targeted 	| -->
+<!-- | **Cheilodactylidae** 	| 26.2 	| 0.039 	| 204 	| commercial 	| commercial 	| 100 	| 20 	| 8 	| targeted 	| -->
+<!-- | **Chironemidae** 	| 14.3 	| 0.0049	| 4 	| NA 	| NA 	| 40 	| 40 	| 1 	| untargeted 	| -->
+<!-- | **Cirrhitidae** 	| 8.69 	| 0.0042 	| 2084 	| commercial 	| of no interest 	| 60 	| 7 	| 20 	| untargeted 	| -->
+<!-- | **Clupeidae** 	| 9.28 	| 0.10 	| 14 	| highly commercial 	| highly commercial 	| 41 	| 10.5 	| 4 	| targeted 	| -->
+<!-- | **Dinolestidae** 	| 20 	| 0.00035 	| 1 	| NA 	| NA 	| 84 	| 84 	| 1 	| untargeted 	| -->
+<!-- | **Diodontidae** 	| 25.0 	| 0.046 	| 303 	| minor commercial 	| of no interest 	| 91 	| 30 	| 8 	| untargeted 	| -->
+<!-- | **Echeneidae** 	| 24.1 	| 0.0068 	| 122 	| commercial 	| commercial 	| 110 	| 75 	| 3 	| targeted 	| -->
+<!-- | **Elopidae** 	| 35 	| 0.0074 	| 1 	| minor commercial 	| minor commercial 	| 91 	| 91 	| 1 	| targeted>20cm 	| -->
+<!-- | **Enoplosidae** 	| 12.7 	| 0.00097 	| 9 	| minor commercial 	| minor commercial 	| 50 	| 50 	| 1 	| targeted>20cm 	| -->
+<!-- | **Ephippidae** 	| 35.7 	| 0.067 	| 254 	| minor commercial 	| minor commercial 	| 91 	| 40 	| 8 	| targeted>20cm 	| -->
+<!-- | **Fistulariidae** 	| 58.0 	| 0.029 	| 286 	| minor commercial 	| minor commercial 	| 200 	| 160 	| 3 	| targeted>20cm 	| -->
+<!-- | **Gerreidae** 	| 12.6	| 0.039 	| 40 	| minor commercial 	| minor commercial 	| 41 	| 20 	| 5 	| targeted>20cm 	| -->
+<!-- | **Glaucosomatidae** 	| 27.2 	| 0.035 	| 35 	| commercial 	| commercial 	| 122 	| 32 	| 2 	| targeted 	| -->
+<!-- | **Haemulidae** 	| 29.9 	| 0.092 	| 1710 	| commercial 	| minor commercial 	| 100 	| 13 	| 46 	| targeted>20cm 	| -->
+<!-- | **Hemiramphidae** 	| 18.5 	| 0.05 	| 4 	| commercial 	| commercial 	| 45 	| 34.5999984741211 	| 4 	| targeted 	| -->
+<!-- | **Holocentridae** 	| 18.3 	| 0.036 	| 2389 	| commercial 	| minor commercial 	| 61 	| 15.3999996185303 	| 36 	| targeted>20cm 	| -->
+<!-- | **Inermiidae** 	| 13.75 	| 0.077	| 5 	| minor commercial 	| minor commercial 	| 23 	| 23 	| 1 	| targeted>20cm 	| -->
+<!-- | **Kuhliidae** 	| 13.8 	| 0.019 	| 3 	| minor commercial 	| minor commercial 	| 40 	| 40 	| 1 	| targeted>20cm 	| -->
+<!-- | **Kyphosidae** 	| 26.5 	| 0.14 	| 897 	| commercial 	| commercial 	| 80 	| 11.2200002670288 	| 23 	| targeted 	| -->
+<!-- | **Labridae** 	| 11.1 	| 0.09 	| 5983 	| commercial 	| minor commercial 	| 229 	| 4.69999980926514 	| 233 	| targeted>20cm 	| -->
+<!-- | **Latidae** 	| 26.1 	| 0.06 	| 137 	| commercial 	| commercial 	| 47 	| 47 	| 1 	| targeted 	| -->
+<!-- | **Lethrinidae** 	| 23.7 	| 0.05 	| 2085 	| highly commercial 	| minor commercial 	| 100 	| 20 	| 26 	| targeted>20cm 	| -->
+<!-- | **Lutjanidae** 	| 25.8 	| 0.085 	| 3449 	| highly commercial 	| commercial 	| 170 	| 25 	| 51 	| targeted 	| -->
+<!-- | **Malacanthidae** 	| 22.9 	| 0.0088 	| 84 	| commercial 	| commercial 	| 102 	| 15.5 	| 6 	| targeted 	| -->
+<!-- | **Megalopidae** 	| 137.5 	| 0.63 	| 1 	| commercial 	| commercial 	| 250 	| 250 	| 1 	| targeted 	| -->
+<!-- | **Microdesmidae** 	| 6.9 	| 0.0010 	| 821 	| of no interest 	| of no interest 	| 15 	| 3.5 	| 12 	| untargeted 	| -->
+<!-- | **Molidae** 	| 162.5 	| 0.84 	| 1 	| minor commercial 	| minor commercial 	| 333 	| 333 	| 1 	| targeted>20cm 	| -->
+<!-- | **Monacanthidae** 	| 10.9 	| 0.0048	| 1460 	| minor commercial 	| minor commercial 	| 110 	| 6.19999980926514 	| 28 	| targeted>20cm 	| -->
+<!-- | **Monocentridae** 	| 15 	| 0.0012	| 1 	| of no interest 	| of no interest 	| 22 	| 22 	| 1 	| untargeted 	| -->
+<!-- | **Monodactylidae** 	| 11.70 	| 0.16 	| 33 	| minor commercial 	| minor commercial 	| 27 	| 20 	| 3 	| targeted>20cm 	| -->
+<!-- | **Moronidae** 	| 16.2	| 0.033 	| 2 	| commercial 	| commercial 	| 103 	| 103 	| 1 	| targeted 	| -->
+<!-- | **Mugilidae** 	| 28.5 	| 0.17	| 28 	| highly commercial 	| commercial 	| 100 	| 40 	| 7 	| targeted 	| -->
+<!-- | **Mullidae** 	| 16.5	| 0.025 	| 3268 	| commercial 	| commercial 	| 60 	| 16 	| 27 	| targeted 	| -->
+<!-- | **Nemipteridae** 	| 15.5 	| 0.023 	| 2383 	| commercial 	| subsistence fisheries 	| 38 	| 20 	| 21 	| targeted 	| -->
+<!-- | **Odacidae** 	| 16.09 	| 0.0087 	| 8 	| of no interest 	| of no interest 	| 35 	| 24 	| 2 	| untargeted 	| -->
+<!-- | **Ogcocephalidae** 	| 20 	| 0.00089 	| 1 	| of no interest 	| of no interest 	| 20.2999992370605 	| 20.2999992370605 	| 1 	| untargeted 	| -->
+<!-- | **Oplegnathidae** 	| 40 	| 0.024 	| 11 	| NA 	| NA 	| 66 	| 66 	| 1 	| untargeted 	| -->
+<!-- | **Ostraciidae** 	| 11.9 	| 0.0040	| 711 	| commercial 	| of no interest 	| 55 	| 12 	| 14 	| untargeted 	| -->
+<!-- | **Pempheridae** 	| 11.9 	| 0.01	| 467 	| minor commercial 	| minor commercial 	| 28 	| 10 	| 13 	| targeted>20cm 	| -->
+<!-- | **Percophidae** 	| 5 	| 3.8e-05 	| 1 	| NA 	| NA 	| 8 	| 8 	| 1 	| untargeted 	| -->
+<!-- | **Pinguipedidae** 	| 11.3 	| 0.0021 	| 1049 	| minor commercial 	| minor commercial 	| 29 	| 7.40999984741211 	| 16 	| targeted>20cm 	| -->
+<!-- | **Platycephalidae** 	| 39.8 	| 0.04 	| 9 	| commercial 	| commercial 	| 120 	| 50 	| 2 	| targeted 	| -->
+<!-- | **Plotosidae** 	| 21.8 	| 0.01 	| 101 	| commercial 	| commercial 	| 111.099998474121 	| 26.7999992370605 	| 5 	| targeted 	| -->
+<!-- | **Pomacanthidae** 	| 14.6 	| 0.027 	| 4231 	| commercial 	| minor commercial 	| 60 	| 7 	| 44 	| targeted>20cm 	| -->
+<!-- | **Pomacentridae** 	| 7.4 	| 0.13 	| 5950 	| highly commercial 	| of no interest 	| 31 	| 4 	| 245 	| untargeted 	| -->
+<!-- | **Pomatomidae** 	| 35 	| 0.01 	| 1 	| highly commercial 	| highly commercial 	| 130 	| 130 	| 1 	| targeted 	| -->
+<!-- | **Priacanthidae** 	| 22.2 	| 0.022 	| 154 	| minor commercial 	| minor commercial 	| 50.7000007629395 	| 36.0999984741211 	| 3 	| targeted>20cm 	| -->
+<!-- | **Rachycentridae** 	| 75 	| 0.019 	| 1 	| minor commercial 	| minor commercial 	| 200 	| 200 	| 1 	| targeted>20cm 	| -->
+<!-- | **Scaridae** 	| 21.9	| 0.17	| 5210 	| commercial 	| commercial 	| 130 	| 13 	| 75 	| targeted 	| -->
+<!-- | **Sciaenidae** 	| 14.8 	| 0.02 	| 91 	| minor commercial 	| minor commercial 	| 30 	| 23 	| 8 	| targeted>20cm 	| -->
+<!-- | **Scombridae** 	| 56.1 	| 0.098 	| 121 	| highly commercial 	| minor commercial 	| 250 	| 36 	| 17 	| targeted>20cm 	| -->
+<!-- | **Scorpaenidae** 	| 16.6 	| 0.0062 	| 275 	| commercial 	| commercial 	| 45.7000007629395 	| 9.5 	| 30 	| targeted 	| -->
+<!-- | **Serranidae** 	| 23.5 	| 0.08 	| 4860 	| highly commercial 	| minor commercial 	| 270 	| 3.98000001907349 	| 141 	| targeted>20cm 	| -->
+<!-- | **Siganidae** 	| 20.3	| 0.040 	| 1910 	| commercial 	| commercial 	| 53 	| 25 	| 20 	| targeted 	| -->
+<!-- | **Sillaginidae** 	| 28.7	| 0.010	| 8 	| highly commercial 	| highly commercial 	| 51 	| 30 	| 2 	| targeted 	| -->
+<!-- | **Sparidae** 	| 19.8 	| 0.14 	| 306 	| highly commercial 	| commercial 	| 130 	| 28 	| 27 	| targeted 	| -->
+<!-- | **Sphyraenidae** 	| 41.7	| 0.14 	| 175 	| commercial 	| commercial 	| 200 	| 55 	| 9 	| targeted 	| -->
+<!-- | **Synanceiidae** 	| 22.9 	| 0.056 	| 4 	| minor commercial 	| minor commercial 	| 60 	| 25 	| 4 	| targeted>20cm 	| -->
+<!-- | **Synodontidae** 	| 13.1 	| 0.0038 	| 984 	| commercial 	| commercial 	| 46 	| 16.5 	| 15 	| targeted 	| -->
+<!-- | **Terapontidae** 	| 12.2 	| 0.016 	| 4 	| minor commercial 	| minor commercial 	| 30 	| 15 	| 2 	| targeted>20cm 	| -->
+<!-- | **Tetraodontidae** 	| 10.6	| 0.013 	| 2471 	| commercial 	| of no interest 	| 120 	| 9 	| 30 	| untargeted 	| -->
+<!-- | **Zanclidae** 	| 17.3 	| 0.014 	| 1864 	| subsistence fisheries 	| subsistence fisheries 	| 23 	| 23 	| 1 	| targeted 	| -->
+<!-- ::: -->
 
 
 
@@ -919,7 +970,7 @@ for i in range(10):
     print(i)
 ```
 
-
+ 
 ```{r, echo=TRUE}
 #r
 for(i in 1:10) print(i)

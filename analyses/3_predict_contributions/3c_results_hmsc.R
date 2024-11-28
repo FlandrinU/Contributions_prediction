@@ -51,7 +51,7 @@ path = here::here("outputs/models/hmsc")
 
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-file_name <- gsub("output_", "", list_files[13]) #choose the wanted file
+file_name <- gsub("output_", "", list_files[14]) #choose the wanted file
 concatenate_chains = F
 
 ##----------------------------- Plot hmsc results ------------------------------
@@ -70,14 +70,14 @@ plot_hmsc_result(metadata = metadata_sites,
                  check_spatial_autocorrelation = F,
                  latent_factors = T,
                  drivers_to_plot =  list(
-                   # c("protection_status2full","gravtot2", "n_fishing_vessels"),
-                   # c("protection_status2full", "protection_status2restricted",
-                   #   "n_fishing_vessels"),
-                   c("protection_statushigh","gravtot2", "n_fishing_vessels"),
-                   c("protection_statushigh", "protection_statusmedium",
-                     "protection_statuslow", "n_fishing_vessels"),
-                   
-                   c("hdi", "marine_ecosystem_dependency",
+                   c("protection_status2full","gravtot2", "n_fishing_vessels"),
+                   c("protection_status2full", "protection_status2restricted",
+                     "n_fishing_vessels"),
+                   # c("protection_statushigh","gravtot2", "n_fishing_vessels"),
+                   # c("protection_statushigh", "protection_statusmedium",
+                   #   "protection_statuslow", "n_fishing_vessels"),
+                   # 
+                   c("neartt","gdp", "hdi", "marine_ecosystem_dependency",
                      "natural_ressource_rent"),
                    c("median_5year_analysed_sst", "coral", "median_5year_chl")
                    # c( "coral", "algae", "Terrestrial_Reef_Flat_500m", "depth")

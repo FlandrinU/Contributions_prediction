@@ -1,6 +1,6 @@
 rm(list=ls())
 
-### Check data aesthetic and public interest ###
+#### Check data aesthetic and public interest ####
 # data
 load(file = here::here("data", "raw_data", "RLS_actinopterygii_data.Rdata"))
 load(file = here::here("data", "raw_data", "environmental_covariates", "TEMP_list_survey_sst.Rdata"))
@@ -50,3 +50,26 @@ write.csv(missing_interest_data, here::here("data","list_species_missing_interes
 
 
 
+
+
+#### Photoquadrats ####
+metadata_survey <- read.csv(here::here("data", "raw_data","ep_survey_list.csv"))
+all_survey <- metadata_survey 
+# |> 
+#   dplyr::filter(has_pq_scores_in_db == "true" | has_pqs_catalogued_in_db == "true")
+
+#liste des anciens surveys avec PQ: 
+load("/home/u_flandrin/Bureau/RLS_data/data/derived_data/covariates/raw_covariates_all_surveys.Rdata")
+old_pq  <- raw_covariates_all |> 
+  dplyr::filter(!is.na(coral)) |> 
+  dplyr::select(survey_id)
+
+#liste des surveys actuels
+studied_survey <- list_survey_sst$survey_id
+
+# PQ data ?
+pq_data <- all_survey |> 
+  dplyr::filter(survey_id %in% studied_survey) |>  # all survey with PQ data
+  dplyr::filter(!survey_id %in% old_pq$survey_id)
+
+# => PAS DE NOUVEAU PQ DATA DEPUIS DEBUT 2023

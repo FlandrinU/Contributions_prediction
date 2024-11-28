@@ -2133,7 +2133,8 @@ plot_conterfactual_scenarios <- function(path = path,
                                          selected_countries = selected_countries,
                                          plot_responders_on_map = FALSE,
                                          set_ids = NULL,
-                                         is_counterfactual = TRUE
+                                         is_counterfactual = TRUE,
+                                         set_order_boxplot = NULL
 ){
   #Contributions group
   grp_NN_NP <- data.frame(
@@ -2296,7 +2297,12 @@ plot_conterfactual_scenarios <- function(path = path,
   ## Change in percent on raw values
   raw_change <- raw_change  |> 
     dplyr::mutate(contribution = reorder(contribution, raw_change_percent,
-                                         FUN = median))
+                                         FUN = median, decreasing = T ))
+  # set_order_boxplot <- levels(raw_change$contribution)
+  if(!is.null(set_order_boxplot)){
+    raw_change$contribution <- factor(raw_change$contribution,
+                                         levels = set_order_boxplot)
+  }
   
   mean <- dplyr::group_by(raw_change, contribution) |> 
     dplyr::summarise(change = median(raw_change_percent)) |> 
@@ -2321,7 +2327,12 @@ plot_conterfactual_scenarios <- function(path = path,
       T ~ raw_change_percent
     )) |> 
     dplyr::mutate(contribution = reorder(contribution, change_percent_log,
-                                         FUN = median))
+                                         FUN = median, decreasing=T))
+  
+  if(!is.null(set_order_boxplot)){
+    raw_change_log_transformed$contribution <- 
+      factor(raw_change_log_transformed$contribution, levels = set_order_boxplot)
+  }
   
   median_labels <- raw_change |> 
     dplyr::group_by(contribution, group) |> 
@@ -2336,7 +2347,7 @@ plot_conterfactual_scenarios <- function(path = path,
 
   distrib_boxplot(raw_change_log_transformed, x = "contribution", y = "change_percent_log",
                  fill = "group", title = paste(save_name, "(change in percent, LOG-scale)"),
-                  hline = 0, prop_outliers = 0.005,
+                  hline = 0, prop_outliers = 0.01,
                  include_stat = F) + 
     geom_text(data = median_labels,
               aes(x = contribution, y = median_position, 

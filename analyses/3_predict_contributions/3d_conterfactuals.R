@@ -197,6 +197,12 @@ human_footprint <-
 
 
 # (2) CONSERVATION LEGACY 
+order <- human_footprint[[3]]  |> 
+  dplyr::mutate(contribution = reorder(contribution, raw_change_percent,
+                                       FUN = median, decreasing = T )) 
+set_order_boxplot <- levels(order$contribution)
+
+
 conservation_legacy <- 
   plot_conterfactual_scenarios(path, model_name, concatenate_chains,
                                X_new_data = X_conservation_legacy,
@@ -204,7 +210,8 @@ conservation_legacy <-
                                save_name = "Conservation_legacy",
                                selected_countries,
                                plot_responders_on_map = F,
-                               is_counterfactual = TRUE)
+                               is_counterfactual = TRUE,
+                               set_order_boxplot = set_order_boxplot)
 
 
 
@@ -267,7 +274,220 @@ plot_conterfactual_scenarios(path, model_name, concatenate_chains,
 
 
 
-# ##----------------------------- Plot panel -----------------------------------
+##----------------------------- Plot panel -----------------------------------
+
+folder_name <- gsub(".rds", "", model_name)
+path_file <- here::here("figures","models","hmsc", "conterfactuals", folder_name)    
+
+
+conserv_legacy <- conservation_legacy[[3]] |> 
+  dplyr::select(id, contribution, conserv_legacy_change = raw_change_percent) |> 
+  dplyr::group_by(contribution) |> 
+  dplyr::summarise(mean_change_percent_conserv_legacy = mean(conserv_legacy_change),
+                   median_change_percent_conserv_legacy = median(conserv_legacy_change),
+                   sd_change_percent_conserv_legacy = sd(conserv_legacy_change))
+
+
+hum_footprint <- human_footprint[[3]]|> 
+  dplyr::select(id, contribution, hum_footprint_change = raw_change_percent) |> 
+  dplyr::group_by(contribution) |> 
+  dplyr::summarise(mean_change_percent_hum_footprint = mean(hum_footprint_change),
+                   median_change_percent_hum_footprint = median(hum_footprint_change),
+                   sd_change_percent_hum_footprint = sd(hum_footprint_change))
+
+
+all_changes <- conservation_legacy[[3]] |> 
+  dplyr::select(id, contribution, change = raw_change_percent) |> 
+  dplyr::mutate(counterfactual = "conservation_legacy") |> 
+  dplyr::bind_rows(
+    human_footprint[[3]]|> 
+      dplyr::select(id, contribution, change = raw_change_percent) |> 
+      dplyr::mutate(counterfactual = "human_footprint")
+  )
+
+## Statistical test
+check_normality <- all_changes |> 
+  dplyr::group_by(counterfactual, contribution) |> 
+  dplyr::summarise(
+    shapiro =  list(shapiro.test(change)))|> 
+  dplyr::mutate(
+    shapiro_results = purrr::map(shapiro, broom::tidy))  |> 
+  tidyr::unnest(shapiro_results) |> 
+  dplyr::mutate(normal_distrib = ifelse(p.value < 0.05, "no", "yes"))
+      
+check_homoscedasticity <- all_changes |> 
+  dplyr::mutate(counterfactual = as.factor(counterfactual)) |>
+  dplyr::group_by(contribution) |> 
+  dplyr::summarise(
+    levene = list(car::leveneTest(change ~ counterfactual))) |> 
+  dplyr::mutate(
+    levene_results = purrr::map(levene, broom::tidy)) |> 
+  tidyr::unnest(levene_results) |> 
+  dplyr::mutate(homoscedastic = ifelse(p.value < 0.05, "no", "yes"))
+      
+test_zero <- all_changes |> 
+  dplyr::group_by(counterfactual, contribution) |> 
+  dplyr::summarise(
+    t_test = list(t.test(change, mu = 0)), .groups = "drop") |> 
+  dplyr::mutate(
+    t_results = purrr::map(t_test, broom::tidy))  |> 
+  tidyr::unnest(t_results) |> 
+  dplyr::mutate(different_from_zero = ifelse(p.value < 0.05, "yes", "no")) |> 
+  dplyr::select(contribution, counterfactual, different_from_zero)
+
+test_between_couterfactuals <- all_changes |> 
+  dplyr::mutate(change = dplyr::case_when(
+    counterfactual == "conservation_legacy" ~ - change, # take the opposite of conservation gains to compare with human footprint
+    TRUE ~ change)) |> 
+  dplyr::group_by(contribution) |> 
+  dplyr::summarise(
+    welch_t = list(t.test(change ~ counterfactual, var.equal = FALSE))) |> 
+  dplyr::mutate(
+    welch_t_results = purrr::map(welch_t, broom::tidy)) |> 
+  tidyr::unnest(welch_t_results) |> 
+  dplyr::mutate(footprint_different_from_gain = ifelse(p.value < 0.05, "yes", "no"))|> 
+  dplyr::select(contribution, footprint_different_from_gain)
+
+ 
+
+## Loliplot
+change_percent <- conserv_legacy |> 
+  dplyr::left_join(hum_footprint) |>
+  dplyr::mutate(contribution =forcats::fct_reorder(contribution,
+     median_change_percent_hum_footprint, .fun = max, .desc = TRUE)) |>
+  tidyr::pivot_longer(
+    cols = starts_with("median") | starts_with("sd"),
+    names_to = c("stat", "counterfactual"),
+    names_pattern = "(median|sd)_change_percent_(.*)",
+    values_to = "value" ) |> 
+  tidyr::pivot_wider(
+    names_from = "stat",
+    values_from = "value") |> 
+  dplyr::mutate(counterfactual = dplyr::recode(counterfactual, 
+                                        "conserv_legacy" = "conservation_legacy", 
+                                        "hum_footprint" = "human_footprint")) |> 
+  dplyr::left_join(test_zero) |> 
+  dplyr::left_join(test_between_couterfactuals)
+
+
+ggplot(change_percent, aes(x = median, y = contribution, color = counterfactual)) +
+  geom_segment(aes(x = 0, xend = median, y = contribution, yend = contribution,
+                   alpha = different_from_zero), 
+               size = 1) + 
+  geom_point(size = 4,aes(alpha = different_from_zero)) + 
+  scale_alpha_manual(values = c("yes" = 1, "no" = 0.3)) +
+  geom_text(
+    data = change_percent |> dplyr::filter(footprint_different_from_gain == "yes") |> 
+      dplyr::distinct(contribution, .keep_all = TRUE), 
+    aes(x = 25, y = contribution, label = "*"), 
+    color = "black", hjust = 0, size = 5
+  ) +
+  scale_x_continuous(
+    breaks = c(-250,-200,-150,-100,-50,0,50),      
+    labels = c("-250%","-200%","-150%","-100%","-50%","0","+50%"))+
+  scale_color_manual(values = c("conservation_legacy" = "darkseagreen3", 
+                                "human_footprint" = "firebrick3")) + 
+  labs(
+    x = "Contribution changes in counterfactual scenarios", 
+    y = "Contributions",
+    color = "Counterfactual") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 10),
+        legend.position = "bottom",
+        legend.key.spacing.y = unit(0.1, "cm"),
+        legend.margin = margin(0,1,0,0, unit = "cm"),
+        legend.title = element_text(face="bold", size = 11)) +
+  guides(color = guide_legend(nrow = 2, byrow = TRUE),
+         alpha = guide_legend(nrow = 2, byrow = TRUE))
+
+ggsave(width = 9, height = 8, filename = file.path(
+  path_file,paste0("loliplot_human_footprint_conserv_legacy","_", folder_name,".jpg")))
+
+
+
+
+## Barplot with log scale
+change_percent_log <- conserv_legacy |> 
+  dplyr::left_join(hum_footprint) |>
+  dplyr::mutate(contribution = forcats::fct_reorder(contribution,
+                                                    median_change_percent_hum_footprint, .fun = max, .desc = TRUE)) |>
+  tidyr::pivot_longer(
+    cols = starts_with("median") | starts_with("sd"),
+    names_to = c("stat", "counterfactual"),
+    names_pattern = "(median|sd)_change_percent_(.*)",
+    values_to = "value" ) |> 
+  tidyr::pivot_wider(
+    names_from = "stat",
+    values_from = "value") |>  
+  dplyr::mutate(counterfactual = dplyr::recode(counterfactual, 
+                                               "conserv_legacy" = "conservation_legacy", 
+                                               "hum_footprint" = "human_footprint")) |> 
+  dplyr::mutate(median = dplyr::case_when( median > 1 ~ log10(median),
+                                           median < -1 ~ -log10(-(median)),
+                                           T ~ median),
+                sd = dplyr::case_when( sd > 1 ~ log10(sd),
+                                       sd < -1 ~ -log10(-(sd)),
+                                       T ~ sd)) 
+
+
+ggplot(change_percent_log, aes(x = median, y = contribution, fill = counterfactual)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7) +  
+  geom_errorbar(aes(xmin = median, xmax = median + sd), 
+                position = position_dodge(width = 0.9), 
+                width = 0.2, color = "black") +
+  geom_errorbar(aes(xmin = median - sd, xmax = median), 
+                position = position_dodge(width = 0.9), 
+                width = 0.2, color = "black")+
+  scale_fill_manual(values = c("conservation_legacy" = "darkseagreen3", 
+                                "human_footprint" = "firebrick3")) +
+  scale_x_continuous(
+    breaks = c(-3, -2, -1, 0, 1, 2, 3),      
+    labels = c("-1000%", "-100%", "-10%", "0", "+10%", "+100%", "+1000%"))+  
+  labs(
+    x = "Contribution changes in counterfactual scenarios", 
+    y = "Contribution",
+    color = "Counterfactual") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 10))
+
+ggsave(width = 10, height = 8, filename = file.path(
+  path_file,paste0("barplot_human_footprint_conserv_legacy","_", folder_name,".jpg")))
+
+
+
+## Boxplot 
+all_changes_log_transformed <- all_changes|> 
+  dplyr::mutate(change = dplyr::case_when(
+    change > 1 ~ log10(change),
+    change < -1 ~ -log10(-(change)),
+    T ~ change
+  )) |> 
+  dplyr::mutate(contribution = reorder(contribution, change,
+                                       FUN = median))
+ggplot(all_changes) +
+  geom_hline(yintercept = 0, color = "grey", size = 1) +
+  aes(x= change, y= contribution, fill = counterfactual)+
+  scale_fill_manual(values = c("conservation_legacy" = "darkseagreen3", 
+                                "human_footprint" = "firebrick3")) +
+  # geom_violin(trim = FALSE, position = position_dodge(width =1), alpha = 0.7) +
+  geom_boxplot(alpha = 0.7, outliers = F) +
+
+  ylab("") + xlab("Contributions change in counterfactual scenarios") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 15, margin = margin(r = 20)),
+        panel.spacing = unit(0.3, "lines"),
+        axis.text.y = element_text(size = 13),
+        axis.title = element_text(size = 13),
+        axis.text.x = element_text(angle = 0, hjust = 0.5,size = 13))
+
+
+
+
+
+
+
 # set_ids = new_mpa_no_vessels #look only at currently unprotected sites
 # # set_ids = new_pristine
 # # set_ids = new_no_human
@@ -340,138 +560,3 @@ plot_conterfactual_scenarios(path, model_name, concatenate_chains,
 # 
 # ggsave(filename = file.path( path_file, paste0("Panel_conterfactuals_",model_name,".jpg")),
 #        width = 20, height =15 )
-
-folder_name <- gsub(".rds", "", model_name)
-path_file <- here::here("figures","models","hmsc", "conterfactuals", folder_name)    
-
-
-conserv_legacy <- conservation_legacy[[3]] |> 
-  dplyr::select(id, contribution, conserv_legacy_change = raw_change_percent) |> 
-  dplyr::group_by(contribution) |> 
-  dplyr::summarise(mean_change_percent_conserv_legacy = mean(conserv_legacy_change),
-                   median_change_percent_conserv_legacy = median(conserv_legacy_change),
-                   sd_change_percent_conserv_legacy = sd(conserv_legacy_change))
-
-
-hum_footprint <- human_footprint[[3]]|> 
-  dplyr::select(id, contribution, hum_footprint_change = raw_change_percent) |> 
-  dplyr::group_by(contribution) |> 
-  dplyr::summarise(mean_change_percent_hum_footprint = mean(hum_footprint_change),
-                   median_change_percent_hum_footprint = median(hum_footprint_change),
-                   sd_change_percent_hum_footprint = sd(hum_footprint_change))
-
-
-all_changes <- conservation_legacy[[3]] |> 
-  dplyr::select(id, contribution, change = raw_change_percent) |> 
-  dplyr::mutate(counterfactual = "conservation_legacy") |> 
-  dplyr::bind_rows(
-    human_footprint[[3]]|> 
-      dplyr::select(id, contribution, change = raw_change_percent) |> 
-      dplyr::mutate(counterfactual = "human_footprint")
-  )
-
-test_zero <- all_changes |> 
-  dplyr::group_by(counterfactual, contribution) |> 
-  dplyr::summarise(
-    t_test = list(t.test(change, mu = 0)), .groups = "drop") |> 
-  dplyr::mutate(
-    t_results = purrr::map(t_test, broom::tidy))  |> 
-  tidyr::unnest(t_results)
-
-test_between_couterfactuals <- all_changes |> 
-  dplyr::group_by(contribution) |> 
-  dplyr::summarise(
-    t_test = list(t.test(
-      change ~ counterfactual,  # Test t entre les deux countrefactuels
-      data = dplyr::cur_data()       # Applique à chaque contribution
-    )), .groups = "drop")|> 
-  dplyr::mutate(t_results = purrr::map(t_test, broom::tidy))  |> 
-   tidyr::unnest(t_results)
- 
-
-## Loliplot
-change_percent <- conserv_legacy |> 
-  dplyr::left_join(hum_footprint) |>
-  dplyr::mutate(contribution = forcats::fct_reorder(contribution,
-                                                    median_change_percent_hum_footprint, .fun = max, .desc = TRUE)) |>
-  tidyr::pivot_longer(
-    cols = starts_with("median") | starts_with("sd"),
-    names_to = c("stat", "type"),
-    names_pattern = "(median|sd)_change_percent_(.*)",
-    values_to = "value" ) |> 
-  tidyr::pivot_wider(
-    names_from = "stat",
-    values_from = "value") 
-
-
-ggplot(change_percent, aes(x = median, y = contribution, color = type)) +
-  geom_segment(aes(x = 0, xend = median, y = contribution, yend = contribution), 
-               size = 1) + 
-  geom_point(size = 4) + 
-  scale_x_continuous(
-    breaks = c(-250,-200,-150,-100,-50,0,50),      
-    labels = c("-250%","-200%","-150%","-100%","-50%","0","+50%"))+
-  scale_color_manual(values = c("conserv_legacy" = "darkseagreen3", 
-                                "hum_footprint" = "firebrick1"),
-                     labels = c("conserv_legacy" = "Conservation legacy", 
-                                "hum_footprint" = "Human footprint")) + 
-  labs(
-    x = "Contribution changes in counterfactual scenarios", 
-    y = "Contributions",
-    color = "Counterfactual") +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 10))
-
-ggsave(width = 10, height = 8, filename = file.path(
-  path_file,paste0("loliplot_human_footprint_conserv_legacy","_", folder_name,".jpg")))
-
-
-
-
-## Boxplot with log scale
-change_percent_log <- conserv_legacy |> 
-  dplyr::left_join(hum_footprint) |>
-  dplyr::mutate(contribution = forcats::fct_reorder(contribution,
-                                                    median_change_percent_hum_footprint, .fun = max, .desc = TRUE)) |>
-  tidyr::pivot_longer(
-    cols = starts_with("median") | starts_with("sd"),
-    names_to = c("stat", "type"),
-    names_pattern = "(median|sd)_change_percent_(.*)",
-    values_to = "value" ) |> 
-  tidyr::pivot_wider(
-    names_from = "stat",
-    values_from = "value") |> 
-  dplyr::mutate(median = dplyr::case_when( median > 1 ~ log10(median),
-                                           median < -1 ~ -log10(-(median)),
-                                           T ~ median),
-                sd = dplyr::case_when( sd > 1 ~ log10(sd),
-                                       sd < -1 ~ -log10(-(sd)),
-                                       T ~ sd)) 
-
-
-ggplot(change_percent_log, aes(x = median, y = contribution, fill = type)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7) +  
-  geom_errorbar(aes(xmin = median, xmax = median + sd), 
-                position = position_dodge(width = 0.9), 
-                width = 0.2, color = "black") +
-  geom_errorbar(aes(xmin = median - sd, xmax = median), 
-                position = position_dodge(width = 0.9), 
-                width = 0.2, color = "black")+
-  scale_fill_manual(values = c("conserv_legacy" = "darkseagreen3", 
-                                "hum_footprint" = "firebrick"),
-                     labels = c("conserv_legacy" = "Conservation legacy", 
-                                "hum_footprint" = "Human footprint")) + 
-  scale_x_continuous(
-    breaks = c(-3, -2, -1, 0, 1, 2, 3),      
-    labels = c("-1000%", "-100%", "-10%", "0", "+10%", "+100%", "+1000%"))+  
-  # xlim(-3,3)+
-  labs(
-    x = "Contribution changes in counterfactual scenarios", 
-    y = "Contribution",
-    color = "Counterfactual") +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 10))
-
-ggsave(width = 10, height = 8, filename = file.path(
-  path_file,paste0("barplot_human_footprint_conserv_legacy","_", folder_name,".jpg")))
-
