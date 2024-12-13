@@ -15,9 +15,9 @@ rm(list=ls())
 
 
 ##-----------------Loading packages-------------------
-# pkgs <- c("here", "tidyverse", "rfishbase", "dplyr", "DHARMa", "gtools", 
+# pkgs <- c("here", "tidyverse", "rfishbase", "dplyr", "DHARMa", "gtools",
 #           "parallel", "car", "PresenceAbsence",  "igraph", "NetIndices",
-#           "ggplot2", "ggsignif" )
+#           "ggplot2", "ggsignif", "ggraph" )
 # nip <- pkgs[!(pkgs %in% installed.packages())]
 # nip <- lapply(nip, install.packages, dependencies = TRUE)
 # ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
@@ -58,9 +58,12 @@ source(here::here("R", "extract_local_web_trophic_indicators.R"))
 #reorder the species 
 traits <- inferred_species_traits |> 
   dplyr::filter(!class == "Elasmobranchii") |> 
-  dplyr::select(Troph, Length)
+  dplyr::select(Troph, Length) |> 
+  tidyr::drop_na() |> 
+  as.matrix()
 
-traits <- as.matrix(traits[colnames(surveys_sp_pbiom),]) #reorder
+# traits <- as.matrix(traits[colnames(surveys_sp_pbiom),])
+surveys_sp_pbiom <- as.matrix(surveys_sp_pbiom[,rownames(traits)]) #reorder
 
 which(rownames(traits) != colnames(surveys_sp_pbiom)) #OK
 

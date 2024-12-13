@@ -415,7 +415,7 @@ plot_hmsc_result <- function(metadata = metadata,
                              check_spatial_autocorrelation = F,
                              latent_factors = T,
                              drivers_to_plot =  list(
-                               c("n_fishing_vessels", "gravtot2", "gdp", "neartt"))
+                               c("n_fishing_vessels", "gravity", "gdp", "neartt"))
                             ){
   
   color_grad = rev(c("#A50026", "#D73027", "#FDAE61", "#FEE090","white",
@@ -437,11 +437,13 @@ plot_hmsc_result <- function(metadata = metadata,
                       "invertivores_biomass",  "piscivores_biomass",
                       "trophic_web_robustness", "mean_trophic_level",
       
-                      "public_interest", "aesthetic",
+                      "public_attention", "aesthetic",
                       "available_biomass", "selenium",
                       "zinc",   "omega_3", "calcium",
                       "iron","vitamin_A", "available_biomass_turnover"),
-    group = c(rep("NN", 12), rep("NP", 10)))
+    group = c(rep("NN", 12), 
+              rep("NC", 2),
+              rep("NS", 8)))
   
   ##----Source packages and functions----
   
@@ -784,8 +786,8 @@ plot_hmsc_result <- function(metadata = metadata,
       )
     
     #classify covariates
-    human <- c("gdp", "gravtot2", "protection_status", "natural_ressource_rent",
-               "protection_status2",
+    human <- c("gdp", "gravity", "protection_status", "natural_ressource_rent",
+               # "protection_status2",
                "neartt","n_fishing_vessels", "hdi", "marine_ecosystem_dependency")
     
     habitat <- c("depth", #"algae",
@@ -799,7 +801,7 @@ plot_hmsc_result <- function(metadata = metadata,
     
     envir <-  c("median_5year_analysed_sst", "median_5year_chl", 
                 "median_5year_degree_heating_week", #"q05_5year_ph",
-                "median_5year_so_mean", "median_1year_degree_heating_week",
+                "median_5year_so_glor", "median_1year_degree_heating_week",
                 "median_7days_degree_heating_week", #"median_7days_analysed_sst",
                 "median_7days_chl", #"q95_1year_degree_heating_week", 
                 "median_5year_ph",
@@ -869,13 +871,26 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::mutate(Covariate = dplyr::recode(Covariate,
                                               "median_5year_analysed_sst" = "SST_5years",
                                               "median_5year_degree_heating_week" = "DHW_5years",
-                                              "median_5year_so_mean" = "Salinity_5_years",
+                                              "median_5year_so_glor" = "Salinity_5_years",
                                               "median_1year_degree_heating_week" = "DHW_1year",
                                               "median_7days_degree_heating_week" = "DHW_7days",
                                               "median_7days_chl" = "Chlorophyll_7days",
                                               "median_5year_ph" = "pH_5years",
                                               "q95_5year_degree_heating_week" = "DHW_quartile95_5years",
                                               "median_5year_chl" = "Chlorophyll_5years"))
+    
+    # Mean contribution of covariates
+    mean_contrib <-  VP_long |> 
+      dplyr::group_by(Covariate, color, category) |> 
+      dplyr::summarise(Value = mean(Value)) |> 
+      dplyr::mutate(Response = "Mean contribution")
+    
+    add_gap <- mean_contrib|> 
+      dplyr::mutate(Response = "", Value = 0)
+    
+    VP_long <- VP_long |>
+      dplyr::bind_rows(mean_contrib) |>
+      dplyr::bind_rows(add_gap)
     
     # measure where to place labels in relative variance partitioning
     VP_long <- VP_long |> dplyr::arrange(Covariate)
@@ -901,15 +916,17 @@ plot_hmsc_result <- function(metadata = metadata,
     
     # Aggregated
     VP_aggregated <- VP_long |> 
+      dplyr::filter(!Response %in% c("","Mean contribution")) |> 
       dplyr::group_by(category, Response) |> 
       dplyr::summarise(prop_variance = sum(Value)) |> 
       dplyr::group_by(category) |> 
       dplyr::summarise(sd = sd(prop_variance),
                        prop_variance = mean(prop_variance))
     
+    
     # VP absolute
-    variance_explained <- data.frame(Response = model_fit_mcmc[["spNames"]],
-                                     R2 = MF$R2)
+    variance_explained <- data.frame(Response = c(model_fit_mcmc[["spNames"]],"", "Mean contribution"),
+                                     R2 = c(MF$R2,0,1))
     VP_long_absolute <- VP_long |> 
       dplyr::left_join(variance_explained) |> 
       dplyr::mutate(Value = Value * R2)
@@ -933,13 +950,50 @@ plot_hmsc_result <- function(metadata = metadata,
     ##### Plot VP #####
   
     ## Sum of VP per category
+    VP_random <- VP_long |> 
+      dplyr::filter(!Response %in% c("","Mean contribution")) |> 
+      dplyr::filter(category == "random") |> 
+      dplyr::group_by(Covariate, color) |> 
+      dplyr::summarise(mean_imp = mean(Value)) 
+    
     
     ggplot(VP_aggregated) +
       geom_col(aes(x = reorder(category, prop_variance),
-                   y = prop_variance, fill = category)) +
+                   y = prop_variance, fill = category),
+               color = "grey20") +
+      
+      #Add precision on the random bar
+      annotate("rect", 
+               xmin = which(levels(reorder(VP_aggregated$category,
+                            VP_aggregated$prop_variance)) == "random") - 0.45,
+               xmax = which(levels(reorder(VP_aggregated$category,
+                            VP_aggregated$prop_variance)) == "random") + 0.45, 
+               ymin = 0, 
+               ymax = VP_random$mean_imp[2], 
+               fill = VP_random$color[2])+
+      annotate("text", label = stringr::word(VP_random$Covariate[2], sep = " ", 2),
+               x = which(levels(reorder(VP_aggregated$category,
+                                    VP_aggregated$prop_variance)) == "random"),
+               y = VP_random$mean_imp[2]/2)+
+      
+      annotate("rect", 
+               xmin = which(levels(reorder(VP_aggregated$category, 
+                          VP_aggregated$prop_variance)) == "random") - 0.45,
+               xmax = which(levels(reorder(VP_aggregated$category, 
+                          VP_aggregated$prop_variance)) == "random") + 0.45, 
+               ymin = VP_random$mean_imp[2], 
+               ymax = VP_random$mean_imp[2] + VP_random$mean_imp[1], 
+               fill = VP_random$color[1], alpha = 0.5)+
+      annotate("text", label = stringr::word(VP_random$Covariate[1], sep = " ", 2),
+               x = which(levels(reorder(VP_aggregated$category,
+                                        VP_aggregated$prop_variance)) == "random"),
+               y = VP_random$mean_imp[2] + VP_random$mean_imp[1]/2.5)+
+      
+      #plot parameters
       geom_errorbar(aes(x = category, y = prop_variance,
                         ymin=prop_variance-sd, ymax=prop_variance+sd),
-                    width=.1, position=position_dodge(.9)) +
+                    width=.1, position=position_dodge(.9),
+                    color = "grey20") +
       scale_fill_manual(values = c("random" =  "#CBCBCB",
                                    "envir" = "#FFA976",
                                    "habitat" = "#FFCF7A",
@@ -956,7 +1010,8 @@ plot_hmsc_result <- function(metadata = metadata,
     
     
     ## Relative variance partitioning
-    ggplot(VP_long, aes(x = Response, y = Value, fill = Covariate)) +
+    ggplot(dplyr::filter(VP_long,!Response %in% c("","Mean contribution"))) +    
+      aes(x = Response, y = Value, fill = Covariate)+
       geom_bar(stat = "identity", position = "stack", 
                color = "black",linewidth = 0.1) +
       scale_fill_manual(values = setNames(VP_long$color, VP_long$Covariate),
@@ -971,10 +1026,9 @@ plot_hmsc_result <- function(metadata = metadata,
         legend.title = element_text(size = 15, hjust = 0),
         legend.text = element_text( size = 10))+
       guides(fill = guide_legend(ncol = 2)) + 
-      geom_text(data = dplyr::filter(VP_long, Value > 0.04),
+      geom_text(data = dplyr::filter(VP_long, Response != "Mean contribution" & Value > 0.04),
                 aes(y = mid_y, label = Symbol), size = 3, color = "black") 
-    
-    
+
     ggsave(filename =  paste0(path_file,"/variance_partitioning_", save_name,".jpg"),
            width = 15, height = 10)
     
@@ -984,11 +1038,14 @@ plot_hmsc_result <- function(metadata = metadata,
     variance_explained 
     
     VP_absolute_aggregated <- VP_long_absolute |> 
+      dplyr::filter(Response != "Mean contribution") |> 
       dplyr::group_by(category, Response) |> 
       dplyr::summarise(prop_variance = sum(Value)) |> 
       dplyr::group_by(category) |> 
       dplyr::summarise(sd = sd(prop_variance),
                        prop_variance = mean(prop_variance))
+    
+    VP_long_absolute[VP_long_absolute$Response == "Mean contribution", "R2"] <- -1
     
     ggplot(VP_long_absolute, aes(x = reorder(Response,-R2),
                                  y = Value, fill = Covariate)) +
@@ -1000,22 +1057,38 @@ plot_hmsc_result <- function(metadata = metadata,
       theme_classic(base_size = 11,
                     base_line_size = 0.1) +
       theme(
-        axis.text.x = element_text(size=12, angle = 50, hjust = 1, vjust = 1),
-        axis.text.y = element_text(size=12),
-        legend.position = "right",
-        legend.title = element_text(size = 15, hjust = 0),
-        legend.text = element_text( size = 10))+
-      guides(fill = guide_legend(ncol = 2)) +
+        axis.text.x = element_text(size=15, angle = 50, hjust = 1, vjust = 1),
+        axis.text.y = element_text(size=15),
+        legend.position = "bottom",
+        legend.title = element_text(size = 20, hjust = 0.5, vjust= 5, angle = 90),
+        legend.text = element_text( size = 14),
+        legend.key.spacing.y = unit(0, units = "cm"))+
+      guides(fill = guide_legend(nrow = 9)) +
       geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02),
-                aes(y = mid_y, label = Symbol), size = 3, color = "black") 
+                aes(y = mid_y, label = Symbol), size = 4, color = "black") +
+    
+    #Custom mean bar
+    geom_rect(aes(xmin = length(unique(Response))-1 - 0.5, # Hide gap bar
+                  xmax = length(unique(Response))-1 + 0.5,
+                  ymin = -Inf, ymax = Inf),
+              inherit.aes = FALSE, fill = "white", color = NA)+ 
+    geom_rect(aes(xmin = length(unique(Response))- 0.5, #higlight mean bar
+                  xmax = length(unique(Response))+ 0.5,
+                  ymin = 0, ymax = 1.001),
+              inherit.aes = FALSE, fill = NA, color = "black", linewidth = 2)
+    # geom_text(aes(x = length(unique(Response)), y = -Inf, 
+    #               label = "Mean contributions"),
+    #           inherit.aes = FALSE, fontface = "bold", size = 5, vjust = -0.5,
+    #           angle = 45)
     
     ggsave(filename =  paste0(path_file,"/variance_partitioning_absolute_values_", save_name,".jpg"),
-           width = 15, height = 10)
+           width = 18, height = 16)
     
     
     
     ## Mean contributions of covariates
     covariate_contrib <- VP_long |> 
+      dplyr::filter(Response != "Mean contribution") |> 
       dplyr::group_by(Covariate, color, category) |> 
       dplyr::summarise(sd = sd(Value),
                        contribution = mean(Value)) |> 
@@ -1193,9 +1266,10 @@ plot_hmsc_result <- function(metadata = metadata,
       ggplot(df) +
         aes(y = response, x = value,  fill = group) +
         ggridges::geom_density_ridges(aes(alpha = support))+#alpha=0.5, bandwidth = 0.005) +
-        scale_fill_manual(values = c("forestgreen", "dodgerblue3"),
-                          labels = c("NN" = "Nature-for-Nature contributions",
-                                     "NP" = "Nature-for-People contributions"))+
+        scale_fill_manual(values = c( "darkgoldenrod2", "forestgreen", "dodgerblue3"),
+                          labels = c("NN" = "Nature-for-Nature",
+                                     "NS" = "Nature-for-Society",
+                                     "NC" = "Nature-as-Culture"))+
         geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5)+
         scale_alpha_manual(values = c("0" = 0.25, "1" = 0.7), guide = "none") +
         hrbrthemes::theme_ipsum( axis_title_size = 0 ) +
@@ -1216,7 +1290,6 @@ plot_hmsc_result <- function(metadata = metadata,
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
                                paste(drivers_name, collapse = "-"), ".jpg"),
              width = 12, height = 8)
-      
       
     }
     
@@ -2139,17 +2212,19 @@ plot_conterfactual_scenarios <- function(path = path,
   #Contributions group
   grp_NN_NP <- data.frame(
     contribution = c("actino_richness","functional_distinctiveness",
-                     "iucn_species_richness" ,"mean_endemism",
-                     "evolutionary_distinctiveness","functional_entropy",
-                     "phylogenetic_entropy","herbivores_biomass",
-                     "invertivores_biomass",  "piscivores_biomass",
-                     "trophic_web_robustness", "mean_trophic_level",
-                     
-                     "public_interest", "aesthetic",
-                     "available_biomass", "selenium",
-                     "zinc",   "omega_3", "calcium",
-                     "iron","vitamin_A", "available_biomass_turnover"),
-    group = c(rep("NN", 12), rep("NP", 10)))
+                      "iucn_species_richness" ,"mean_endemism",
+                      "evolutionary_distinctiveness","functional_entropy",
+                      "phylogenetic_entropy","herbivores_biomass",
+                      "invertivores_biomass",  "piscivores_biomass",
+                      "trophic_web_robustness", "mean_trophic_level",
+      
+                      "public_attention", "aesthetic",
+                      "available_biomass", "selenium",
+                      "zinc",   "omega_3", "calcium",
+                      "iron","vitamin_A", "available_biomass_turnover"),
+    group = c(rep("NN", 12), 
+              rep("NC", 2),
+              rep("NS", 8)))
   
   #Coastline
   coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
@@ -2224,7 +2299,7 @@ plot_conterfactual_scenarios <- function(path = path,
   #   path_file,paste0("Conterfactual_VS_predictions_", save_name, folder_name, ".jpg"))
   #       )
   
-  #---- Plot histogramms of changes ---
+  ###---- Plot histogramms of changes ---####
   distribution_plot(raw_change, longer = F,
                     index_values =  c("contribution", "raw_change_values"))
 
@@ -2232,16 +2307,20 @@ plot_conterfactual_scenarios <- function(path = path,
     path_file,paste0("Raw_changes_histogramms_", save_name, folder_name, ".jpg"))
         )
   
-  #---- Plot distributions of contribution changes ---
+  ###---- Plot distributions of contribution changes ---####
   distrib_boxplot <- function(data, x, y, fill, hline = 0, title = NULL,
                               prop_outliers = 0,
                               include_stat = TRUE){
     p <- ggplot(data) +
           geom_hline(yintercept = 0, color = "grey", size = 1) +
           aes_string(x= x, y= y, fill = fill)+
-          scale_fill_manual(values = c("forestgreen", "dodgerblue3"),
-                            labels = c("NN" = "Nature-for-Nature contributions",
-                                       "NP" = "Nature-for-People contributions"))+
+          # scale_fill_manual(values = c("forestgreen", "dodgerblue3"),
+          #                   labels = c("NN" = "Nature-for-Nature contributions",
+          #                              "NP" = "Nature-for-People contributions"))+
+          scale_fill_manual(values = c( "darkgoldenrod2", "forestgreen", "dodgerblue3"),
+                            labels = c("NN" = "Nature-for-Nature",
+                                       "NS" = "Nature-for-Society",
+                                       "NC" = "Nature-as-Culture"))+
           # geom_violin(trim = FALSE, position = position_dodge(width =1), alpha = 0.7) +
           geom_boxplot(alpha = 0.7, outliers = T) +
           
@@ -2362,12 +2441,13 @@ plot_conterfactual_scenarios <- function(path = path,
     scale_y_continuous(
       breaks = c(-3, -2, -1, 0, 1, 2, 3),      
       labels = c("-1000%", "-100%", "-10%", "0", "+10%", "+100%", "+1000%")
-    )
+    )+
+    ylab("Percent change in contributions in counterfactuals (%, log-scale)")
   
   ggsave(width = 12, height = 10, filename = file.path(
     path_file,paste0("Percent_changes_LOG_scale_", save_name, "_", folder_name, ".jpg")))
   
-  #---- Plot changes in each countries ---
+  ###---- Plot changes in each countries ---####
   
   # #obs heterogeneity by country
   # data_1_contrib <- effective_change |>
@@ -2382,7 +2462,7 @@ plot_conterfactual_scenarios <- function(path = path,
   # Original PCA
   pca <- FactoMineR::PCA(preds, scale.unit = T, graph=F, ncp=15)
   
-  factoextra::fviz_screeplot(pca, ncp=15)
+  # factoextra::fviz_screeplot(pca, ncp=15)
   
   pca_plot_no_labels <- factoextra::fviz_pca_biplot(pca,
                                           axes = c(1,2),title="",
@@ -2415,7 +2495,7 @@ plot_conterfactual_scenarios <- function(path = path,
                              pca, element= "var",axes = c(1,2))$cos2 > 0.3)
                    ,], #extract cos2 of variables
       aes(x= v1*1.05, y= v2*1.03, label= gsub("_"," ", varnames)),
-      size=3,
+      size=5,
       color =  "grey20", 
       force_pull = 5,
       direction = "both")
@@ -2487,7 +2567,7 @@ plot_conterfactual_scenarios <- function(path = path,
                aes(x = PC1, y = PC2, fill = country, shape = "Counterfactual conditions"), 
                size = 4, color = "black", alpha = 1) +
     coord_cartesian(xlim= c(-7.5,7))+
-    labs(title = save_name, fill = "Country", shape = "Conditions", y = "", x="") +
+    labs(title = save_name, fill = "Country", shape = "Conditions")+#, y = "", x="") +
     scale_shape_manual(values = c("Current conditions" = 21, "Counterfactual conditions" = 24)) +
     guides(
       fill = guide_legend(nrow = 2, override.aes = list(shape = 21)),  
@@ -2496,7 +2576,9 @@ plot_conterfactual_scenarios <- function(path = path,
     )+
     theme(legend.position = "bottom",
           axis.text = element_text(size = 0),
-          axis.ticks = element_line(linewidth = 0))
+          axis.ticks = element_line(linewidth = 0),
+          axis.title.x = element_text(vjust = 127, hjust = 0, size = 12),
+          axis.title.y = element_text(vjust = -205, hjust = 0, angle = 90, size = 12))
   plot_mvt
   
   # if(is.null(set_ids)){ # if the ID are fixed to plot the barycenters, don't save theses
@@ -2541,6 +2623,8 @@ plot_conterfactual_scenarios <- function(path = path,
           axis.text = element_text(size = 0),
           axis.ticks = element_line(linewidth = 0))
   
+  
+  ###---- Responders ---####
   
   ## Plot the distances in the contribution multidimensional space
   if(plot_responders_on_map){

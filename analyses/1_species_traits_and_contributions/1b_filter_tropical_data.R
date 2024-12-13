@@ -46,7 +46,7 @@ source(here::here("R","evaluation_prediction_model.R"))
 
 sites_upper_17SST <- all_covariates_benthos_inferred |>
    dplyr::filter(min_5year_analysed_sst >= 17) |> 
-   dplyr::filter(latitude > -30) # Approximatelly the limit of the Allen Atlas
+   dplyr::filter(latitude > -30) # Approximatelly the limit of the Allen Atlas ([-31.56, 29.5])
 
 # check filter
 NA_on_map(data=sites_upper_17SST, variable = "mean_1year_analysed_sst",
@@ -88,7 +88,10 @@ tropical_species_traits <- species_traits_contrib |>
 dplyr::n_distinct(tropical_species_traits$family) # 99 families (84 actino)
 dplyr::n_distinct(tropical_species_traits$rls_species_name) # 1715 taxa (1655 actino)
 dplyr::n_distinct(tropical_species_traits$fishbase_name) # 1695 taxa -> 20 duplicates
-
+dplyr::n_distinct(tropical_species_traits$fishbase_name[
+   tropical_species_traits$class != "Elasmobranchii"]) # 1637 taxa
+dplyr::n_distinct(tropical_species_traits$fishbase_name[
+   tropical_species_traits$class == "Elasmobranchii"]) # 58 taxa
 
 ##-------------Observe data with missing values-------------
 # Explore data
@@ -121,6 +124,9 @@ ggsave(plot= last_plot(), file= here::here("figures", "1_percent_species_per_tra
 # RLS data #
 save(rls_actino_trop, file = here::here("data/derived_data/rls_actino_trop.Rdata"))
 save(rls_elasmo_trop, file = here::here("data/derived_data/rls_elasmo_trop.Rdata"))
+
+# load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
+# load(file = here::here("data/derived_data/rls_elasmo_trop.Rdata"))
 
 # species traits #
 save(tropical_species_traits, file = here::here("data/derived_data/tropical_species_traits.Rdata"))

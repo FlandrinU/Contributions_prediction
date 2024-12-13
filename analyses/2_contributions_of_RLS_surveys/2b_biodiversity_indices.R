@@ -12,6 +12,12 @@
 
 ## cleaning memory
 rm(list=ls())
+##-----------------Loading packages-------------------
+# pkgs <- c("here", "dplyr", "ggplot2", "mFD", "rnaturalearth", "ape")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+
 
 ##------------------- loading datasets-------------------
 #Species traits
@@ -183,7 +189,7 @@ iucn_by_surveys <- rls_trop_iucn|>
 
 table(iucn_by_surveys$iucn_species)
 #nb of iucn species:   0    1    2    3    4    5    6    7 
-# nb of surveys     3295 1814  624  202   49   14    3    1 
+# nb of surveys     3870 2081  696  213   56   16    3    1 
 
 
 
@@ -211,7 +217,7 @@ iucn_by_surveys[iucn_by_surveys$survey_id %in% na_survey,c("iucn_species")] <- N
 
 table(iucn_by_surveys$iucn_species)
 #nb of iucn species:   0    1    2    3    4    5    6    7 
-# nb of surveys     3196 1726  602  196   47   13    3    1 
+# nb of surveys     3775 1996  678  205   55   14    3    1 
 plot(c(iucn_by_surveys$iucn_species + rnorm(nrow(iucn_by_surveys), sd=0.1))~
        c(iucn_by_surveys$elasmobranch+rnorm(nrow(iucn_by_surveys), sd=0.1)))
 
@@ -353,7 +359,7 @@ for( i in 1:ncol(surveys_sp_occ)){
 }
   
  
-length(sp_wrong_name) #11 species are still missing
+length(sp_wrong_name) #19 species are still missing
 #none of these species are in NA_fishbase
 
 

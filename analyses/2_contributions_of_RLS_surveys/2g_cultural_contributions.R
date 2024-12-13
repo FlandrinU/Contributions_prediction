@@ -214,7 +214,7 @@ write.csv(survey_aesth, here::here("outputs", "survey_aesth.csv"), row.names = F
 #Check outputs
 old_surveys_aesth <- read.csv(here::here("data/derived_data/survey_aesth_McLean2024.csv")) |> 
   dplyr::mutate(SurveyID = as.character(SurveyID)) |> 
-  dplyr::select(SurveyID = survey_id,
+  dplyr::select(survey_id = SurveyID,
                 aesthe_old = aesthe_survey, 
                 aesthe_SR_old = aesthe_SR_survey) |> 
   dplyr::full_join(survey_aesth)

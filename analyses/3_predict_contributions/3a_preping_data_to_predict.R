@@ -34,11 +34,103 @@ load(file = here::here("outputs", "2_metadata_backtransformation_contrib.Rdata")
 # Contribution matrix at the site scale
 load(file = here::here("outputs", "2_contributions_site&date.Rdata"))
 
+# MPA data
+mpa_csv <- read.csv("data/raw_data/rls_mpa_MASTER_26112024.csv", header = TRUE)
+
+
 #Coastline
 coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
 
 ## Load functions ##
 source(here::here("R","evaluation_prediction_model.R"))
+
+#----------------- Extract MPA data ---------------------
+colnames(mpa_csv)
+table(mpa_csv$level_fishing_protection)
+# see meaning of the numbers at: https://navigatormap.org/methodology/
+# 0 = fished, 1-4 = from least to heavy restricted, 5 = no take or no entry
+
+## Chek the date of MPA vs date of surveys
+mpa_csv_rls <- all_covariates_benthos_inferred |>
+  dplyr::inner_join(dplyr::select(mpa_csv, -site_name, -latitude, -longitude, -country)) |> 
+  dplyr::select(survey_id, site_code, latitude, longitude, survey_date, year, 
+                rls_mpa, rls_protection_status_old, protected_seas_id,
+                year_of_protection, level_fishing_protection, compliance,
+                zone_marine_area_km, data_source, comments)
+
+colnames(mpa_csv_rls)
+
+mpa_csv_rls[mpa_csv_rls == ""] <- NA
+
+mpa_csv_rls <- mpa_csv_rls |> 
+  dplyr::mutate(protection_to_date = ifelse(year_of_protection < year |
+                                              is.na(year_of_protection), 
+                                            level_fishing_protection, 0),
+                age_of_MPA = year - year_of_protection )
+
+
+table(mpa_csv_rls$level_fishing_protection)
+table(mpa_csv_rls$protection_to_date)
+
+
+## Recode Protection status:
+mpa <- mpa_csv_rls |> 
+  dplyr::mutate( 
+    #Simple classification
+    protection_status = dplyr::case_when(
+      # full protection: no-take, with high or medium compliance
+      protection_to_date == 5 & 
+        compliance %in% c("High", "Medium") ~ "full",
+      
+      # Restricted: other mpa
+      (protection_to_date == 5 & compliance %in% c("Low")) |
+        (protection_to_date == 5 & is.na(compliance)) |
+        (protection_to_date >= 1 & protection_to_date <= 4)  ~ "restricted",
+      
+      # Out: no protection
+      protection_to_date == 0 ~ "out",
+      
+      # NA if conditions doesn't match -> check the NAs.
+      TRUE ~ NA_character_
+    ),
+    protection_status_detailed = dplyr::case_when(
+      # High protection: no-take, high/medium enforcement, >10 km2, >10 years
+      protection_to_date == 5 & 
+        compliance %in% c("High", "Medium") & 
+        zone_marine_area_km >= 10 & 
+        age_of_MPA >= 10 ~ "high",
+      
+      # Medium protection: no-take, high/medium enforcement, but either <10 km2 or <10 years
+      protection_to_date == 5 & 
+        compliance %in% c("High", "Medium") & 
+        (zone_marine_area_km < 10 | age_of_MPA < 10 | is.na(zone_marine_area_km) |
+           is.na(age_of_MPA)) ~ "medium",
+      
+      # Low protection: no-take with low enforcement and other MPAs
+      protection_to_date == 5 & ( compliance == "Low" | is.na(compliance)) |
+        (protection_to_date >= 1 & protection_to_date <= 4) ~ "low",
+      
+      # Out : no MPAs
+      protection_to_date == 0 ~ "out",
+      
+      # Valeur par défaut si aucun critère ne correspond (optionnel, pour éviter les NA)
+      TRUE ~ NA_character_
+    )
+  ) 
+
+## Check sample design
+table(mpa$protection_status)
+table(mpa$protection_status_detailed)
+
+## Update MPA data on covariates
+new_mpa <- mpa |> dplyr::select(survey_id, protection_status, protection_status_detailed)
+
+all_covariates_benthos_inferred <- all_covariates_benthos_inferred |> 
+  dplyr::select(-protection_status, -protection_status_detailed) |> 
+  dplyr::left_join(new_mpa)
+
+colnames(all_covariates_benthos_inferred)
+
 
 ###############################################################################"
 ##
@@ -87,7 +179,7 @@ colnames(all_covariates_benthos_inferred) <- gsub(" ", "_", colnames(all_covaria
 sapply(all_covariates_benthos_inferred, class) 
 metadata_col <- c("survey_id", "country", "area", "ecoregion", "realm", "location",
                   "site_code", "site_name", "latitude", "longitude", "survey_date",
-                  "program", "hour", "protection_status", "protection_status2")
+                  "program", "hour", "protection_status", "protection_status_detailed")
 
 data_to_filter <- all_covariates_benthos_inferred[,-which(names(
   all_covariates_benthos_inferred) %in% metadata_col)] |> 
@@ -183,7 +275,7 @@ cov <- cov[order(cov)]
 metadata_to_select <- c("survey_id", "site_code", "latitude", "longitude",
                         "country", "ecoregion", "realm",
                         "depth", "year",
-                        "protection_status", "protection_status2")
+                        "protection_status", "protection_status_detailed")
 
 cov_to_select <- c(#Environment
                      cov[grep("median_5year", cov)],
@@ -200,7 +292,7 @@ cov_to_select <- c(#Environment
                      "Rock", "coralline_algae", "coral_rubble",
                      
                    #Human
-                     "control_of_corruption", "gdp", "gravtot2", "hdi", 
+                     "control_of_corruption", "gdp", "gravity", "hdi", 
                      "marine_ecosystem_dependency", 
                      "natural_ressource_rent", "neartt", "ngo",
                      "no_violence", "voice", "n_fishing_vessels"
@@ -241,7 +333,7 @@ cov_to_select2 <-
                            "median_7days_nppv", # correlated to chlorophyll
                            "median_7days_o2",
                            "median_5year_o2",
-                           "median_7days_so_mean",
+                           "median_7days_so_glor",
                            # "median_5year_ph", #correlated with sst, low ecological meaning
                            "q05_5year_nppv",
                            "q05_5year_chl",
@@ -251,8 +343,8 @@ cov_to_select2 <-
                            "q95_5year_ph",
                            "q05_5year_ph", # correlated at the median_5year_pH
                            "q95_5year_nppv",
-                           "q95_5year_so_mean",
-                           "q05_5year_so_mean",
+                           "q95_5year_so_glor",
+                           "q05_5year_so_glor",
                            "q95_5year_analysed_sst",
                            "q05_5year_analysed_sst",
                            "q05_7days_degree_heating_week",
@@ -308,7 +400,7 @@ ggsave( width=15, height= 10,
         filename = here::here("figures/models/covariates", "3_raw_covariates_distribution.jpg"))
 
 cov_to_log_transformed <- 
-  c("Back_Reef_Slope_500m", "Deep_Lagoon_500m", "gdp", "gravtot2",
+  c("Back_Reef_Slope_500m", "Deep_Lagoon_500m", "gdp", "gravity",
     "Inner_Reef_Flat_500m", 
     "marine_ecosystem_dependency", "natural_ressource_rent",
     "median_1year_degree_heating_week", "median_5year_chl",
@@ -349,20 +441,21 @@ covariates_final <- covariates |>
   
   #Change the order of levels of MPAs for the GLM
   dplyr::mutate(protection_status = factor(protection_status, 
-                                       levels = c("out", "low", "medium", "high")),
-                protection_status2 =factor(protection_status2, 
-                                           levels = c("out", "restricted", "full")) ) |> 
+                                       levels = c("out", "restricted", "full")),
+                protection_status_detailed =factor(protection_status_detailed, 
+                                           levels = c("out", "low", "medium", "high")) ) |> 
   # tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |>
   dplyr::mutate(across(-c(longitude, latitude,
                           site_code,
-                          protection_status, protection_status2,
+                          protection_status, protection_status_detailed,
                           country,
                           realm,
                           ecoregion), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-c(site_code, protection_status, protection_status2,
-                          country, realm, ecoregion), as.numeric))
+  dplyr::mutate(across(-c(site_code, protection_status, protection_status_detailed,
+                          country, realm, ecoregion), as.numeric)) |> 
+  dplyr::select(-protection_status_detailed)
 
 
 
@@ -386,19 +479,19 @@ covariates_final_without_Allen <- covariates_final[rownames(observations),] |>
   tidyr::drop_na() 
 
 covariates_final <- covariates_final[rownames(observations),] |> 
-  tidyr::drop_na() #30% of loss notably due to the Allen Atlas
+  tidyr::drop_na() #15% of loss notably due to the Allen Atlas
 
 
 observations_final <- observations[rownames(covariates_final),] |> 
   dplyr::select(-NN_score, -NP_score)
-dim(observations_final) #4423 SURVEYS, 22 CONTRIBUTIONS
+dim(observations_final) #4375 SURVEYS, 22 CONTRIBUTIONS
 
 observations_final_aggregated_score <- observations[rownames(covariates_final),] |> 
   dplyr::select(NN_score, NP_score)
 
 observations_final_without_Allen <- observations[rownames(covariates_final_without_Allen),] |> 
   dplyr::select(-NN_score, -NP_score)
-dim(observations_final_without_Allen) #5170 SURVEYS, 22 CONTRIBUTIONS
+dim(observations_final_without_Allen) #5111 SURVEYS, 22 CONTRIBUTIONS
 
 
 #Distribution of observations
@@ -491,9 +584,9 @@ cov_to_select2
 covariates_site <- all_covariates_benthos_inferred |> 
   dplyr::select(all_of(c(metadata_to_select, "survey_date",cov_to_select2))) |> 
   #Agregate at the site scale
-  dplyr::select(-survey_id) |> 
+  dplyr::select(-survey_id, -protection_status_detailed) |> 
   dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
-                  survey_date, year, protection_status, protection_status2) |> 
+                  survey_date, year, protection_status) |> 
   dplyr::summarise(across(.cols = everything(),
                           .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
   dplyr::mutate(across(.cols = all_of(cov_to_select2),
@@ -513,6 +606,12 @@ funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates_site, sp
 # ggsave(plot = last_plot(), width=15, height= 10,
 #        filename = here::here("figures/models/covariates", "covariates_completedness.jpg"))
 
+# ## Extract missing data on MPas:
+# missing_mpa <- covariates_site |> 
+#   dplyr::filter(is.na(protection_status)) |> 
+#   dplyr::select(-n_fishing_vessels, -protection_status, -protection_status_detailed) |> 
+#   tidyr::drop_na()
+# write.csv(missing_mpa, here::here("data", "list_sites_missing_MPA_data.csv"), row.names = F)
 
 #FINAL COVARIATES                                       
 covariates_site_final <- covariates_site |> 
@@ -523,20 +622,20 @@ covariates_site_final <- covariates_site |>
   #                                             "High" = 3)) |>  
   
   #Change the order of levels of MPAs for the GLM
-  dplyr::mutate(protection_status = factor(protection_status, 
-                                           levels = c("out", "low", "medium", "high")),
-                protection_status2 =factor(protection_status2, 
+  dplyr::mutate(#protection_status_detailed = factor(protection_status_detailed, 
+                #                           levels = c("out", "low", "medium", "high")),
+                protection_status =factor(protection_status, 
                                            levels = c("out", "restricted", "full")) ) |> 
   # tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(id %in% rownames(observations_site)) |> 
   tibble::column_to_rownames("id") |>
   dplyr::mutate(across(-c(longitude, latitude,
                           site_code,
-                          protection_status, protection_status2,
+                          protection_status, #protection_status_detailed,
                           country,
                           realm,
                           ecoregion), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-c(site_code, protection_status, protection_status2,
+  dplyr::mutate(across(-c(site_code, protection_status, #protection_status_detailed,
                           country, realm, ecoregion), as.numeric))
 
 
@@ -580,7 +679,9 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 ##------------------- Map and caracterize RLS sites -------------------
 
-table(covariates_site_final$protection_status2)
+table(covariates_site_final$protection_status)
+# out restricted       full 
+# 985       1034        511 
 length(unique(covariates_site_final$country))
 
 plot_mpa <-function(covariates_site_final, xlim=c(-180,180), ylim = c(-36, 31),
@@ -596,7 +697,7 @@ plot_mpa <-function(covariates_site_final, xlim=c(-180,180), ylim = c(-36, 31),
                stroke=0.1,
                shape = 21,
                aes(x = longitude, y = latitude,
-                   fill=protection_status2)) +
+                   fill=protection_status)) +
     
     coord_sf(xlim, ylim , expand = FALSE) +
     guides(alpha = "none", size = "none", colour = "none") +
@@ -634,12 +735,74 @@ ggsave(plot = last_plot(), width = 14, height = 7,
        filename = here::here("figures","RLS sites with protection and zoom.jpg"))
        
 
+##-------------plot Covariates on map-------------
+covariate <- colnames(dplyr::select(covariates_site_final, depth:n_fishing_vessels))
+
+# save world maps
+parallel::mclapply(covariate, function(cov){
+  plot_Contrib_on_world_map(data=covariates_site_final[order(covariates_site_final[,cov]),],
+                            cov, xlim=c(-180,180), ylim = c(-36, 31), 
+                            title="", jitter=1.5, pt_size=2,
+                            save=F)
+  ggsave( here::here("figures", "map_covariates", paste0( "world_map_with_" , cov, ".jpg")),
+          plot = last_plot(), width=15, height = 7 )
+  
+},mc.cores=parallel::detectCores()-5)
+
+##-------------plot Covariates vs contributions -------------
+covariates <- covariates_site_final
+obs <- observations_site_final[rownames(covariates),]
+data <- cbind(covariates, obs)
+colnames(obs)
+colnames(covariates)
+custom_colors <- colorRampPalette(c(
+  "darkblue", "dodgerblue", "lightblue", 
+  "cyan", "green", "limegreen",        
+  "yellow", "gold", "orange",        
+  "red", "darkred", "purple",          
+  "violet", "pink",         
+  "grey50", "black"           
+))(length(unique(data$country)))
+
+obs_vs_cov <- function(X, Y, save = T){
+  # X = "gravity"
+  # Y = "aesthetic"
+  ggplot(data)+
+    geom_point(aes_string(x = X, y = Y, fill = "country"),
+               color = "grey40", alpha = 0.7, shape = 21) +
+    scale_fill_manual(values = custom_colors) +
+    hrbrthemes::theme_ipsum(
+      axis_title_size = 15,
+      strip_text_size = 12,
+      strip_text_face = 12
+    ) +
+    theme(legend.position="right",panel.spacing = unit(0.1, "lines"),
+          axis.ticks.x=element_blank())
+  
+  if(save){
+    ggsave(here::here("figures", "contribution_vs_covariate", 
+                      paste0( Y, "_VS_", X, ".jpg")),
+            plot = last_plot(), width=15, height = 7 )
+  }
+}
+
+obs_vs_cov("gravity", "aesthetic")
+obs_vs_cov("gravity", "available_biomass_turnover")
+obs_vs_cov("gravity", "evolutionary_distinctiveness")
+
+obs_vs_cov("n_fishing_vessels", "vitamin_A")
+obs_vs_cov("n_fishing_vessels", "selenium")
+obs_vs_cov("n_fishing_vessels", "trophic_web_robustness")
+
+obs_vs_cov("gdp", "calcium")
+
 
 ##------------------- save datasets -------------------
 save(covariates_site_final, file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
 save(observations_site_final, file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
 
 # load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
+# load(file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
 
 save(contributions_transformation,
      file = here::here("outputs", "3_metadata_backtransformation_contrib.Rdata") )

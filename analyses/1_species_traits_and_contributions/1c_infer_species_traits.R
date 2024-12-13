@@ -50,11 +50,11 @@ ggplot(data = df)+
   )
 
 #DEPTH MIN AND DEPTH MAX + GEOGRAPHIC RANGE ARE HIGLY RIGHT-SKEWED -> LOG TRANSFORMATION
-cols <- c("depth_min", "depth_max", "geographic_range_Albouy19")
+cols <- c("depth_min", "depth_max", "geographic_range_Albouy19", "range_n_cells_01")
 
 tropical_species_traits[,cols] <- log10(tropical_species_traits[,cols] +1) # log10(X+1)
 colnames(tropical_species_traits)[colnames(tropical_species_traits) %in% cols] <- 
-  c("log(depth_min)", "log(depth_max)", "log(geographic_range_Albouy19)")
+  c("log(depth_min)", "log(depth_max)", "log(geographic_range_Albouy19)", "log10(range_n_cells_01)")
 
 
 ##-------------Complete IUCN data from known categories-------------
@@ -124,28 +124,28 @@ tropical_species_traits[, "IUCN_inferred_Loiseau23"] <-
 #   # Estimate distributions (boxplot)
 #   boxplot_missforest <- estimates_boxplot(df_estimates = traits_performance)
 #   boxplot_missforest
-#   ggsave(filename = here::here("figures", "1_Missforest_performance_boxplot_traits.jpg"),
+#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_boxplot_traits.jpg"),
 #          boxplot_missforest, width = 12, height =8 )
 #   
 #   # Estimate distributions (Histograms)
 #   hist_missforest <- estimates_histogramm(data = traits_performance)
 #   hist_missforest
-#   ggsave(filename = here::here("figures", "1_Missforest_performance_distribution.png"),
+#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_distribution.png"),
 #          hist_missforest, width = 22, height =14 )
 #   
 #   boxplot_missforest_order <- estimates_boxplot_per_order(df_estimates = order_performance)
 #   boxplot_missforest_order #very large plot
 #   ggpubr::ggexport(boxplot_missforest_order, 
-#                    filename = here::here("figures", "1_Missforest_performance_boxplot_order.pdf"),
+#                    filename = here::here("figures","species_traits", "1_Missforest_performance_boxplot_order.pdf"),
 #                    width = 16, height =11)
 #   
 #   # Influence of NAs proportions in initial data
 #   NA_proportion <- fct_test_NA_proportion(data_to_infer = data_to_infer)
 #   NA_prop_plot <- estimates_initial_NA(NA_proportion = NA_proportion)
 #   NA_prop_plot
-#   ggsave(filename = here::here("figures", "1_Missforest_NA_proportion.jpg"),
+#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion.jpg"),
 #          NA_prop_plot[[1]], width = 12, height =7 )
-#   ggsave(filename = here::here("figures", "1_Missforest_NA_proportion_per_trait.jpg"),
+#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion_per_trait.jpg"),
 #          NA_prop_plot[[2]], width = 12, height =7 )
 # 
 # 
@@ -220,7 +220,7 @@ tropical_species_traits[, "IUCN_inferred_Loiseau23"] <-
 #     panel.spacing = unit(0.1, "lines"),
 #     axis.ticks.x=element_blank()
 #   )
-# # ggsave(filename = here::here("figures", "1_trophic_guild_inference_VS_troph.jpg"),
+# # ggsave(filename = here::here("figures","species_traits", "1_trophic_guild_inference_VS_troph.jpg"),
 # #        width = 12, height = 8)
 # 
 # 
@@ -260,7 +260,7 @@ tropical_species_traits[, "IUCN_inferred_Loiseau23"] <-
 # # Estimate distributions (boxplot)
 # boxplot_missforest <- estimates_boxplot(df_estimates = traits_performance)
 # boxplot_missforest
-# ggsave(filename = here::here("figures", "1_Missforest_RANDOM_traits.jpg"),
+# ggsave(filename = here::here("figures","species_traits", "1_Missforest_RANDOM_traits.jpg"),
 #        boxplot_missforest, width = 12, height =8 )
 
 
@@ -353,7 +353,8 @@ dimensionality_res <- do.call(rbind, test_dimensionality) |>
   dplyr::mutate(dimensions = as.factor(dimensions))  
 # dplyr::filter(variable == "K")
 
-save(dimensionality_res, file = here::here("outputs","choose_dimensionality_phylogeny_mF.Rdata"))
+save(dimensionality_res, file = here::here("outputs","1c_choose_dimensionality_phylogeny_mF.Rdata"))
+# load(file = here::here("outputs","1c_choose_dimensionality_phylogeny_mF.Rdata"))
 
 resumed_data <- dimensionality_res |>
   dplyr::group_by(variable, dimensions) |>
@@ -374,17 +375,17 @@ ggplot(resumed_data) +
         axis.title = element_text(size = 10),
         axis.text.x = element_text(size = 10))
   
-ggsave(filename = here::here("figures", "1_phylogeny_importance_in_MF_perf.jpg"),
+ggsave(filename = here::here("figures","species_traits", "1_phylogeny_importance_in_MF_perf.jpg"),
        plot = last_plot(), width = 10, height =8 )
 
 
 ## Plot performance of prediction for each dimensionality ##
-dim = 0
+dim = 35
 res <- dimensionality_res |> dplyr::filter(dimensions == dim)
 # Estimate distributions (boxplot)
 boxplot_missforest <- estimates_boxplot(df_estimates = res)
 boxplot_missforest
-ggsave(filename = here::here("figures", paste0("1_Missforest_performance_boxplot_traits_phylogeny_",dim,".jpg")),
+ggsave(filename = here::here("figures","species_traits", paste0("1_Missforest_performance_boxplot_traits_phylogeny_",dim,".jpg")),
        boxplot_missforest, width = 12, height =8 )
 
 # Estimate distribution (Histograms)
@@ -397,7 +398,7 @@ hist_missforest
 ##-------------Assess error in MissForest-------------
 
 ## number of dimensions chosen 
-dim = 45
+dim = 35
 ##
 
 ## Preping data
@@ -448,28 +449,28 @@ raw_numeric_perf <- results[[4]]
 # Estimate distributions (boxplot)
 boxplot_missforest <- estimates_boxplot(df_estimates = traits_performance)
 boxplot_missforest
-ggsave(filename = here::here("figures", "1_Missforest_final_performance_boxplot_traits.jpg"),
+ggsave(filename = here::here("figures","species_traits", "1_Missforest_final_performance_boxplot_traits.jpg"),
        boxplot_missforest, width = 12, height =8 )
 
 # Estimate distributions (Histograms)
 hist_missforest <- estimates_histogramm(data = traits_performance)
 hist_missforest
-ggsave(filename = here::here("figures", "1_Missforest_performance_distribution.png"),
+ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_distribution.png"),
        hist_missforest, width = 22, height =14 )
 
 boxplot_missforest_order <- estimates_boxplot_per_order(df_estimates = order_performance)
 boxplot_missforest_order #very large plot
 ggpubr::ggexport(boxplot_missforest_order, 
-                 filename = here::here("figures", "1_Missforest_performance_boxplot_order.pdf"),
+                 filename = here::here("figures","species_traits", "1_Missforest_performance_boxplot_order.pdf"),
                  width = 16, height =11)
 
 # # Influence of NAs proportions in initial data
 # NA_proportion <- fct_test_NA_proportion(data_to_infer = data_to_infer)
 # NA_prop_plot <- estimates_initial_NA(NA_proportion = NA_proportion)
 # NA_prop_plot
-# ggsave(filename = here::here("figures", "1_Missforest_NA_proportion.jpg"),
+# ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion.jpg"),
 #        NA_prop_plot[[1]], width = 12, height =7 )
-# ggsave(filename = here::here("figures", "1_Missforest_NA_proportion_per_trait.jpg"),
+# ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion_per_trait.jpg"),
 #        NA_prop_plot[[2]], width = 12, height =7 )
 
 
@@ -511,7 +512,7 @@ var_to_infer <- c("Length", "K", "trophic_guild",
                   "ClimVuln_SSP585", "geographic_range_Albouy19")
 
 #Number of dimensions chosen 
-dim = 45
+dim = 35
 
 #Preping data
 phylogeny <- tropical_species_traits |> 
@@ -560,7 +561,7 @@ species_traits <- inferred_data |>
 fb_plot_species_traits_completeness(species_traits)
 fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
 ggsave(plot= last_plot(), width = 8, height = 8, 
-       file= here::here("figures","1_percent_species_INFERRED_TRAITS_tropical.png"))
+       file= here::here("figures","species_traits","1_percent_species_INFERRED_TRAITS_tropical.png"))
 
 #check trophic guild inference
 df <- data.frame(troph_fishbase  = data_to_infer$Troph[which(is.na(data_to_infer$trophic_guild))],
@@ -576,7 +577,7 @@ ggplot(data=df, aes(x=troph_fishbase, group=trophic_guild_inferred, fill=trophic
     panel.spacing = unit(0.1, "lines"),
     axis.ticks.x=element_blank()
   )
-ggsave(filename = here::here("figures", "1_trophic_guild_inference_VS_troph.jpg"),
+ggsave(filename = here::here("figures","species_traits", "1_trophic_guild_inference_VS_troph.jpg"),
        width = 12, height = 8)
 
 
@@ -591,3 +592,4 @@ inferred_species_traits <- inferred_data |>
 
 save(inferred_species_traits, file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
 # load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
+

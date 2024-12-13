@@ -260,7 +260,7 @@ for (i in c(1:3)){
   library(ggplot2)
   P <- ggraph::ggraph(graph, layout = "stress")+
     ggraph::geom_edge_link(aes(edge_alpha = 0.1), edge_colour = "grey80", arrow=arrow(ends="last", angle=20, length=unit(0.15, "inches"), type="closed"), show.legend=F)+
-    ggraph::geom_node_point(aes(size = Degree), col = "white")+ #enlève les pointe de flèche visible par transparence
+    ggraph::geom_node_point(aes(size = Degree), col = "white")+ 
     ggraph::geom_node_point(aes( fill = Trophic_Level, size = Degree, alpha=0), shape = 21, show.legend = c(fill=T, Degree_in =T, alpha=F)) +
     ggraph::geom_node_text(aes(label = name, size=20, fontface="italic"), family = "Helvetica-Narrow", repel=T, show.legend = F)+
     labs(size="Degree", fill= "Trophic level")+

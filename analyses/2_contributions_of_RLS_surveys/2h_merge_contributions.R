@@ -48,7 +48,7 @@ source(here::here("R","evaluation_prediction_model.R"))
 metadata <- all_covariates_benthos_inferred |> 
   dplyr::select(survey_id, country, ecoregion, realm, site_code, latitude,
                 longitude, survey_date, depth, year, sst  = mean_5year_analysed_sst,
-                effectiveness, coral
+                protection_status, protection_status_detailed, coral
                 )
 var_metadata <- colnames(metadata)
 
@@ -88,13 +88,13 @@ contributions_surveys <- metadata |>
                 available_biomass_turnover = productivity)
 
 summary(contributions_surveys)
-#299 RLS SITES WITH NO FISHES KEPT FOR THE ANALYSIS -> TO REMOVE
+#260 RLS SITES WITH NO FISHES KEPT FOR THE ANALYSIS -> TO REMOVE
 contributions_surveys <- dplyr::filter(contributions_surveys, !is.na(actino_richness))
 
 # diversity remaining
-dplyr::n_distinct(contributions_surveys$survey_id) # 6002 surveys
-dplyr::n_distinct(contributions_surveys$site_code) # 1977 sites
-dplyr::n_distinct(contributions_surveys$country) # 41 countries
+dplyr::n_distinct(contributions_surveys$survey_id) # 6936 surveys
+dplyr::n_distinct(contributions_surveys$site_code) # 2194 sites
+dplyr::n_distinct(contributions_surveys$country) # 44 countries
 
 
 
@@ -209,10 +209,10 @@ dev.off()
 pairwise_corr <- M[upper.tri(M)]
 summary(pairwise_corr) 
 # Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-# -0.65994 -0.08566  0.07111  0.08510  0.20663  0.99300 
+# -0.69901 -0.08575  0.06050  0.07846  0.20855  0.99273 
 summary(abs(pairwise_corr))
 # Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-# 0.001281 0.072355 0.144830 0.203633 0.285199 0.993001  
+# 0.00058 0.07189 0.15352 0.20677 0.29587 0.99273 
 
 
 
@@ -406,7 +406,7 @@ save(contributions_transformation,
 contributions_sites <- contributions_surveys |> 
   dplyr::select(-survey_id, -elasmobranch_richness) |> 
   dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
-                  survey_date, year, effectiveness) |> 
+                  survey_date, year, protection_status, protection_status_detailed) |> 
   dplyr::summarise(across(.cols = everything(),
                           .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
   dplyr::mutate(across(.cols = everything(),
@@ -414,7 +414,7 @@ contributions_sites <- contributions_surveys |>
   dplyr::mutate(id = paste0(site_code, "_", survey_date)) |> 
   dplyr::ungroup() 
 
-nrow(contributions_sites) # 3325 mean_surveys
+nrow(contributions_sites) # 3835 mean_surveys
 
 distribution_plot(contributions_sites, longer = T,cols_plot = colnames(contributions_sites)[13:36])
 

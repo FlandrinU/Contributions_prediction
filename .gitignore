@@ -28,6 +28,7 @@ report/docs/
 
 #remove large data files ----> to include in a data repo.
 data_rfishbase.RData
+data/raw_data/old/
 data/raw_data/phylogeny/
 data/raw_data/World_EEZ_v12_20231025/
 
@@ -44,3 +45,7 @@ HMSC_package/*.odt
 figures/
 outputs/models/
 outputs/2d_cnpflux_sp_size_sst.csv
+
+#Embargo
+data/raw_data/covariates/social_covariates/rls_mpa_MASTER_26112024.csv
+

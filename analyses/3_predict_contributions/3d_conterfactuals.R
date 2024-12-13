@@ -71,7 +71,7 @@ path = here::here("outputs/models/hmsc")
 ## List all files in the directory and choose the model
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-model_name <- gsub("output_", "", list_files[14]) #choose the wanted file
+model_name <- gsub("output_", "", list_files[15]) #choose the wanted file
 concatenate_chains = F
 
 
@@ -90,25 +90,19 @@ summary(X)
 # (1) HUMAN FOOTPRINT - Change unprotected sites to: full protection, 
 #  min fishing vessels, min gravity and max neartt
 X_pristine_conditions <- X
-new_pristine <- rownames(X_pristine_conditions |> dplyr::filter(protection_status2 == "out"))
+new_pristine <- rownames(X_pristine_conditions |> dplyr::filter(protection_status == "out"))
 
-X_pristine_conditions[new_pristine, "protection_status2"] <- as.factor("full")
+X_pristine_conditions[new_pristine, "protection_status"] <- as.factor("full")
 X_pristine_conditions[new_pristine, "n_fishing_vessels"] <- min(X_pristine_conditions$n_fishing_vessels)
-X_pristine_conditions[new_pristine, "gravtot2"] <- min(X_pristine_conditions$gravtot2)
+X_pristine_conditions[new_pristine, "gravity"] <- min(X_pristine_conditions$gravity)
 X_pristine_conditions[new_pristine, "neartt"] <- min(X_pristine_conditions$neartt)
 
 
 # (2) CONSERVATION LEGACY - Change protected sites to: out MPA, mean fishing vessels of "out" sites
-X_conservation_legacy <- X
-# new_conserv_legacy <- rownames(X_conservation_legacy |> dplyr::filter(protection_status == "full"))
-new_conserv_legacy <- rownames(X_conservation_legacy |> dplyr::filter(protection_status2 != "out"))
-
-#protection status
-X_conservation_legacy[new_conserv_legacy, "protection_status2"] <- as.factor("out")
 
 #fishing vessels
-mean_fishing_out <- mean(X_conservation_legacy[new_pristine, "n_fishing_vessels"])
-mean_country_out <- X_conservation_legacy[new_pristine, ] |> 
+mean_fishing_out <- mean(X[new_pristine, "n_fishing_vessels"])
+mean_country_out <- X[new_pristine, ] |> 
   dplyr::group_by(country) |> 
   dplyr::summarise(fishing_out = mean(n_fishing_vessels))
 missing_rows <- data.frame(
@@ -117,26 +111,50 @@ missing_rows <- data.frame(
 mean_country_out <- rbind(mean_country_out, missing_rows)
 
 
-X_conservation_legacy <- X_conservation_legacy |> 
+## Convervation legacy of full MPA only
+X_conservation_legacy_full <- X
+new_conserv_legacy_full_mpa <- rownames(X_conservation_legacy_full |> dplyr::filter(protection_status == "full"))
+
+X_conservation_legacy_full[new_conserv_legacy_full_mpa, "protection_status"] <- as.factor("out")
+
+X_conservation_legacy_full <- X_conservation_legacy_full |> 
   tibble::rownames_to_column("id") |> 
   dplyr::left_join(mean_country_out) |> 
   dplyr::mutate(n_fishing_vessels = dplyr::case_when(
-    id %in% new_conserv_legacy ~ fishing_out,
+    id %in% new_conserv_legacy_full_mpa ~ fishing_out,
     TRUE ~ n_fishing_vessels)) |> 
   tibble::column_to_rownames("id") |> 
   dplyr::select(-fishing_out)
+
+
+
+## Convervation legacy of all MPAs
+X_conservation_legacy_all <- X
+new_conserv_legacy_all_mpa <- rownames(X_conservation_legacy_all |> dplyr::filter(protection_status != "out"))
+
+X_conservation_legacy_all[new_conserv_legacy_all_mpa, "protection_status"] <- as.factor("out")
+
+X_conservation_legacy_all <- X_conservation_legacy_all |> 
+  tibble::rownames_to_column("id") |> 
+  dplyr::left_join(mean_country_out) |> 
+  dplyr::mutate(n_fishing_vessels = dplyr::case_when(
+    id %in% new_conserv_legacy_all_mpa ~ fishing_out,
+    TRUE ~ n_fishing_vessels)) |> 
+  tibble::column_to_rownames("id") |> 
+  dplyr::select(-fishing_out)
+
 # X_conservation_legacy[new_conserv_legacy, "n_fishing_vessels"] <- mean_fishing_out
 
 
 
 
 
-#### Explore other changes ###
+#### Explore other changes ####
 
 #(3) Change MPA only: from "out" to "full protection"
 X_new_mpa <- X
-new_mpa <- rownames(X_new_mpa |> dplyr::filter(protection_status2 == "out"))
-X_new_mpa[new_mpa, "protection_status2"] <- as.factor("full")
+new_mpa <- rownames(X_new_mpa |> dplyr::filter(protection_status == "out"))
+X_new_mpa[new_mpa, "protection_status"] <- as.factor("full")
 
 #(4) Change fishing pressure only: set the number of fishing vessel to the minimum known.
 X_no_vessels <- X
@@ -148,7 +166,7 @@ X_no_vessels[new_vessels, "n_fishing_vessels"] <- min(X_no_vessels$n_fishing_ves
 #(5) Conservation potential: unprotected sites are placed in reserves, without fishing pressure.
 X_new_mpa_no_vessels <- X
 new_mpa_no_vessels <- unique(c(new_mpa, new_vessels))
-X_new_mpa_no_vessels[new_mpa_no_vessels, "protection_status2"] <- as.factor("full")
+X_new_mpa_no_vessels[new_mpa_no_vessels, "protection_status"] <- as.factor("full")
 X_new_mpa_no_vessels[new_mpa_no_vessels, "n_fishing_vessels"] <- min(X_new_mpa_no_vessels$n_fishing_vessels)
 
 #(6) Low gravity
@@ -166,8 +184,8 @@ X_no_human[new_no_human, "neartt"] <- max(X_no_human$neartt)
 
 #(8) Change MPA only: from "out" to medium protection ("restricted")
 X_new_medium_mpa <- X
-new_medium_mpa <- rownames(X_new_medium_mpa |> dplyr::filter(protection_status2 == "out"))
-X_new_medium_mpa[new_medium_mpa, "protection_status2"] <- as.factor("restricted")
+new_medium_mpa <- rownames(X_new_medium_mpa |> dplyr::filter(protection_status == "out"))
+X_new_medium_mpa[new_medium_mpa, "protection_status"] <- as.factor("restricted")
 
 
 ##----------------------------- Plot changes -----------------------------------
@@ -203,11 +221,22 @@ order <- human_footprint[[3]]  |>
 set_order_boxplot <- levels(order$contribution)
 
 
-conservation_legacy <- 
+conservation_legacy_all_mpa <- 
   plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                               X_new_data = X_conservation_legacy,
+                               X_new_data = X_conservation_legacy_all,
                                metadata,
-                               save_name = "Conservation_legacy",
+                               save_name = "Conservation_legacy_all_MPA",
+                               selected_countries,
+                               plot_responders_on_map = F,
+                               is_counterfactual = TRUE,
+                               set_order_boxplot = set_order_boxplot)
+
+
+conservation_legacy_full_mpa <- 
+  plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+                               X_new_data = X_conservation_legacy_full,
+                               metadata,
+                               save_name = "Conservation_legacy_full_MPA",
                                selected_countries,
                                plot_responders_on_map = F,
                                is_counterfactual = TRUE,
@@ -216,8 +245,7 @@ conservation_legacy <-
 
 
 
-
-#### Explore other changes ###
+#### Plot other changes ####
 
 #(3) Change effectiveness only: from "out" to "full protection"
 plot_conterfactual_scenarios(path, model_name, concatenate_chains,
@@ -279,6 +307,10 @@ plot_conterfactual_scenarios(path, model_name, concatenate_chains,
 folder_name <- gsub(".rds", "", model_name)
 path_file <- here::here("figures","models","hmsc", "conterfactuals", folder_name)    
 
+## choose the type of conservation legacy ###########################################"
+conservation_legacy <- conservation_legacy_full_mpa
+# conservation_legacy <- conservation_legacy_all_mpa
+
 
 conserv_legacy <- conservation_legacy[[3]] |> 
   dplyr::select(id, contribution, conserv_legacy_change = raw_change_percent) |> 
@@ -324,37 +356,65 @@ check_homoscedasticity <- all_changes |>
     levene_results = purrr::map(levene, broom::tidy)) |> 
   tidyr::unnest(levene_results) |> 
   dplyr::mutate(homoscedastic = ifelse(p.value < 0.05, "no", "yes"))
-      
+
+# # Parametric tests      
+# test_zero <- all_changes |> 
+#   dplyr::group_by(counterfactual, contribution) |> 
+#   dplyr::summarise(
+#     t_test = list(t.test(change, mu = 0)), .groups = "drop") |> 
+#   dplyr::mutate(
+#     t_results = purrr::map(t_test, broom::tidy))  |> 
+#   tidyr::unnest(t_results) |> 
+#   dplyr::mutate(different_from_zero = ifelse(p.value < 0.05, "yes", "no")) |> 
+#   dplyr::select(contribution, counterfactual, different_from_zero)
+# 
+# test_between_couterfactuals <- all_changes |> 
+#   dplyr::mutate(change = dplyr::case_when(
+#     counterfactual == "conservation_legacy" ~ - change, # take the opposite of conservation gains to compare with human footprint
+#     TRUE ~ change)) |> 
+#   dplyr::group_by(contribution) |> 
+#   dplyr::summarise(
+#     welch_t = list(t.test(change ~ counterfactual, var.equal = FALSE))) |> 
+#   dplyr::mutate(
+#     welch_t_results = purrr::map(welch_t, broom::tidy)) |> 
+#   tidyr::unnest(welch_t_results) |> 
+#   dplyr::mutate(footprint_different_from_gain = ifelse(p.value < 0.05, "yes", "no"))|> 
+#   dplyr::select(contribution, footprint_different_from_gain)
+
+# Non-Parametric tests      
 test_zero <- all_changes |> 
   dplyr::group_by(counterfactual, contribution) |> 
   dplyr::summarise(
-    t_test = list(t.test(change, mu = 0)), .groups = "drop") |> 
+    wilcox_test = list(wilcox.test(change, mu = 0)), .groups = "drop") |> 
   dplyr::mutate(
-    t_results = purrr::map(t_test, broom::tidy))  |> 
-  tidyr::unnest(t_results) |> 
+    wilcox_results = purrr::map(wilcox_test, broom::tidy))  |> 
+  tidyr::unnest(wilcox_results) |> 
   dplyr::mutate(different_from_zero = ifelse(p.value < 0.05, "yes", "no")) |> 
   dplyr::select(contribution, counterfactual, different_from_zero)
 
 test_between_couterfactuals <- all_changes |> 
   dplyr::mutate(change = dplyr::case_when(
-    counterfactual == "conservation_legacy" ~ - change, # take the opposite of conservation gains to compare with human footprint
+    counterfactual == "conservation_legacy" ~ -change, # take the opposite of conservation gains to compare with human footprint
     TRUE ~ change)) |> 
   dplyr::group_by(contribution) |> 
   dplyr::summarise(
-    welch_t = list(t.test(change ~ counterfactual, var.equal = FALSE))) |> 
+    wilcox_test = list(wilcox.test(change ~ counterfactual, exact = FALSE)), .groups = "drop") |> 
   dplyr::mutate(
-    welch_t_results = purrr::map(welch_t, broom::tidy)) |> 
-  tidyr::unnest(welch_t_results) |> 
-  dplyr::mutate(footprint_different_from_gain = ifelse(p.value < 0.05, "yes", "no"))|> 
+    wilcox_results = purrr::map(wilcox_test, broom::tidy)) |> 
+  tidyr::unnest(wilcox_results) |> 
+  dplyr::mutate(footprint_different_from_gain = ifelse(p.value < 0.05, "yes", "no")) |> 
   dplyr::select(contribution, footprint_different_from_gain)
-
- 
 
 ## Loliplot
 change_percent <- conserv_legacy |> 
   dplyr::left_join(hum_footprint) |>
   dplyr::mutate(contribution =forcats::fct_reorder(contribution,
      median_change_percent_hum_footprint, .fun = max, .desc = TRUE)) |>
+  # Compare medians
+  dplyr::mutate(bigger_effect = 
+      ifelse(abs(median_change_percent_conserv_legacy) > abs(median_change_percent_hum_footprint),
+             "conservation_legacy", "human_footprint")) |> 
+  # Arrange table
   tidyr::pivot_longer(
     cols = starts_with("median") | starts_with("sd"),
     names_to = c("stat", "counterfactual"),
@@ -367,42 +427,91 @@ change_percent <- conserv_legacy |>
                                         "conserv_legacy" = "conservation_legacy", 
                                         "hum_footprint" = "human_footprint")) |> 
   dplyr::left_join(test_zero) |> 
-  dplyr::left_join(test_between_couterfactuals)
+  dplyr::left_join(test_between_couterfactuals) |> 
+  # Keep significant differences between counterfactuals
+  dplyr::mutate(bigger_effect = ifelse(footprint_different_from_gain == "yes" &
+                                         bigger_effect == counterfactual,
+                                       "yes", "no"))
 
 
-ggplot(change_percent, aes(x = median, y = contribution, color = counterfactual)) +
-  geom_segment(aes(x = 0, xend = median, y = contribution, yend = contribution,
+## Broke  X-axis
+x_break = -60
+xticks <- c(-120, -60,-40,-20, 0, 20)
+
+# Transform the data
+trans_x <- function(x) {
+  pmax(x, x_break) + 0.12 * pmin(x + abs(x_break), 0)
+}
+trans_x(xticks)
+change_percent$median_t <- trans_x(change_percent$median)
+
+
+ggplot(change_percent, aes(x = median_t, y = contribution, color = counterfactual)) +
+  geom_segment(aes(x = 0, xend = median_t, y = contribution, yend = contribution,
                    alpha = different_from_zero), 
                size = 1) + 
-  geom_point(size = 4,aes(alpha = different_from_zero)) + 
+  geom_point(aes(alpha = different_from_zero, size = bigger_effect)) + 
   scale_alpha_manual(values = c("yes" = 1, "no" = 0.3)) +
-  geom_text(
-    data = change_percent |> dplyr::filter(footprint_different_from_gain == "yes") |> 
-      dplyr::distinct(contribution, .keep_all = TRUE), 
-    aes(x = 25, y = contribution, label = "*"), 
-    color = "black", hjust = 0, size = 5
-  ) +
+  scale_size_manual(values = c("yes" = 5, "no" = 2)) +
+  geom_rect(aes(xmin = trans_x(x_break-15), xmax = x_break-4, ymin = -Inf, ymax = Inf), 
+            fill = "white", color = NA) +  # Mask broken area
+  annotate("text", x = x_break-3, y = max(as.numeric(factor(change_percent$contribution))), 
+           label = "//", size = 7) + # Add a visual cue for the break
   scale_x_continuous(
-    breaks = c(-250,-200,-150,-100,-50,0,50),      
-    labels = c("-250%","-200%","-150%","-100%","-50%","0","+50%"))+
+    breaks = trans_x(xticks),
+    labels = paste0(xticks, "%") )+
   scale_color_manual(values = c("conservation_legacy" = "darkseagreen3", 
                                 "human_footprint" = "firebrick3")) + 
   labs(
     x = "Contribution changes in counterfactual scenarios", 
     y = "Contributions",
-    color = "Counterfactual") +
+    color = "Counterfactuals") +
   theme_minimal() +
   theme(axis.text.y = element_text(size = 10),
         legend.position = "bottom",
         legend.key.spacing.y = unit(0.1, "cm"),
         legend.margin = margin(0,1,0,0, unit = "cm"),
         legend.title = element_text(face="bold", size = 11)) +
-  guides(color = guide_legend(nrow = 2, byrow = TRUE),
-         alpha = guide_legend(nrow = 2, byrow = TRUE))
+  guides(color = guide_legend(nrow = 1, byrow = TRUE),
+         alpha = "none",#guide_legend(nrow = 2, byrow = TRUE),
+         size = "none")
 
 ggsave(width = 9, height = 8, filename = file.path(
-  path_file,paste0("loliplot_human_footprint_conserv_legacy","_", folder_name,".jpg")))
+  path_file,paste0("loliplot_human_footprint_conserv_legacy_full_MPA","_", folder_name,".jpg")))
 
+
+# ggplot(change_percent, aes(x = median, y = contribution, color = counterfactual)) +
+#   geom_segment(aes(x = 0, xend = median, y = contribution, yend = contribution,
+#                    alpha = different_from_zero),
+#                size = 1) +
+#   geom_point(aes(alpha = different_from_zero, size = bigger_effect)) +
+#   scale_alpha_manual(values = c("yes" = 1, "no" = 0.3)) +
+#   scale_size_manual(values = c("yes" = 5, "no" = 3)) +
+#   # Stars for significant differences
+#   # geom_text(
+#   #   data = change_percent |> dplyr::filter(footprint_different_from_gain == "yes") |>
+#   #     dplyr::distinct(contribution, .keep_all = TRUE),
+#   #   aes(x = 25, y = contribution, label = "*"),
+#   #   color = "black", hjust = 0, size = 5
+#   # ) +
+#   scale_x_continuous(
+#     breaks = c(-250,-200,-150,-100,-50,0,50),
+#     labels = c("-250%","-200%","-150%","-100%","-50%","0","+50%"))+
+#   scale_color_manual(values = c("conservation_legacy" = "darkseagreen3",
+#                                 "human_footprint" = "firebrick3")) +
+#   labs(
+#     x = "Contribution changes in counterfactual scenarios",
+#     y = "Contributions",
+#     color = "Counterfactual") +
+#   theme_minimal() +
+#   theme(axis.text.y = element_text(size = 10),
+#         legend.position = "bottom",
+#         legend.key.spacing.y = unit(0.1, "cm"),
+#         legend.margin = margin(0,1,0,0, unit = "cm"),
+#         legend.title = element_text(face="bold", size = 11)) +
+#   guides(color = guide_legend(nrow = 2, byrow = TRUE),
+#          alpha = guide_legend(nrow = 2, byrow = TRUE),
+#          size = "none")
 
 
 
@@ -445,13 +554,13 @@ ggplot(change_percent_log, aes(x = median, y = contribution, fill = counterfactu
     labels = c("-1000%", "-100%", "-10%", "0", "+10%", "+100%", "+1000%"))+  
   labs(
     x = "Contribution changes in counterfactual scenarios", 
-    y = "Contribution",
-    color = "Counterfactual") +
+    y = "Contribution"
+    ) +
   theme_minimal() +
   theme(axis.text.y = element_text(size = 10))
 
 ggsave(width = 10, height = 8, filename = file.path(
-  path_file,paste0("barplot_human_footprint_conserv_legacy","_", folder_name,".jpg")))
+  path_file,paste0("barplot_human_footprint_conserv_legacy_full_MPA","_", folder_name,".jpg")))
 
 
 
@@ -482,6 +591,8 @@ ggplot(all_changes) +
         axis.title = element_text(size = 13),
         axis.text.x = element_text(angle = 0, hjust = 0.5,size = 13))
 
+ggsave(width = 10, height = 8, filename = file.path(
+  path_file,paste0("boxplot_human_footprint_conserv_legacy_full_MPA","_", folder_name,".jpg")))
 
 
 

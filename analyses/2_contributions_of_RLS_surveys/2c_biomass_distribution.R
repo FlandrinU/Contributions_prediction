@@ -13,6 +13,13 @@
 ## cleaning memory
 rm(list=ls())
 
+
+# #-----------------Loading packages-------------------
+# pkgs <- c("here", "dplyr", "ggplot2", "funbiogeo", "entropart", "phytools")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+
 ##------------------- loading datasets-------------------
 #Species traits
 load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
@@ -50,10 +57,10 @@ summary(inferred_species_traits$trophic_guild)
 species_lowTL <- inferred_species_traits |>
   dplyr::filter(trophic_guild == "Herbivores Microvores Detritivores") |>
   rownames() 
-length(species_lowTL) # 232 species
+length(species_lowTL) # 237 species
 
 biom_lowTL <- rowSums(surveys_sp_biom[,species_lowTL]) 
-summary(biom_lowTL) # from 0 to 466219 , median=11986
+summary(biom_lowTL) # from 0 to 556609 , median=8974
 
 
 ## Species with medium TL = all type of invertivorous diet (including planktivores and corallivores)
@@ -63,10 +70,10 @@ species_mediumTL <- inferred_species_traits |>
                             "planktivore") &
                   class != "Elasmobranchii") |>
   rownames() 
-length(species_mediumTL) # 1148 species
+length(species_mediumTL) # 1165 species
 
 biom_mediumTL <- rowSums(surveys_sp_biom[,species_mediumTL])
-summary(biom_mediumTL) # from 7.8 to 458431.2, median=14624.4
+summary(biom_mediumTL) # from 4.4 to 352165.7, median=9026.6
 
 
 
@@ -74,10 +81,10 @@ summary(biom_mediumTL) # from 7.8 to 458431.2, median=14624.4
 species_highTL <- inferred_species_traits |>
   dplyr::filter(trophic_guild=="piscivore" & class != "Elasmobranchii") |>
   rownames() 
-length(species_highTL) # 190 species
+length(species_highTL) # 206 species
 
 biom_highTL <- rowSums(surveys_sp_biom[,species_highTL])
-summary(biom_highTL) # from 0 to 467505.5, median=1145.9
+summary(biom_highTL) # from 0 to 599753.1, median=1325.4
 
 
 ## Total biomass
@@ -86,7 +93,7 @@ species_NA <- inferred_species_traits |>
   rownames()
 
 all_actino <- c(species_lowTL, species_mediumTL, species_highTL, species_NA) 
-length(all_actino) #1609 -> All actino species have been taken.
+length(all_actino) #1655 -> All actino species have been taken.
 
 total_biomass <- rowSums(surveys_sp_biom[,all_actino])
 summary(total_biomass) # from 10.7 to 498916.0, median=35424.5
@@ -186,7 +193,7 @@ save(phylo_entropy_raw, file = here::here("outputs", "2c_phylogenetic_entropy_su
 phylo_entropy_surveys_10 <- do.call(cbind, phylo_entropy_raw)
 # test variability
 sd <- apply(phylo_entropy_surveys_10, 1, sd)
-summary(sd) # Median 0.0023459      Mean 0.0053854  3rd Qu. 0.0072062      Max. 0.0538961
+summary(sd) # Median 0.0020862      Mean 0.0052351  3rd Qu. 0.0068443      Max. 0.0660754
 #
 
 phylo_entropy_summary <- t(apply(phylo_entropy_surveys_10, 1, summary))

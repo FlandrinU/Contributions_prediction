@@ -13,6 +13,16 @@
 ## cleaning memory
 rm(list=ls())
 
+##-----------------Loading packages-------------------
+# pkgs <- c("here", "dplyr", "ggplot2", "funbiogeo", "fishtree", "tidybayes", "devtools")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
+# ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
+# 
+# Sys.unsetenv("GITHUB_PAT")
+# devtools::install_github("nschiett/fishflux", dependencies=TRUE)
+
+
 ##------------------- loading datasets-------------------
 #Species traits
 load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
@@ -55,12 +65,12 @@ spcombo <- all_covariates_benthos_inferred  |>
   unique()
 
 
-nrow(spcombo) # 27 162
-length(unique(spcombo$species)) #1609 OK
+nrow(spcombo) # 29047
+length(unique(spcombo$species)) #1655 OK
 
 # Get all parameters that are independent from sst
 length(which(parameters$species %in% 
-               gsub(" ", "_", rownames(inferred_species_traits)))) #1034 species out of 1609
+               gsub(" ", "_", rownames(inferred_species_traits)))) #1037 species out of 1655
 sp_par <- dplyr::left_join(spcombo, parameters)
 
 

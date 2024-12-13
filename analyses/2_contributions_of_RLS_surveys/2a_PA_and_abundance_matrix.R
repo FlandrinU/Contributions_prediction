@@ -37,7 +37,7 @@ surveys_sp_biom <- rls_actino_trop |>
   tibble::column_to_rownames(var="survey_id") 
 
 
-dim(surveys_sp_biom) # OK
+dim(surveys_sp_biom) # OK: 1655 actino according RLS -> 1637 unique species
 
 
 # ------------------- occurrence matrix of species in surveys  -------------------
