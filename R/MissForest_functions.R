@@ -475,7 +475,7 @@ missforest_applied <- function(data_to_infer,
                                       
   
   res_missforest <- pbmcapply::pbmclapply(c(1:model_iteration), 
-                                          mc.cores = parallel::detectCores() - 3, 
+                                          mc.cores = parallel::detectCores() - 5, 
                                           FUN = function(N){
                                             
     Dims <- colnames(data_to_infer)[grep("Dim",colnames(data_to_infer))]

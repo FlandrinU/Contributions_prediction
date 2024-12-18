@@ -83,6 +83,15 @@ tropical_species_traits[, "IUCN_inferred_Loiseau23"] <-
 
 
 
+
+trait_completedness <- dplyr::rename(tropical_species_traits,
+                                species = rls_species_name) |> 
+  dplyr::select(-phylum, -class, -order, -family, -spec_code, -worms_id)
+
+fb_plot_species_traits_completeness(trait_completedness)
+fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
+
+
 ################################################################################
 ##
 ##   Try missforest without all taxonomical data (only Phylum, class, order)
@@ -274,6 +283,7 @@ tropical_species_traits[, "IUCN_inferred_Loiseau23"] <-
 
 ##-------------Choose the number of dimensions-------------
 phylogeny <- tropical_species_traits |> 
+  dplyr::ungroup() |> 
   dplyr::select(rls_species_name, phylum, class, order, family) |> 
   dplyr::mutate(genus = stringr::word(rls_species_name,1)) |> 
   tibble::column_to_rownames(var="rls_species_name") |> 
@@ -403,6 +413,7 @@ dim = 35
 
 ## Preping data
 phylogeny <- tropical_species_traits |> 
+  dplyr::ungroup() |> 
   dplyr::select(rls_species_name, phylum, class, order, family) |> 
   dplyr::mutate(genus = stringr::word(rls_species_name,1)) |> 
   tibble::column_to_rownames(var="rls_species_name") |> 
@@ -509,13 +520,15 @@ resumed_data[resumed_data$prop_error < 0.05,]$variable
 #Choose variable to infer
 var_to_infer <- c("Length", "K", "trophic_guild",
                   "Calcium", "Iron", "Omega3", "Selenium", "VitaminA", "Zinc",
-                  "ClimVuln_SSP585", "geographic_range_Albouy19")
+                  "ClimVuln_SSP585", "geographic_range_Albouy19",
+                  "public_attention", "aesthetic")
 
 #Number of dimensions chosen 
 dim = 35
 
 #Preping data
 phylogeny <- tropical_species_traits |> 
+  dplyr::ungroup() |> 
   dplyr::select(rls_species_name, phylum, class, order, family) |> 
   dplyr::mutate(genus = stringr::word(rls_species_name,1)) |> 
   tibble::column_to_rownames(var="rls_species_name") |> 

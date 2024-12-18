@@ -91,6 +91,7 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          run_python = T, save_path)
 
 
+
 # #### FULL MODEL SITES test mpa 2 ####
 # name = "test_mpa2_FULL_model_SITE_SCALE"
 # random_factors = c("sample_unit", "country")
@@ -115,26 +116,6 @@ fit_hmsc_crossvalidation(k_fold = 5,
 #                          nb_neighbours, set_shrink, test_null_model, name,
 #                          run_python = T, save_path)
 # 
-#### FULL MODEL SITES test mpa####
-name = "test_new_full_mpa_FULL_model_SITE_SCALE"
-random_factors = c("sample_unit", "country")
-
-#Fit full model
-hmsc_function(nSamples, thin, nChains, verbose, transient,
-              Y_data = Y_data_site,
-              X_data = X_data_site,
-              response_distribution, quadratic_effects,random_factors,
-              nb_neighbours, set_shrink, test_null_model, name,
-              run_python = T, save_path)
-
-#Fit crossvalidation
-fit_hmsc_crossvalidation(k_fold = 5,
-                         nSamples, thin, nChains, verbose, transient,
-                         Y_data = Y_data_site,
-                         X_data = X_data_site,
-                         response_distribution, quadratic_effects,random_factors,
-                         nb_neighbours, set_shrink, test_null_model, name,
-                         run_python = T, save_path)
 
 ##--------------------------- Sensitivity analyses -----------------------------
 

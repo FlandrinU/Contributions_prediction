@@ -51,7 +51,7 @@ path = here::here("outputs/models/hmsc")
 
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-file_name <- gsub("output_", "", list_files[15]) #choose the wanted file
+file_name <- gsub("output_", "", list_files[4]) #choose the wanted file
 concatenate_chains = F
 
 ##----------------------------- Plot hmsc results ------------------------------
@@ -66,7 +66,7 @@ plot_hmsc_result(metadata = metadata_sites,
                  plot_residual_associations = T,
                  plot_estimates = T,
                  plot_partial_graph = T,
-                 check_residuals = F,
+                 check_residuals = T,
                  check_spatial_autocorrelation = F,
                  latent_factors = T,
                  drivers_to_plot =  list(
@@ -77,9 +77,11 @@ plot_hmsc_result(metadata = metadata_sites,
                    # c("protection_statushigh", "protection_statusmedium",
                    #   "protection_statuslow", "n_fishing_vessels"),
                    # 
-                   c( "marine_ecosystem_dependency", "natural_ressource_rent",
-                      "hdi","gdp","neartt"),
-                   c("median_5year_analysed_sst", "coral", "median_5year_chl")
+                   c("protection_statusfull", "protection_statusrestricted",
+                     "marine_ecosystem_dependency", "natural_ressource_rent",
+                     "hdi","neartt"),
+                   c("median_5year_analysed_sst", "coral", "median_5year_chl",
+                     "q95_5year_degree_heating_week")
                  )
 )
 

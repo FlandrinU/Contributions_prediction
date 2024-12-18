@@ -956,7 +956,6 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::group_by(Covariate, color) |> 
       dplyr::summarise(mean_imp = mean(Value)) 
     
-    
     ggplot(VP_aggregated) +
       geom_col(aes(x = reorder(category, prop_variance),
                    y = prop_variance, fill = category),
@@ -998,6 +997,11 @@ plot_hmsc_result <- function(metadata = metadata,
                                    "envir" = "#FFA976",
                                    "habitat" = "#FFCF7A",
                                    "human" = "#9B7D9E")) +
+    
+      scale_x_discrete(labels = c("random" = "Random Effects", 
+                                  "envir" = "Environment", 
+                                  "habitat" = "Habitat", 
+                                  "human" = "Human")) +
       theme_minimal() +
       coord_flip() +
       labs(y = "Proportion in the variance explained", x = "") +
@@ -1047,8 +1051,12 @@ plot_hmsc_result <- function(metadata = metadata,
     
     VP_long_absolute[VP_long_absolute$Response == "Mean contribution", "R2"] <- -1
     
-    ggplot(VP_long_absolute, aes(x = reorder(Response,-R2),
-                                 y = Value, fill = Covariate)) +
+    
+    
+    ## Plot Figure 1
+    VP_plot_absolute <- 
+      ggplot(dplyr::filter(VP_long_absolute, !Response %in% c("", "Mean contribution")))+
+      aes(x = reorder(Response,-R2), y = Value, fill = Covariate) +
       geom_bar(stat = "identity", position = "stack",
                color = "black", linewidth = 0.1) +
       scale_fill_manual(values = setNames(VP_long_absolute$color, VP_long_absolute$Covariate),
@@ -1064,23 +1072,53 @@ plot_hmsc_result <- function(metadata = metadata,
         legend.text = element_text( size = 14),
         legend.key.spacing.y = unit(0, units = "cm"))+
       guides(fill = guide_legend(nrow = 9)) +
-      geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02),
-                aes(y = mid_y, label = Symbol), size = 4, color = "black") +
+      geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
+                                       !Response %in% c("", "Mean contribution")),
+                aes(y = mid_y, label = Symbol), size = 4, color = "black") 
     
-    #Custom mean bar
-    geom_rect(aes(xmin = length(unique(Response))-1 - 0.5, # Hide gap bar
-                  xmax = length(unique(Response))-1 + 0.5,
-                  ymin = -Inf, ymax = Inf),
-              inherit.aes = FALSE, fill = "white", color = NA)+ 
-    geom_rect(aes(xmin = length(unique(Response))- 0.5, #higlight mean bar
-                  xmax = length(unique(Response))+ 0.5,
-                  ymin = 0, ymax = 1.001),
-              inherit.aes = FALSE, fill = NA, color = "black", linewidth = 2)
-    # geom_text(aes(x = length(unique(Response)), y = -Inf, 
-    #               label = "Mean contributions"),
-    #           inherit.aes = FALSE, fontface = "bold", size = 5, vjust = -0.5,
-    #           angle = 45)
+    # #Custom mean bar
+    # geom_rect(aes(xmin = length(unique(Response))-1 - 0.5, # Hide gap bar
+    #               xmax = length(unique(Response))-1 + 0.5,
+    #               ymin = -Inf, ymax = Inf),
+    #           inherit.aes = FALSE, fill = "white", color = NA)+ 
+    # geom_rect(aes(xmin = length(unique(Response))- 0.5, #higlight mean bar
+    #               xmax = length(unique(Response))+ 0.5,
+    #               ymin = 0, ymax = 1.001),
+    #           inherit.aes = FALSE, fill = NA, color = "black", linewidth = 2)+
+    # # Increase font size of "Average effects"
+    # scale_x_discrete(labels = c("Mean contribution" = expression(bold("Average effects"))))+
+
     
+    ## Mean importance column
+    VP_plot_mean_imp <- 
+      ggplot(dplyr::filter(VP_long_absolute, Response=="Mean contribution"))+
+      aes(x = Response, y = Value, fill = Covariate) +
+      geom_bar(stat = "identity", position = "stack",
+               color = "black", linewidth = 0.1) +
+      scale_fill_manual(values = setNames(VP_long_absolute$color, VP_long_absolute$Covariate),
+                        labels = unique(VP_long_absolute$labels)) +
+      theme_classic(base_size = 11, base_line_size = 0.1) +
+      scale_x_discrete(labels = c("Mean contribution" = "Average importance"))+
+      theme(
+        axis.text.x = element_text(size=18, angle = 50, face= "bold", 
+                                   hjust = 1, vjust = 1),
+        legend.position = "none",
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),)+
+      geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
+                                       Response == "Mean contribution"),
+                aes(y = mid_y, label = Symbol), size = 4, color = "black")+
+      geom_rect(aes(xmin = 1- 0.5, 
+                    xmax = 1+ 0.5,
+                    ymin = 0, ymax = 1.003),
+                inherit.aes = FALSE, fill = NA, color = "black", linewidth = 1.8)
+  
+    
+    #Merge the plot
+    library(patchwork)
+    VP_plot_absolute + plot_spacer() + VP_plot_mean_imp + plot_layout(widths = c(20, 0.2, 1))
     ggsave(filename =  paste0(path_file,"/variance_partitioning_absolute_values_", save_name,".jpg"),
            width = 18, height = 16)
     
@@ -1103,7 +1141,10 @@ plot_hmsc_result <- function(metadata = metadata,
       scale_fill_manual(values = c("random" =  "#CBCBCB",
                                    "envir" = "#FFA976",
                                    "habitat" = "#FFCF7A",
-                                   "human" = "#9B7D9E")) +
+                                   "human" = "#9B7D9E"),
+                        labels = c("envir" = "Environment", 
+                                   "habitat" = "Habitat", 
+                                   "human" = "Human")) +
       theme_minimal() +
       coord_flip() +
       labs(y = "Proportion in the variance explained", x = "") +
@@ -1245,27 +1286,39 @@ plot_hmsc_result <- function(metadata = metadata,
       
       #drivers = drivers_to_plot[[1]]
       drivers_name <- drivers
-      drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
+      all_drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
       
       #Filter estimates table
       df <- S_arranged |>
-        dplyr::filter(covariate %in% drivers) |> 
+        dplyr::filter(covariate %in% all_drivers) |> 
         dplyr::left_join(support_estimates)
       
       medians <- df  |> 
-        dplyr::filter(covariate %in% c(drivers[1], paste0(drivers[1], "_Deg1"))) |> 
+        dplyr::filter(covariate %in% c(all_drivers[1], paste0(all_drivers[1], "_Deg1"))) |> 
         dplyr::group_by(response)  |> 
         dplyr::summarise(median_value = median(value)) |> 
         dplyr::arrange(median_value)
       
       df <- df |> 
         dplyr::left_join(dplyr::rename(grp_NN_NP, response = "contribution"))|> 
-        dplyr::mutate(covariate = factor(covariate, levels = drivers)) |> 
+        dplyr::mutate(covariate = factor(covariate, levels = all_drivers)) |> 
         dplyr::mutate(response = factor(response, levels = medians$response)) 
       
-      ggplot(df) +
+      new_titles <- c(
+        "protection_statusfull" = "Full protection",
+        "n_fishing_vessels" = "Fishing pressure",
+        "gravity" = "Gravity",
+        "gdp" = "GDP",
+        
+        "protection_statusrestricted" = "Restricted MPA",
+        "median_5year_analysed_sst" = "SST_5years",
+        "median_5year_chl" = "Chlorophyll_5years",
+        "q95_5year_degree_heating_week" = "DHW_5years"
+      )
+      
+      ridges_plot <- ggplot(df) +
         aes(y = response, x = value,  fill = group) +
-        ggridges::geom_density_ridges(aes(alpha = support))+#alpha=0.5, bandwidth = 0.005) +
+        ggridges::geom_density_ridges(aes(alpha = support), linewidth = 0.3)+#alpha=0.5, bandwidth = 0.005) +
         scale_fill_manual(values = c( "darkgoldenrod2", "forestgreen", "dodgerblue3"),
                           labels = c("NN" = "Nature-for-Nature",
                                      "NS" = "Nature-for-Society",
@@ -1277,19 +1330,22 @@ plot_hmsc_result <- function(metadata = metadata,
           legend.position="bottom",
           legend.text = element_text(size = 15, margin = margin(r = 20)),
           panel.spacing = unit(0.3, "lines"),
-          strip.text.x = element_text(size = 17),
+          strip.text.x = element_text(size = 16, hjust = 0.5, face = "bold"),
           axis.text.x = element_text(size = 13),
           axis.text.y = element_text(size = 13)
           ) +
         labs(fill = "")+
-        xlab(drivers) + ylab("Nature Contributions to People and Nature")+
-        facet_wrap(~covariate, ncol = length(df$covariate)
-                   , scales = "free_x"
+        xlab(all_drivers) + ylab("Nature Contributions to People and Nature")+
+        facet_wrap(~covariate, ncol = length(df$covariate),
+                   scales = "free_x",
+             labeller = labeller(covariate = new_titles)
         )
+      
+      # if(drivers == c("protection_statusfull", "n_fishing_vessels","gravity","gdp"))
       
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
                                paste(drivers_name, collapse = "-"), ".jpg"),
-             width = 12, height = 8)
+             plot = ridges_plot, width = 12, height = 8)
       
     }
     
@@ -2000,9 +2056,9 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     dplyr::mutate(responses = factor(responses, levels = responses))
   
   ggplot(predictive_power_summary, aes(y = responses)) +
-    geom_point(aes(x = r_squared_marginal, color = "Joint"), size = 3) + 
-    geom_point(aes(x = r_squared_conditional, color = "Conditional"), size = 3) + 
-    geom_point(aes(x = R2, color = "Inference"), size = 3) + 
+    geom_point(aes(x = r_squared_marginal, color = "Marginal prediction"), size = 3) + 
+    geom_point(aes(x = r_squared_conditional, color = "Conditional prediction"), size = 3) + 
+    geom_point(aes(x = R2, color = "Explanatory power"), size = 3) + 
     
     geom_vline(xintercept = mean(predictive_power_summary$r_squared_marginal),
                linetype = "dashed", color = "skyblue") + 
@@ -2023,10 +2079,11 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
              vjust =-1.5, color = "grey50", size = 4) +
     
     labs(x = "R_squared", y = "Responses", 
-         title = "R_squared Joint vs Conditional predictions",
+         title = "Explanatory and predictive power",
          color = "R_squared Type") +
-    scale_color_manual(values = c("Joint" = "skyblue", "Conditional" = "orange",
-                                  "Inference" = "grey50")) +
+    scale_color_manual(values = c("Marginal prediction" = "skyblue",
+                                  "Conditional prediction" = "orange",
+                                  "Explanatory power" = "grey50")) +
     theme_minimal()
   
   ggsave(filename = paste0(path_file, "/Joint_vs_Conditional_pred_power_", folder_name, ".jpg"),
@@ -2566,11 +2623,11 @@ plot_conterfactual_scenarios <- function(path = path,
     geom_point(data = barycenters_new, 
                aes(x = PC1, y = PC2, fill = country, shape = "Counterfactual conditions"), 
                size = 4, color = "black", alpha = 1) +
-    coord_cartesian(xlim= c(-7.5,7))+
+    coord_cartesian(xlim= c(-7.7,7))+
     labs(title = save_name, fill = "Country", shape = "Conditions")+#, y = "", x="") +
     scale_shape_manual(values = c("Current conditions" = 21, "Counterfactual conditions" = 24)) +
     guides(
-      fill = guide_legend(nrow = 2, override.aes = list(shape = 21)),  
+      fill = guide_legend(nrow = 3, override.aes = list(shape = 21)),  
       shape = guide_legend(nrow = 2, override.aes = list(fill = NA)),
       color = "none"
     )+
@@ -2578,7 +2635,12 @@ plot_conterfactual_scenarios <- function(path = path,
           axis.text = element_text(size = 0),
           axis.ticks = element_line(linewidth = 0),
           axis.title.x = element_text(vjust = 127, hjust = 0, size = 12),
-          axis.title.y = element_text(vjust = -205, hjust = 0, angle = 90, size = 12))
+          axis.title.y = element_text(vjust = -197, hjust = 0, angle = 90, size = 12),
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size = 9, face = "bold", 
+                                      margin = margin(r=.5, unit = "cm")),
+          legend.spacing.x = unit(1, "cm"),
+          legend.key.spacing.x = unit(.1, "cm") )
   plot_mvt
   
   # if(is.null(set_ids)){ # if the ID are fixed to plot the barycenters, don't save theses

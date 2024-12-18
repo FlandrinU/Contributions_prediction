@@ -100,15 +100,15 @@ species_traits <- dplyr::rename(tropical_species_traits,
   dplyr::select(-phylum, -class, -order, -family, -spec_code, -worms_id)
 
 fb_plot_species_traits_completeness(species_traits)
-ggsave(plot= last_plot(), file= here::here("figures", "1_traits_completedness_tropical.png"), width = 15, height = 7)
+ggsave(plot= last_plot(), file= here::here("figures", "species_traits",
+        "1_traits_completedness_tropical.png"), width = 25, height = 10)
 fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
-ggsave(plot= last_plot(), file= here::here("figures", "1_percent_species_per_traits_tropical.png"), width = 8, height = 8)
+ggsave(plot= last_plot(), file= here::here("figures", "species_traits" ,
+        "1_percent_species_per_traits_tropical.png"), width = 8, height = 8)
 
 # ### espèces manquantes pour l'esthétique
 # sp_missing_aest <- tropical_species_traits[is.na(tropical_species_traits$aesthetic),]
-# added_sp_aest <- readr::read_csv(here::here("outputs/2g_aesthetic_inference_new_sp.csv")) |> 
-#    dplyr::mutate(name = gsub("([A-Za-z]+)\\_([A-Za-z]+).*", "\\1 \\2", image_name))
-# a_faire <- dplyr::filter(sp_missing_aest, !fishbase_name %in% added_sp_aest$name) |> 
+# a_faire <- dplyr::filter(sp_missing_aest) |>
 #    dplyr::filter(class != "Elasmobranchii",
 #                  order != "Pleuronectiformes",
 #                  order != "Syngnathiformes")

@@ -193,7 +193,7 @@ HMSC (Hierarchical Modeling of Species Communities) is a jSDM that relies on a l
 
 ### Partitioning of explained variance: strong influence of ecological histories {.unnumbered}
 
-![**Variance partitioning of the full model.** *The total height of each bar correspond to the percent of the initial variance explained by the model (R² for each response variable).The importance of the covariates in the explained variance is represented by the height of the stacked bars.* ](img/variance_partitioning_absolute_values_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_full_model width=100%}
+![**Variance partitioning of the full model.** *The total height of each bar correspond to the percent of the initial variance explained by the model (R² for each response variable).The importance of the covariates in the explained variance is represented by the height of the stacked bars.* ](img/variance_partitioning_absolute_values_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-VP_full_model width=100%}
 
 
 
@@ -221,7 +221,7 @@ HMSC (Hierarchical Modeling of Species Communities) is a jSDM that relies on a l
 
 <!-- level of statistical support measured by posterior probability for a positive or negative response -->
 
-![**Posterior distributions of anthropic covariates on community contributions.** * High protection_status corresponds to MPA with whith good protection levels according to EOLI criteria. "gravity" is a proxy of the human pressure, accounting for population size and travel time to the reef. n_fishing_vessels" is the number of fishing vessels bigger than 12m within a 10km radius of the reef, detected by satellite imagery.* ](img/posterior_distribution_of_estimates_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samplesprotection_statusfull-n_fishing_vessels-gravity-gdp.jpg){#fig-ridge_estimates width=100%}
+![**Posterior distributions of anthropic covariates on community contributions.** * High protection_status corresponds to MPA with whith good protection levels according to EOLI criteria. "gravity" is a proxy of the human pressure, accounting for population size and travel time to the reef. n_fishing_vessels" is the number of fishing vessels bigger than 12m within a 10km radius of the reef, detected by satellite imagery.* ](img/posterior_distribution_of_estimates_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samplesprotection_statusfull-n_fishing_vessels-gravity-gdp.jpg){#fig-ridge_estimates width=100%}
 
 **&rarr; Observations:**
 
@@ -249,27 +249,43 @@ In the end, we have only a few levers available at political level to increase c
 These aren't really predictive scenarios, because we don't know the “activation energy” required to move from one evolutive path to another: we have to take into account the inertia of ecosystems. Here, we're measuring the “**ecological deficit of protection**”, i.e. what we'd have now if we'd protected all the sites (with the current level/efficiency of protection of our sites). -> Taking action now should take us in these directions, but we can't say how long it will take/ how easy it will be to reach these states. This kind of modeling helps to show what average gain we can expect.
 
 
-<!-- ![**The ecological deficit of tropical reefs due to antrophic activities.** *In the multidimensional space of nature's contributions obtained by PCA, we plotted the barycenters of each country's unprotected reefs (deep colors), and the barycenters of the same reefs in the theoretical scenarios of **(B)** total protection (high effictiveness MPA and low fishing pressure), **(C)** low human pollution (low gravity and high neartt), or **(A)** pristine conditions (both *B* and *C* conditions combined). Country's barycenters in counterfactual scenarios are plotted in lighter colors. The dotted lines between each pair of barycenters represent the ecological deficit of each country in terms of contributions due to antrophic activities in unprotected sites. Only countries with at least 10 RLS sites are shown here.* ](img/Panel_conterfactuals_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.rds.jpg){#fig-counterfactuals width=100%} -->
+<!-- ![**The ecological deficit of tropical reefs due to antrophic activities.** *In the multidimensional space of nature's contributions obtained by PCA, we plotted the barycenters of each country's unprotected reefs (deep colors), and the barycenters of the same reefs in the theoretical scenarios of **(B)** total protection (high effictiveness MPA and low fishing pressure), **(C)** low human pollution (low gravity and high neartt), or **(A)** pristine conditions (both *B* and *C* conditions combined). Country's barycenters in counterfactual scenarios are plotted in lighter colors. The dotted lines between each pair of barycenters represent the ecological deficit of each country in terms of contributions due to antrophic activities in unprotected sites. Only countries with at least 10 RLS sites are shown here.* ](img/Panel_conterfactuals_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.rds.jpg){#fig-counterfactuals width=100%} -->
 
 
   
-  <!-- ![**The potential changes in contributions of fish communities.** *Changes in percent of the current predicted contributions in a scenario of total protection (high effectiveness and low fishing pressure). Only sites currently unprotected are taken into account here.* ](img/Percent_changes_distrib_Total_protection-MPA&vesselstest_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-conterfactuals_percent width=60%} -->
+  <!-- ![**The potential changes in contributions of fish communities.** *Changes in percent of the current predicted contributions in a scenario of total protection (high effectiveness and low fishing pressure). Only sites currently unprotected are taken into account here.* ](img/Percent_changes_distrib_Total_protection-MPA&vesselsFULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-conterfactuals_percent width=60%} -->
   
 
   
   
   
-::: {#fig-counterfactuals layout-ncol=2}
+<!-- ::: {#fig-counterfactuals layout-ncol=2} -->
 
-![a) Human footprint.](img/Percent_changes_LOG_scale_Human_footprint_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+<!-- ![a) Human footprint.](img/Percent_changes_LOG_scale_Human_footprint_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg) -->
 
-![b) Conservation legacy.](img/Percent_changes_distrib_Conservation_legacy_full_MPA_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+<!-- ![b) Conservation legacy.](img/Percent_changes_distrib_Conservation_legacy_full_MPA_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg) -->
 
-![c) Human footprint.](img/Barycenters_movement_Human_footprint_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
 
-![d) Conservation legacy.](img/Barycenters_movement_Conservation_legacy_full_MPA_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+<!-- ![c) Human footprint.](img/Barycenters_movement_Human_footprint_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg) -->
 
-**Percent changes in contributions according to different conterfactual scenarios.** *__(a and b)__ Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to pot the change in percent of the contributions. __(c and d)__ In the multidimensional space of nature's contributions obtained by PCA, we plotted the barycenters of each country's current reefs (circles), and the barycenters of the same reefs in the counterfactual scenarios (triangles). __Human footprint:__ currently unprotectedd sites are placed in conditions of minimum human impact known (full MPA, min fishing vessels, min gravity, max neartt). __Conservation legacy:__ currently protected sites are placed in conditions of non protection, given their human current human population: out MPA, mean fishing_vessels of out reserves sites.*
+<!-- ![d) Conservation legacy.](img/Barycenters_movement_Conservation_legacy_full_MPA_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg) -->
+
+<!-- **Percent changes in contributions according to different conterfactual scenarios.** *__(a and b)__ Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to pot the change in percent of the contributions. __(c and d)__ In the multidimensional space of nature's contributions obtained by PCA, we plotted the barycenters of each country's current reefs (circles), and the barycenters of the same reefs in the counterfactual scenarios (triangles). __Human footprint:__ currently unprotectedd sites are placed in conditions of minimum human impact known (full MPA, min fishing vessels, min gravity, max neartt). __Conservation legacy:__ currently protected sites are placed in conditions of non protection, given their human current human population: out MPA, mean fishing_vessels of out reserves sites.* -->
+
+<!-- ::: -->
+
+ 
+::: {layout-ncol=2 layout-heights="[1fr, 2fr]" #fig-counterfactuals}
+
+![Counterfactuals procedure.](Current reefs_timeline.png){#fig-workflow width=70%}
+
+![Median changes of human footprint and conservation legacy.](img/loliplot_human_footprint_conserv_legacy_full_MPA_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-loliplot}
+
+![Human footprint.](img/Barycenters_movement_Human_footprint_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
+
+![Conservation legacy.](img/Barycenters_movement_Conservation_legacy_full_MPA_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
+
+**Percent changes in contributions according to different conterfactual scenarios.** 
 
 :::
 
@@ -291,21 +307,7 @@ These aren't really predictive scenarios, because we don't know the “activatio
   + Effet négatif des réserves sur l'endémisme car l'endémisme est surtout dans les îles, et les îles ne sont pas bien protégées: D'agata 2016
   
   
-  
-::: {layout-ncol=2 layout-heights="[1fr, 2fr]" #fig-counterfactuals}
-
-![Counterfactuals procedure.](Current reefs (2).png){#fig-workflow width=70%}
-
-![Median changes of human footprint and conservation legacy.](img/loliplot_human_footprint_conserv_legacy_full_MPA_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-loliplot}
-
-![Human footprint.](img/Barycenters_movement_Human_footprint_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-![Conservation legacy.](img/Barycenters_movement_Conservation_legacy_full_MPA_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
-
-**Percent changes in contributions according to different conterfactual scenarios.** 
-
-:::
-
+ 
 
 <!-- ::: {#fig-panel layout-ncol=2} -->
 
@@ -314,7 +316,7 @@ These aren't really predictive scenarios, because we don't know the “activatio
 <!-- ::: -->
 
 <!-- ::: {layout-column=6} -->
-<!-- ![Median changes of human footprint and conservation legacy.](img/loliplot_human_footprint_conserv_legacy_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-loliplot} -->
+<!-- ![Median changes of human footprint and conservation legacy.](img/loliplot_human_footprint_conserv_legacy_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-loliplot} -->
 <!-- ::: -->
 
 <!-- ::: -->
@@ -634,14 +636,14 @@ __Covariates inference:__
 
 ### Check convergence of the model {.unnumbered}
 
-![**Convergence diagnosis of the full bayesian model (2000 thin, 100 samples, 2 chains).** *Theoritical values are highlighed with red dashed lines ("ess" should be around Sample x Chain = 200, and "psrf" around 1). A good convergence is observed in this model*](img/convergence_estimates_effective_size_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){#fig-convergence width=70%}
+![**Convergence diagnosis of the full bayesian model (2000 thin, 100 samples, 2 chains).** *Theoritical values are highlighed with red dashed lines ("ess" should be around Sample x Chain = 200, and "psrf" around 1). A good convergence is observed in this model*](img/convergence_estimates_effective_size_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.png){#fig-convergence width=70%}
 
 ::: {#fig-chains layout-ncol=2}
 
-![a) Estimates autocorrelations.](img/autocorrelation_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Estimates autocorrelations.](img/autocorrelation_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
 
-![b) Chains convergence.](img/Chain_convergence_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![b) Chains convergence.](img/Chain_convergence_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
 **Quality of the chains convergence.**
 :::
@@ -649,17 +651,17 @@ __Covariates inference:__
 
 ### Explanatory and predictive power {.unnumbered}
 
-![**Predictive and explanatory power of the model** *For each contributions, the points represent the R² in case of inference (full model, explanatory power; in grey), joint prediction (predictive power in 5-fold crossvalidation; in blue), and conditional prediction (observed biomass of the test set was given to the model to take into account residual associations; in orange). Dotted lines represent the mean of all contributions. In crossvalidation, the sites at a given date in the train and test sets were separated so that no reefs were in common between the two sets.*](img/Joint_vs_Conditional_pred_power_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-power width=90%}
+![**Predictive and explanatory power of the model** *For each contributions, the points represent the R² in case of inference (full model, explanatory power; in grey), joint prediction (predictive power in 5-fold crossvalidation; in blue), and conditional prediction (observed biomass of the test set was given to the model to take into account residual associations; in orange). Dotted lines represent the mean of all contributions. In crossvalidation, the sites at a given date in the train and test sets were separated so that no reefs were in common between the two sets.*](img/Joint_vs_Conditional_pred_power_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-power width=90%}
 
-![**Mean explanatory power per country**](img/Explanatory_power_per_ecoregion_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-power width=100%}
+![**Mean explanatory power per country**](img/Explanatory_power_per_ecoregion_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-power width=100%}
 
 ### Variance partitioning and importance of covariables {.unnumbered}
 
 ::: {#fig-chains layout-ncol=2}
 
-![a) Mean importance of habitat, environment and human covariates, compared to random effects, in the explained variance.](img/variance_explained_per_category_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_agreg}
+![a) Mean importance of habitat, environment and human covariates, compared to random effects, in the explained variance.](img/variance_explained_per_category_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-VP_agreg}
 
-![b) Importance of covariates in the explained variance.](img/contributions_of_covariate_in_variance_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-imp_variable}
+![b) Importance of covariates in the explained variance.](img/contributions_of_covariate_in_variance_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-imp_variable}
 
 **Importance of covariates in the full model**
 :::
@@ -667,14 +669,14 @@ __Covariates inference:__
 
 ### Estimates {.unnumbered}
 
-![**Mean of estimates statistically different from 0 (support level > 0.95).** *Estimates not different from 0 are not displayed. Overall positive effect of coral, algae cover, depth and MPA. Overall negative effect of degree heating week, gdp.*](img/estimate_significance_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){#fig-heatmap-estimates-hmsc width=100%}
+![**Mean of estimates statistically different from 0 (support level > 0.95).** *Estimates not different from 0 are not displayed. Overall positive effect of coral, algae cover, depth and MPA. Overall negative effect of degree heating week, gdp.*](img/estimate_significance_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.png){#fig-heatmap-estimates-hmsc width=100%}
 
 
 ::: {#fig-ridge_supp layout-ncol=2}
 
-![](img/posterior_distribution_of_estimates_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samplesprotection_statusfull-protection_statusrestricted-n_fishing_vessels.jpg)
+![](img/posterior_distribution_of_estimates_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samplesprotection_statusfull-protection_statusrestricted-n_fishing_vessels.jpg)
 
-![](img/posterior_distribution_of_estimates_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samplesmedian_5year_analysed_sst-coral-median_5year_chl.jpg)
+![](img/posterior_distribution_of_estimates_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samplesmedian_5year_analysed_sst-coral-median_5year_chl.jpg)
 
 **Posterior distributions of environmental, habitat and social covariates on community contributions.** *Local coral cover assessed by photoquadrats. Mean sea surface temperature over the 5 years befor the sampling date. Mean chlorophyll concentration over the 5 years before the sampling date.*
 :::
@@ -686,15 +688,15 @@ __Covariates inference:__
 
 ::: {#fig layout-ncol=2}
 
-![a) Residual associations at country level](img/residual_associations_countrytest_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
+![a) Residual associations at country level](img/residual_associations_countryFULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.png)
 
-![b) Residual associations at sample unit level](img/residual_associations_sample_unittest_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
+![b) Residual associations at sample unit level](img/residual_associations_sample_unitFULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.png)
 
 :::
 
 ::: {#fig layout-ncol=1 width=70%}
 
-![](img/residual_associations_both_levelstest_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png){width=100%}
+![](img/residual_associations_both_levelsFULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.png){width=100%}
 
 :::
 
@@ -711,23 +713,23 @@ Residual covariations among contributions at country and site levels.
 
 ::: {#fig-residuals layout-ncol=2}
 
-![a) Predictions vs observations.](img/Predictions_VS_Observations_Inference_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Predictions vs observations.](img/Predictions_VS_Observations_Inference_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
 
-![b) Residuals vs observations.](img/Residual_VS_Observations_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![b) Residuals vs observations.](img/Residual_VS_Observations_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
 **Quality of prediction in the full model.** *Black lines represent in (a) the 1:1 proportion, and in (b) the y=0 axis.*
 :::
 
 #### __*Spatial autocorrelation of residuals*__ {.unnumbered}
 
-![**Residuals accross latitude and spatial autocorrelations.** *We don't observe any latitudinal gratient in residuals and Moran indices show low to moderate spatial autocorrelations.*](img/residuals_VS_latitude_MoranI_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-Moran width=100%}
+![**Residuals accross latitude and spatial autocorrelations.** *We don't observe any latitudinal gratient in residuals and Moran indices show low to moderate spatial autocorrelations.*](img/residuals_VS_latitude_MoranI_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-Moran width=100%}
 
-![**Geographical extent of spatial autocorrelations of residuals.** *Moran indices estimate the spatial dependence of scores at discrete distance classes (increment of 300 km). Moran indices significantly different from 0 are reported in red dots (p-value <0.01).The Epperson x-intercept, highlighted by the dashed line, is the distance at which the reefs can be considered to be no more similar than expected by-chance-alone across the map (compared with 30 random models, i.e when the effect size of autocorrelation is close to 0).*](img/Variogramms_residuals_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-vario width=100%}
+![**Geographical extent of spatial autocorrelations of residuals.** *Moran indices estimate the spatial dependence of scores at discrete distance classes (increment of 300 km). Moran indices significantly different from 0 are reported in red dots (p-value <0.01).The Epperson x-intercept, highlighted by the dashed line, is the distance at which the reefs can be considered to be no more similar than expected by-chance-alone across the map (compared with 30 random models, i.e when the effect size of autocorrelation is close to 0).*](img/Variogramms_residuals_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-vario width=100%}
 
 ### Latent factors {.unnumbered}
 
-![**Three first latent factors of the full model.** *We can't observe obvious patterns in these latent variables.*](img/Latent_factors_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-latent width=100%}
+![**Three first latent factors of the full model.** *We can't observe obvious patterns in these latent variables.*](img/Latent_factors_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-latent width=100%}
 
 
 
@@ -744,16 +746,16 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 ::: {#fig-percent_change layout-ncol=2}
 
-![a) Human footprint (compared with no humans, total protection).](img/Percent_changes_LOG_scale_Human_footprint_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Human footprint (compared with no humans, total protection).](img/Percent_changes_LOG_scale_Human_footprint_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
 
-![b) Conservation legacy (Compared with no protection).](img/Percent_changes_distrib_Conservation_legacy_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![b) Conservation legacy (Compared with no protection).](img/Percent_changes_distrib_Conservation_legacy_full_MPA_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
-![c) Human presence footprint (compared with low gravity and high travel time).](img/Percent_changes_LOG_scale_Population_footprint-gravity&neartt_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![c) Human presence footprint (compared with low gravity and high travel time).](img/Percent_changes_LOG_scale_Population_footprint-gravity&neartt_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
-![d)full MPA potential gains (on current unprotected reefs.)](img/Percent_changes_distrib_full_protection_potential_gains_of_out_sites_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![d)full MPA potential gains (on current unprotected reefs.)](img/Percent_changes_distrib_full_protection_potential_gains_of_out_sites_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
-![e) Restricted MPA potential gains (on current unprotected reefs).](img/Percent_changes_distrib_restricted_MPA_potential_gains_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![e) Restricted MPA potential gains (on current unprotected reefs).](img/Percent_changes_distrib_restricted_MPA_potential_gains_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
 
 **Percent changes in contributions according to different conterfactual scenarios.** *Quantitative difference of contributions at the site level. All contributions have been back-transformed to their initial unit, and compared to the initial prediction to plot the change in percent of the contributions.*
@@ -766,17 +768,17 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 ##### __Null model: only random levels__ {.unnumbered}
 
-![**Sensibility analysis: variance partitioning in a null model fitted at the site scale.** *Only random levels are taken into account, the formula for each contribution is then ~ 1 + (1|site_id/country)*](img/variance_partitioning_absolute_values_Null_model_SITE_SCALE_site_country_in_rL_2_chains_2000_thin_100_samples.jpg){#fig-VP_null width=100%}
+![**Sensibility analysis: variance partitioning in a null model fitted at the site scale.** *Only random levels are taken into account, the formula for each contribution is then ~ 1 + (1|site_id/country)*](img/variance_partitioning_absolute_values_Null_model_SITE_SCALE_site_country_in_rL_2_chains_1000_thin_200_samples.jpg){#fig-VP_null width=100%}
 
-![**Sensibility analysis: Explanatory and predictive power in the null model fitted at the site scale.** *our full model outperfom the null model for all contributions.*](img/Joint_vs_Conditional_pred_power_Null_model_SITE_SCALE_site_country_in_rL_2_chains_2000_thin_100_samples.jpg){#fig-power_null width=100%}
+![**Sensibility analysis: Explanatory and predictive power in the null model fitted at the site scale.** *our full model outperfom the null model for all contributions.*](img/Joint_vs_Conditional_pred_power_Null_model_SITE_SCALE_site_country_in_rL_2_chains_1000_thin_200_samples.jpg){#fig-power_null width=100%}
 
 ##### __Quadratic Responses__ {.unnumbered}
 
 ::: {#fig-quadractic layout-ncol=2}
 
-![a) Linear effects only.](img/explanatory_power_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.png)
+![a) Linear effects only.](img/explanatory_power_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.png)
 
-![b) linear and quadratic effects for all covariates (degree 2).](img/explanatory_power_Quadratic_SITE_SCALE_site_country_in_rL_2_chains_2000_thin_100_samples.png)
+![b) linear and quadratic effects for all covariates (degree 2).](img/explanatory_power_Quadratic_SITE_SCALE_site_country_in_rL_2_chains_1000_thin_200_samples.png)
 
 **Explanatory power in linear or quadratic models**
 :::
@@ -784,9 +786,9 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 ::: {#fig-partial_plot layout-ncol=2}
 
-![a) Linear effects only.](img/Partial_plot_SST_test_new_full_mpa_FULL_model_SITE_SCALE_2_chains_2000_thin_100_samples.jpg)
+![a) Linear effects only.](img/Partial_plot_SST_FULL_model_SITE_SCALE_2_chains_1000_thin_200_samples.jpg)
 
-![b) linear and quadratic effects for all covariates (degree 2).](img/Partial_plot_SST_Quadratic_SITE_SCALE_site_country_in_rL_2_chains_2000_thin_100_samples.jpg)
+![b) linear and quadratic effects for all covariates (degree 2).](img/Partial_plot_SST_Quadratic_SITE_SCALE_site_country_in_rL_2_chains_1000_thin_200_samples.jpg)
 
 **Partial plot of the contributions according to the SST**
 :::
@@ -794,24 +796,24 @@ Here the x-scale is constrained between the quantiles 1 and 99%.
 
 ##### __Survey scale__ {.unnumbered}
 
-![**Sensibility analysis: variance partitioning in a full model fitted at the survey scale.** *Random levels are then setted as: (1|survey_id/site_id/country)*](img/variance_partitioning_absolute_values_FULL_survey_site_country_in_rL_2_chains_2000_thin_100_samples.jpg){#fig-VP_survey width=100%}
+![**Sensibility analysis: variance partitioning in a full model fitted at the survey scale.** *Random levels are then setted as: (1|survey_id/site_id/country)*](img/variance_partitioning_absolute_values_FULL_survey_site_country_in_rL_2_chains_1000_thin_200_samples.jpg){#fig-VP_survey width=100%}
 
-![**Sensibility analysis: Covariates influence on contributions in the survey scale model*](img/posterior_distribution_of_estimates_FULL_survey_site_country_in_rL_2_chains_2000_thin_100_sampleseffectivenessHigh-gravity-n_fishing_vessels.jpg){#fig-VP_survey width=100%}
+![**Sensibility analysis: Covariates influence on contributions in the survey scale model*](img/posterior_distribution_of_estimates_FULL_survey_site_country_in_rL_2_chains_1000_thin_200_sampleseffectivenessHigh-gravity-n_fishing_vessels.jpg){#fig-VP_survey width=100%}
 
-![**Sensibility analysis: Counterfactual scenarios in the survey scale model.**](img/Panel_conterfactuals_FULL_survey_site_country_in_rL_2_chains_2000_thin_100_samples.rds.jpg){#fig-conter_survey width=100%}
+![**Sensibility analysis: Counterfactual scenarios in the survey scale model.**](img/Panel_conterfactuals_FULL_survey_site_country_in_rL_2_chains_1000_thin_200_samples.rds.jpg){#fig-conter_survey width=100%}
 
 
 ##### __Only australia__ {.unnumbered}
 
-![**Sensibility analysis: variance partitioning in a model containing only australian sites.**](img/variance_partitioning_absolute_values_Australia_only_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_survey width=100%}
+![**Sensibility analysis: variance partitioning in a model containing only australian sites.**](img/variance_partitioning_absolute_values_Australia_only_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-VP_survey width=100%}
 
-![**Sensibility analysis: Covariates influence on contributions in the australian model**](img/posterior_distribution_of_estimates_Australia_only_SITE_SCALE_2_chains_2000_thin_100_sampleseffectivenessHigh-effectivenessLow-n_fishing_vessels-gravity.jpg){#fig-VP_survey width=100%}
+![**Sensibility analysis: Covariates influence on contributions in the australian model**](img/posterior_distribution_of_estimates_Australia_only_SITE_SCALE_2_chains_1000_thin_200_sampleseffectivenessHigh-effectivenessLow-n_fishing_vessels-gravity.jpg){#fig-VP_survey width=100%}
 
 ##### __Without australia__ {.unnumbered}
 
-![**Sensibility analysis: variance partitioning in a model containing non australian sites.**](img/variance_partitioning_absolute_values_Without_Australia_SITE_SCALE_2_chains_2000_thin_100_samples.jpg){#fig-VP_wo_aust width=100%}
+![**Sensibility analysis: variance partitioning in a model containing non australian sites.**](img/variance_partitioning_absolute_values_Without_Australia_SITE_SCALE_2_chains_1000_thin_200_samples.jpg){#fig-VP_wo_aust width=100%}
 
-![**Sensibility analysis: Covariates influence on contributions in the non australian model**](img/posterior_distribution_of_estimates_Without_Australia_SITE_SCALE_2_chains_2000_thin_100_sampleseffectivenessHigh-effectivenessLow-n_fishing_vessels-gravity.jpg){#fig-ridges_wo_aust width=100%}
+![**Sensibility analysis: Covariates influence on contributions in the non australian model**](img/posterior_distribution_of_estimates_Without_Australia_SITE_SCALE_2_chains_1000_thin_200_sampleseffectivenessHigh-effectivenessLow-n_fishing_vessels-gravity.jpg){#fig-ridges_wo_aust width=100%}
 
 
 ## Species traits

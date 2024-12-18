@@ -50,7 +50,7 @@ table(mpa_csv$level_fishing_protection)
 # see meaning of the numbers at: https://navigatormap.org/methodology/
 # 0 = fished, 1-4 = from least to heavy restricted, 5 = no take or no entry
 
-## Chek the date of MPA vs date of surveys
+## Check the date of MPA vs date of surveys
 mpa_csv_rls <- all_covariates_benthos_inferred |>
   dplyr::inner_join(dplyr::select(mpa_csv, -site_name, -latitude, -longitude, -country)) |> 
   dplyr::select(survey_id, site_code, latitude, longitude, survey_date, year, 
@@ -93,6 +93,8 @@ mpa <- mpa_csv_rls |>
       # NA if conditions doesn't match -> check the NAs.
       TRUE ~ NA_character_
     ),
+    
+    #More detailed classification -> depend on the quality of the data
     protection_status_detailed = dplyr::case_when(
       # High protection: no-take, high/medium enforcement, >10 km2, >10 years
       protection_to_date == 5 & 
@@ -657,7 +659,7 @@ covariates_site_final <- covariates_site_final[rownames(observations_site),] |>
 
 observations_site_final <- observations_site[rownames(covariates_site_final),] |> 
   dplyr::select(-NN_score, -NP_score)
-dim(observations_site_final) #2488 SITE/DATE, 22 CONTRIBUTIONS
+dim(observations_site_final) #2536 SITE/DATE, 22 CONTRIBUTIONS
 
 
 #Distribution of observations
@@ -681,7 +683,7 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 table(covariates_site_final$protection_status)
 # out restricted       full 
-# 985       1034        511 
+# 987        742        807 
 length(unique(covariates_site_final$country))
 
 plot_mpa <-function(covariates_site_final, xlim=c(-180,180), ylim = c(-36, 31),
@@ -795,6 +797,8 @@ obs_vs_cov("n_fishing_vessels", "selenium")
 obs_vs_cov("n_fishing_vessels", "trophic_web_robustness")
 
 obs_vs_cov("gdp", "calcium")
+
+boxplot(covariates_site_final$n_fishing_vessels ~ covariates_site_final$protection_status)
 
 
 ##------------------- save datasets -------------------
