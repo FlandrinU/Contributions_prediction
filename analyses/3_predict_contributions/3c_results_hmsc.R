@@ -51,7 +51,7 @@ path = here::here("outputs/models/hmsc")
 
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-file_name <- gsub("output_", "", list_files[4]) #choose the wanted file
+file_name <- gsub("output_", "", list_files[12]) #choose the wanted file
 concatenate_chains = F
 
 ##----------------------------- Plot hmsc results ------------------------------

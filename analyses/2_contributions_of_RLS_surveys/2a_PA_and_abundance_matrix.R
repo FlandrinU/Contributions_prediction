@@ -22,11 +22,23 @@ load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
 # ------------------- total biomass and abundance in each survey  -------------------
 rls_actino_trop <- rls_actino_trop|>
   dplyr::mutate(biomass = raw_biomass) |> #IN THIS PROJECT, WE CONSIDER THE BIOMASS
-  # OF FISHES ESTIMATES AS a*Size^b , WITH THE SIZE REPORTED BY DIVERS, AND NOT CORRECTED.
+  # OF FISHES ESTIMATES AS a*Size^b , WITH THE SIZE REPORTED BY DIVERS.
   dplyr::group_by(survey_id) |>
   dplyr::mutate(
     abundance_tot_survey = sum(total), #total abundance in the survey
     biomass_tot_survey = sum(biomass))  #total biomass in the survey
+
+
+# ------------------- abundance of species in each survey  -------------------
+surveys_sp_abund <- rls_actino_trop |> 
+  dplyr::select(survey_id, rls_species_name, total) |>
+  dplyr::group_by(survey_id, rls_species_name) |>
+  dplyr::summarize( sp_abund = sum(total) ) |>
+  tidyr::pivot_wider(names_from = rls_species_name, values_from = sp_abund, values_fill = 0) |>
+  tibble::column_to_rownames(var="survey_id") 
+
+
+dim(surveys_sp_abund) # OK: 1655 actino according RLS -> 1637 unique species
 
 # ------------------- biomass of species in each survey  -------------------
 surveys_sp_biom <- rls_actino_trop |> 
@@ -35,9 +47,6 @@ surveys_sp_biom <- rls_actino_trop |>
   dplyr::summarize( sp_biom = sum(biomass) ) |>
   tidyr::pivot_wider(names_from = rls_species_name, values_from = sp_biom, values_fill = 0) |>
   tibble::column_to_rownames(var="survey_id") 
-
-
-dim(surveys_sp_biom) # OK: 1655 actino according RLS -> 1637 unique species
 
 
 # ------------------- occurrence matrix of species in surveys  -------------------
@@ -52,5 +61,6 @@ save(rls_actino_trop, file=here::here("data", "derived_data", "2_rls_actino_trop
 save(surveys_sp_occ, file=here::here("data", "derived_data", "2_occurrence_matrix_sp_survey.Rdata"))
 save(surveys_sp_pbiom, file=here::here("data", "derived_data", "2_relative_biom_matrix_sp_survey.Rdata"))
 save(surveys_sp_biom, file=here::here("data", "derived_data", "2_biom_matrix_sp_survey.Rdata"))
+save(surveys_sp_abund, file=here::here("data", "derived_data", "2_abundance_matrix_sp_survey.Rdata"))
 
 

@@ -167,7 +167,8 @@ extract_model_perf <- function(raw_result = model_eval_missforest){
 ##-------------2) Plot estimates boxplot-------------
 
 ## BOXPLOT BY TRAITS
-estimates_boxplot <- function(df_estimates = traits_performance){
+estimates_boxplot <- function(df_estimates = traits_performance,
+                              add_mean = T){
   library(ggplot2)
   #Colors
   col <- rev(fishualize::fish(n = length(unique(df_estimates$variable)), 
@@ -187,7 +188,7 @@ estimates_boxplot <- function(df_estimates = traits_performance){
   data <- merge(df_estimates, order_trait)
   data$variable <- factor(data$variable, levels = order_boxplot)
   
-  ggplot(data) +
+  plot <- ggplot(data) +
     aes(x= variable, y= estimate, fill = variable, col = method)+
     geom_boxplot() +
     ylim(0,1)+
@@ -195,26 +196,32 @@ estimates_boxplot <- function(df_estimates = traits_performance){
     # Add the mean above each boxplot
     stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "text", 
                  aes(label = paste(round(after_stat(y), 2))), 
-                 position = position_dodge(width = 0.75), vjust = -2, size = 3,
+                 position = position_dodge(width = 0.75), vjust = -2, size = 4,
                  color = "grey50") + 
-    
-    #Add the mean prediction
-    geom_hline(yintercept = mean_estimate, linetype = "dashed", 
-               color = "coral3") +
-    annotate("text", x = length(unique(data$variable))-1, y = mean_estimate, 
-             label = paste("Mean:", round(mean_estimate, 2)), vjust = -1,
-             color = "coral3") +
+
     
     #Set ggplot theme
     scale_color_manual(values = c("grey", "black"))+
     scale_fill_manual(values = col)+
-    xlab("") + ylab("Assessement quality (R-squared, or Accuracy, mean in digit above)") +
+    xlab("") + ylab("Predictive power") +
     theme_minimal() +
     theme(legend.position = "none",
           panel.grid.minor = element_blank(),
-          axis.text = element_text(color = "black"),
-          axis.title = element_text(size = 10),
-          axis.text.x = element_text(angle = 45, hjust = 1,size = 10))
+          axis.text = element_text(color = "black", size = 12),
+          axis.title = element_text(size = 14),
+          axis.text.x = element_text(angle = 45, hjust = 1,size = 12))
+  
+  #Add the mean prediction
+  if(add_mean){
+    plot <- plot +
+    geom_hline(yintercept = mean_estimate, linetype = "dashed", 
+               color = "coral3") +
+      annotate("text", x = length(unique(data$variable))-1, y = mean_estimate, 
+               label = paste("Mean:", round(mean_estimate, 2)), vjust = -1,
+               color = "coral3") 
+  }
+  
+  plot
   
 } # END of estimates_boxplot (2a)
 

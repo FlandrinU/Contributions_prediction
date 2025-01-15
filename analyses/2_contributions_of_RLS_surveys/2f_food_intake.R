@@ -78,8 +78,8 @@ commercial_surveys <- rls_actino_trop |>
                    relative_biom_in_survey = sum(raw_biomass)/unique(biomass_tot_survey),
                    count = 1) |> 
   dplyr::group_by(family) |> 
-  dplyr::summarise(mean_size_indiv_in_survey = mean(mean_size_indiv),
-                   mean_relative_biom_in_survey = mean(relative_biom_in_survey),
+  dplyr::summarise(mean_size_indiv_in_survey = round(mean(mean_size_indiv),1),
+                   mean_relative_biom_in_survey = round(mean(relative_biom_in_survey),2),
                    nb_surveys_observed = sum(count))
   
 ## Decision on targeted families

@@ -21,17 +21,6 @@ nip <- lapply(nip, install.packages, dependencies = TRUE)
 source("R/HMSC_function.R")
 
 ##------------------------------- load data ------------------------------------
-## Survey scale, all covariates
-load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
-load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
-Y_data =  observations_final
-X_data = covariates_final[rownames(Y_data),]
-
-## Without Allen
-load(here::here("data/derived_data/3_contributions_without_Allen_to_predict.Rdata"))
-load(here::here("data/derived_data/3_covariates_without_Allen_to_predict.Rdata"))
-Y_data_wo_allen =  observations_final_without_Allen
-X_data_wo_allen = covariates_final_without_Allen[rownames(Y_data_wo_allen),]
 
 ## Site scale
 load(here::here("data/derived_data/3_sites_contributions_to_predict.Rdata"))
@@ -40,23 +29,23 @@ Y_data_site =  observations_site_final
 X_data_site = covariates_site_final[rownames(Y_data_site),]
 
 
-## Only/Without Australia
-X_data_aust = covariates_site_final |> dplyr::filter(country == "Australia")
-Y_data_aust =  observations_site_final[rownames(X_data_aust),]
-
-X_data_no_aust = covariates_site_final |> dplyr::filter(country != "Australia")
-Y_data_no_aust =  observations_site_final[rownames(X_data_no_aust),]
+# ##----------------------------- random forest ------------------------------
+# X <- dplyr::select(X_data, -c(site_code:realm))
+# y=data.frame(biom =Y_data[,15])
+# model <- ranger::ranger(x= X, y=y$biom, num.trees = 100)
+# 
+# pdp::partial(model, train = cbind(X,y) , pred.var = "protection_status")
 
 ##----------------------------- Set-up parameters ------------------------------
-nSamples = 200
+nSamples = 400
 thin = 1000
-nChains = 2 
+nChains = 2
 verbose = 1000 
 nb_neighbours = 10
 transient = nSamples * thin
 
 set_shrink = NULL
-response_distribution <- rep("normal", ncol(Y_data))
+response_distribution <- rep("normal", ncol(Y_data_site))
 #response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
 
 quadratic_effects = NULL
@@ -118,6 +107,26 @@ fit_hmsc_crossvalidation(k_fold = 5,
 # 
 
 ##--------------------------- Sensitivity analyses -----------------------------
+## Survey scale, all covariates
+load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
+load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
+Y_data =  observations_final
+X_data = covariates_final[rownames(Y_data),]
+
+
+## Without Allen
+load(here::here("data/derived_data/3_contributions_without_Allen_to_predict.Rdata"))
+load(here::here("data/derived_data/3_covariates_without_Allen_to_predict.Rdata"))
+Y_data_wo_allen =  observations_final_without_Allen
+X_data_wo_allen = covariates_final_without_Allen[rownames(Y_data_wo_allen),]
+
+## Only/Without Australia
+X_data_aust = covariates_site_final |> dplyr::filter(country == "Australia")
+Y_data_aust =  observations_site_final[rownames(X_data_aust),]
+
+X_data_no_aust = covariates_site_final |> dplyr::filter(country != "Australia")
+Y_data_no_aust =  observations_site_final[rownames(X_data_no_aust),]
+
 
 #### FULL MODEL SURVEYS ####
 name = "FULL_survey_site_country_in_rL"
@@ -158,7 +167,7 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
               response_distribution, 
               quadratic_effects = quadratic_effects_all,
               random_factors, nb_neighbours, set_shrink, test_null_model, name,
-              run_python = F, save_path)
+              run_python = T, save_path)
 
 
 
@@ -206,7 +215,7 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
               response_distribution, quadratic_effects,random_factors,
               nb_neighbours, set_shrink,
               test_null_model = test_null_model,
-              name, run_python = F, save_path)
+              name, run_python = T, save_path)
 
 #Fit crossvalidation
 fit_hmsc_crossvalidation(k_fold = 5, 
@@ -215,7 +224,7 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          X_data = X_data_site,
                          response_distribution, quadratic_effects,random_factors,
                          nb_neighbours, set_shrink, test_null_model = test_null_model, 
-                         name, run_python = F, save_path)
+                         name, run_python = T, save_path)
 
 
 
@@ -332,6 +341,33 @@ fit_hmsc_crossvalidation(k_fold = 5,
 
 
 
+#### WITHOUT PQ DATA MODEL SITES ####
+name = "Without_PQ_model_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+X_data_pq <- X_data_site |> 
+  dplyr::select(-coral, -Sand, -other_sessile_invert, -Rock, 
+                -coralline_algae, -coral_rubble)
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_pq,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_pq,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+
+
 # ##### fit on several realms ####
 # realms <- unique(X_data$realm)
 # 
@@ -385,17 +421,3 @@ ggplot(data)+
   geom_hline(yintercept = median(data[data$effectiveness == "out", "gravtot2"]),
              color = "red")
 
-# ##--------------------------- Sensitivity analyses -----------------------------
-#  source("R/evaluation_prediction_model.R")
-# full_data <- cbind(X_data, Y_data) |> 
-#   tidyr::pivot_longer(cols = colnames(Y_data), names_to = "contributions")
-# 
-# plot_interaction(full_data,
-#                  var_facet_wrap = "contributions",
-#                  X_values = "median_5year_analysed_sst",
-#                  Y_values = "value",
-#                  add_curve = T) # (mgcv::gam() is used with formula = y ~ s(x, bs = "cs") with method = "REML".)
-# 
-# ggsave(filename = here::here("figures/models/hmsc/sensitivity_analyses/contributions_VS_SST.jpg"),
-#        width = 15, height = 8)
-# 

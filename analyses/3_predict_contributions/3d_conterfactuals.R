@@ -71,7 +71,7 @@ path = here::here("outputs/models/hmsc")
 ## List all files in the directory and choose the model
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-model_name <- gsub("output_", "", list_files[4]) #choose the wanted file
+model_name <- gsub("output_", "", list_files[3]) #choose the wanted file
 concatenate_chains = F
 
 
@@ -91,6 +91,7 @@ summary(X)
 #  min fishing vessels, min gravity and max neartt
 X_pristine_conditions <- X
 new_pristine <- rownames(X_pristine_conditions |> dplyr::filter(protection_status == "out"))
+# new_pristine <- rownames(X_pristine_conditions |> dplyr::filter(protection_status == "full"))
 
 X_pristine_conditions[new_pristine, "protection_status"] <- as.factor("full")
 X_pristine_conditions[new_pristine, "n_fishing_vessels"] <- min(X_pristine_conditions$n_fishing_vessels)
@@ -244,6 +245,12 @@ conservation_legacy_full_mpa <-
 
 
 
+## Save conterfactuals ##
+conterfactuals <- list(human_footprint, conservation_legacy_all_mpa, conservation_legacy_full_mpa)
+save(conterfactuals, file = paste0(here::here("figures","models","hmsc", "conterfactuals"),
+                                   "/", gsub(".rds", "", model_name), 
+                                   "/counterfactuals_to_plot.Rdata"))
+
 
 #### Plot other changes ####
 
@@ -303,12 +310,29 @@ plot_conterfactual_scenarios(path, model_name, concatenate_chains,
 
 
 ##----------------------------- Plot Loliplot -----------------------------------
-#Other colors:
-# cadetblue3
-# darkseagreen3
+#Counterfactuals colors:
+Cl_color = "darkseagreen3"
+HF_color = "firebrick3"
+
+# Cl_color = "#7BC4C5"
+# HF_color = "#e3738b"
+
+# Cl_color = "#6BA9AA"
+# HF_color = "#E35973"
+
+# Cl_color = "cadetblue3"
+
 
 folder_name <- gsub(".rds", "", model_name)
 path_file <- here::here("figures","models","hmsc", "conterfactuals", folder_name)    
+
+# ## load file
+# load( file = paste0(here::here("figures","models","hmsc", "conterfactuals"),
+#                     "/", gsub(".rds", "", model_name),
+#                     "/counterfactuals_to_plot.Rdata"))
+# human_footprint <- conterfactuals[[1]]
+# conservation_legacy_all_mpa <- conterfactuals[[2]]
+# conservation_legacy_full_mpa <- conterfactuals[[3]]
 
 ## choose the type of conservation legacy ###########################################"
 conservation_legacy <- conservation_legacy_full_mpa
@@ -472,11 +496,11 @@ lolliplot <- ggplot(change_percent)+
   scale_x_continuous(
     breaks = trans_x(xticks),
     labels = paste0(xticks, "%") )+
-  scale_color_manual(values = c("conservation_legacy" = "darkseagreen3", 
-                                "human_footprint" = "firebrick3")) + 
+  scale_color_manual(values = c("conservation_legacy" = Cl_color, 
+                                "human_footprint" = HF_color)) + 
   labs(
     x = "Contribution changes in counterfactual scenarios", 
-    y = "Contributions",
+    y = "", #"Contributions",
     color = "Counterfactuals") +
   theme_minimal() +
   theme(axis.text.y = element_text(size = 10),
@@ -520,7 +544,7 @@ get_val <- function(grp, type){
 
 mean_plot <- ggplot(mean_NN_NP)+
   aes(x = mean , y = group, fill = group) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.5) +
   scale_fill_manual(values = c("NS" = "dodgerblue3", 
                                "NC" = "darkgoldenrod2", 
                                "NN" = "forestgreen")) +
@@ -529,43 +553,43 @@ mean_plot <- ggplot(mean_NN_NP)+
     axis.text.y = element_blank(),
     axis.title.y = element_blank(),
     axis.ticks.y = element_blank(),
-    axis.title.x = element_text(size=13), 
-    axis.text.x = element_text(size = 12),
+    axis.title.x = element_text(size=16), 
+    axis.text.x = element_text(size = 15),
     legend.position = "none"
   ) +
   labs(x = "Mean changes (%)")+
 
   #Add labels
-  geom_text(aes(x = 0, y = "NN"), label = "Nature-for-Nature", color = "black", 
+  geom_text(aes(x = 0, y = "NN"), label = "Nature-for-Nature", color = "white", 
             hjust = 2, vjust = 0.5, size = 6) + 
   geom_text(aes(x = 0, y = "NS"), label = "Nature-for-Society", color = "black", 
             hjust = 2, vjust = 0.5, size = 6)+
   geom_text(aes(x = 0, y = "NC"), label = "Nature-as-Culture", color = "black",
             hjust = 2, vjust = 0.5, size = 6)+
   
-  # Add rectangles
-  geom_rect(aes(xmin = get_val("NN", "conservation_legacy"), 
-                xmax = 0,  ymin = 2.65, ymax = 3.35), inherit.aes = FALSE,
-            fill = NA, color = "darkseagreen3", linewidth = 1.8) +
-  geom_rect(aes(xmin = get_val("NN", "human_footprint"), 
-                xmax = 0,  ymin = 2.65, ymax = 3.35), inherit.aes = FALSE,
-            fill = NA, color = "firebrick3", linewidth = 1.8) +
-  
-  geom_rect(aes(xmin = get_val("NS", "conservation_legacy"), 
-                xmax = 0,  ymin = 1.65, ymax = 2.35), inherit.aes = FALSE,
-            fill = NA, color = "darkseagreen3", linewidth = 1.8) +
-  geom_rect(aes(xmin = get_val("NS", "human_footprint"), 
-                xmax = 0,  ymin = 1.65, ymax = 2.35), inherit.aes = FALSE,
-            fill = NA, color = "firebrick3", linewidth = 1.8) +
-  
-  geom_rect(aes(xmin = get_val("NC", "conservation_legacy"), 
-                xmax = 0,  ymin = .65, ymax = 1.35), inherit.aes = FALSE,
-            fill = NA, color = "darkseagreen3", linewidth = 1.8) +
-  geom_rect(aes(xmin = get_val("NC", "human_footprint"), 
-                xmax = 0,  ymin = .65, ymax = 1.35), inherit.aes = FALSE,
-            fill = NA, color = "firebrick3", linewidth = 1.8) +
+  # # Add rectangles
+  # geom_rect(aes(xmin = get_val("NN", "conservation_legacy"), 
+  #               xmax = 0,  ymin = 2.65, ymax = 3.35), inherit.aes = FALSE,
+  #           fill = NA, color = Cl_color, linewidth = 1.8) +
+  # geom_rect(aes(xmin = get_val("NN", "human_footprint"), 
+  #               xmax = 0,  ymin = 2.65, ymax = 3.35), inherit.aes = FALSE,
+  #           fill = NA, color = HF_color, linewidth = 1.8) +
+  # 
+  # geom_rect(aes(xmin = get_val("NS", "conservation_legacy"), 
+  #               xmax = 0,  ymin = 1.65, ymax = 2.35), inherit.aes = FALSE,
+  #           fill = NA, color = Cl_color, linewidth = 1.8) +
+  # geom_rect(aes(xmin = get_val("NS", "human_footprint"), 
+  #               xmax = 0,  ymin = 1.65, ymax = 2.35), inherit.aes = FALSE,
+  #           fill = NA, color = HF_color, linewidth = 1.8) +
+  # 
+  # geom_rect(aes(xmin = get_val("NC", "conservation_legacy"), 
+  #               xmax = 0,  ymin = .65, ymax = 1.35), inherit.aes = FALSE,
+  #           fill = NA, color = Cl_color, linewidth = 1.8) +
+  # geom_rect(aes(xmin = get_val("NC", "human_footprint"), 
+  #               xmax = 0,  ymin = .65, ymax = 1.35), inherit.aes = FALSE,
+  #           fill = NA, color = HF_color, linewidth = 1.8) +
 
-geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 2)
+geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.7)
 mean_plot
 
 title <- ggplot() + theme_void() + 
@@ -574,7 +598,7 @@ title <- ggplot() + theme_void() +
             hjust = 0.5, fontface = "bold") +
   geom_text(aes(x = 0, y = 0.1, label = "Conservation\n        legacy", color = "CL"),
             size = 6,hjust = -.9, fontface = "bold") +
-  scale_color_manual(values = c("darkseagreen3", "firebrick3"))
+  scale_color_manual(values = c(Cl_color, HF_color))
 
 library(patchwork)
 mean_plot_with_title <- title / mean_plot + plot_layout(heights = c(4,20))
@@ -635,8 +659,8 @@ ggsave(filename =  paste0(path_file,"/Lolliplot_with_insert.jpg"),
 #   geom_errorbar(aes(xmin = median - sd, xmax = median), 
 #                 position = position_dodge(width = 0.9), 
 #                 width = 0.2, color = "black")+
-#   scale_fill_manual(values = c("conservation_legacy" = "darkseagreen3", 
-#                                 "human_footprint" = "firebrick3")) +
+#   scale_fill_manual(values = c("conservation_legacy" = Cl_color, 
+#                                 "human_footprint" = HF_color)) +
 #   scale_x_continuous(
 #     breaks = c(-3, -2, -1, 0, 1, 2, 3),      
 #     labels = c("-1000%", "-100%", "-10%", "0", "+10%", "+100%", "+1000%"))+  
@@ -664,8 +688,8 @@ ggsave(filename =  paste0(path_file,"/Lolliplot_with_insert.jpg"),
 # ggplot(all_changes) +
 #   geom_hline(yintercept = 0, color = "grey", size = 1) +
 #   aes(x= change, y= contribution, fill = counterfactual)+
-#   scale_fill_manual(values = c("conservation_legacy" = "darkseagreen3", 
-#                                 "human_footprint" = "firebrick3")) +
+#   scale_fill_manual(values = c("conservation_legacy" = Cl_color, 
+#                                 "human_footprint" = HF_color)) +
 #   # geom_violin(trim = FALSE, position = position_dodge(width =1), alpha = 0.7) +
 #   geom_boxplot(alpha = 0.7, outliers = F) +
 # 
@@ -688,7 +712,7 @@ ggsave(filename =  paste0(path_file,"/Lolliplot_with_insert.jpg"),
 PCA_HF <- human_footprint[[1]] +
   labs(title = "Human footprint")+
   theme(legend.position = "none",
-        plot.title = element_text(size = 20, colour = "firebrick3", face = "bold", hjust = 0.5),
+        plot.title = element_text(size = 20, colour = HF_color, face = "bold", hjust = 0.5),
         axis.title.x = element_text(vjust = 140, hjust = 0, size = 12),
         axis.title.y = element_text(vjust = -149, hjust = 0, angle = 90, size = 12))
 
@@ -696,7 +720,7 @@ PCA_HF <- human_footprint[[1]] +
 PCA_CL <- conservation_legacy_full_mpa[[1]]+
   labs(title = "Conservation legacy")+
   theme(legend.position = "none",
-        plot.title = element_text(size = 20, colour = "darkseagreen3", face = "bold", hjust = 0.5),
+        plot.title = element_text(size = 20, colour = Cl_color, face = "bold", hjust = 0.5),
         axis.title.x = element_text(vjust = 140, hjust = 0, size = 12),
         axis.title.y = element_text(vjust = -149, hjust = 0, angle = 90, size = 12))
 

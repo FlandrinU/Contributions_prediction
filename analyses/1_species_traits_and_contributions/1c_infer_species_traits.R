@@ -463,6 +463,20 @@ boxplot_missforest
 ggsave(filename = here::here("figures","species_traits", "1_Missforest_final_performance_boxplot_traits.jpg"),
        boxplot_missforest, width = 12, height =8 )
 
+#Choose variable to plot
+var_to_plot <- c("Length", "K", "trophic_guild",
+                  "Calcium", "Iron", "Omega3", "Selenium", "VitaminA", "Zinc",
+                  "log(geographic_range_Albouy19)",
+                  "public_attention", "aesthetic")
+
+#Plot performance for these traits
+boxplot_missforest <- estimates_boxplot(df_estimates = dplyr::filter(
+  traits_performance, variable %in% var_to_plot),
+  add_mean = F)
+boxplot_missforest
+ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_distribution_selected_traits.jpg"),
+       boxplot_missforest, width = 10, height =7 )
+
 # Estimate distributions (Histograms)
 hist_missforest <- estimates_histogramm(data = traits_performance)
 hist_missforest
@@ -606,3 +620,17 @@ inferred_species_traits <- inferred_data |>
 save(inferred_species_traits, file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
 # load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
 
+
+
+#Save used traits completedness
+used_traits <- c("fishbase_name", "IUCN_category", "Length", "Importance",
+                 "Troph", "a", "b", "K", "DemersPelag", "trophic_guild",
+                 "IUCN_inferred_Loiseau23", 
+                 "log(depth_min)", "log(depth_max)", "log(geographic_range_Albouy19)", "Iron",
+                 "VitaminA" , "Zinc", "Calcium", "Omega3", "Selenium" ,
+                 "aesthetic", "public_attention")
+species_traits <- dplyr::select(inferred_species_traits, all_of(used_traits)) |> 
+  tibble::rownames_to_column("species")
+fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
+ggsave(plot= last_plot(), width = 8, height = 8, 
+       file= here::here("figures","species_traits","1_percent_species_INFERRED_used_TRAITS_tropical.png"))

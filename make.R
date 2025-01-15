@@ -46,3 +46,8 @@ source(here::here("analyses/2_contributions_of_RLS_surveys/2f_food_intake.R")) #
 source(here::here("analyses/2_contributions_of_RLS_surveys/2g_cultural_contributions.R"))
 source(here::here("analyses/2_contributions_of_RLS_surveys/2h_merge_contributions.R"))
 
+## 3) Predict contributions and run couterfactual scenarios
+source(here::here("analyses/3_predict_contributions/3a_preping_data_to_predict.R"))
+#-> need to set-up the HMSC-HPC package. See the file HMSC_package/Set_up_HMSC_package.Rmd
+source(here::here("analyses/3_predict_contributions/3b_fit_model_hmsc.R")) #/!\ run all models will take several days..
+

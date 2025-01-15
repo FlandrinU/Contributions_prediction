@@ -876,7 +876,7 @@ plot_hmsc_result <- function(metadata = metadata,
                                               "median_7days_degree_heating_week" = "DHW_7days",
                                               "median_7days_chl" = "Chlorophyll_7days",
                                               "median_5year_ph" = "pH_5years",
-                                              "q95_5year_degree_heating_week" = "DHW_quartile95_5years",
+                                              "q95_5year_degree_heating_week" = "DHW_quantile95_5years",
                                               "median_5year_chl" = "Chlorophyll_5years"))
     
     # Mean contribution of covariates
@@ -1074,7 +1074,11 @@ plot_hmsc_result <- function(metadata = metadata,
       guides(fill = guide_legend(nrow = 9)) +
       geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
                                        !Response %in% c("", "Mean contribution")),
-                aes(y = mid_y, label = Symbol), size = 4, color = "black") 
+                aes(y = mid_y, label = Symbol), size = 4, color = "black")+
+      geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
+                                       !Response %in% c("", "Mean contribution")&
+                                       Symbol %in% c("1", "2", "3")),
+                aes(y = mid_y, label = Symbol), size = 4, color = "white")
     
     # #Custom mean bar
     # geom_rect(aes(xmin = length(unique(Response))-1 - 0.5, # Hide gap bar
@@ -1098,7 +1102,7 @@ plot_hmsc_result <- function(metadata = metadata,
       scale_fill_manual(values = setNames(VP_long_absolute$color, VP_long_absolute$Covariate),
                         labels = unique(VP_long_absolute$labels)) +
       theme_classic(base_size = 11, base_line_size = 0.1) +
-      scale_x_discrete(labels = c("Mean contribution" = "Average importance"))+
+      scale_x_discrete(labels = c("Mean contribution" = "Average relative\n importance   "))+
       theme(
         axis.text.x = element_text(size=18, angle = 50, face= "bold", 
                                    hjust = 1, vjust = 1),
@@ -1110,6 +1114,10 @@ plot_hmsc_result <- function(metadata = metadata,
       geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
                                        Response == "Mean contribution"),
                 aes(y = mid_y, label = Symbol), size = 4, color = "black")+
+      geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
+                                       Response == "Mean contribution"&
+                                       Symbol %in% c("1", "2", "3")),
+                aes(y = mid_y, label = Symbol), size = 4, color = "white")+
       geom_rect(aes(xmin = 1- 0.5, 
                     xmax = 1+ 0.5,
                     ymin = 0, ymax = 1.003),
@@ -1268,6 +1276,14 @@ plot_hmsc_result <- function(metadata = metadata,
                    mar = c(0,0,0,0) )
     dev.off()
     
+    png(paste0(path_file,"/estimate_significance_mean_", save_name,".png"),
+        width = 30, height = 20, units = "cm", res = 300)
+    par(mar = c(15,10,2,2))
+    Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Mean",
+                   supportLevel = 0.5, colors = colorRampPalette(c("#2166AC", "white", "#A50026")),
+                   mar = c(0,0,0,0) )
+    dev.off()
+    
     ## Keep support levels
     support_estimates <- postBeta[["support"]]
     rownames(support_estimates) <- model_fit_mcmc[["covNames"]]
@@ -1313,7 +1329,11 @@ plot_hmsc_result <- function(metadata = metadata,
         "protection_statusrestricted" = "Restricted MPA",
         "median_5year_analysed_sst" = "SST_5years",
         "median_5year_chl" = "Chlorophyll_5years",
-        "q95_5year_degree_heating_week" = "DHW_5years"
+        "q95_5year_degree_heating_week" = "DHW_5years",
+        "marine_ecosystem_dependency" = "MED",
+        "neartt" = "Travel time",
+        "hdi" = "HDI",
+        "natural_ressource_rent" = "Ressource rent"
       )
       
       ridges_plot <- ggplot(df) +
@@ -2504,7 +2524,7 @@ plot_conterfactual_scenarios <- function(path = path,
   ggsave(width = 12, height = 10, filename = file.path(
     path_file,paste0("Percent_changes_LOG_scale_", save_name, "_", folder_name, ".jpg")))
   
-  ###---- Plot changes in each countries ---####
+  ###---- Plot changes in each countries (PCA) ---####
   
   # #obs heterogeneity by country
   # data_1_contrib <- effective_change |>
@@ -2623,7 +2643,7 @@ plot_conterfactual_scenarios <- function(path = path,
     geom_point(data = barycenters_new, 
                aes(x = PC1, y = PC2, fill = country, shape = "Counterfactual conditions"), 
                size = 4, color = "black", alpha = 1) +
-    coord_cartesian(xlim= c(-7.7,7))+
+    coord_cartesian(xlim= c(-7.8,7.1))+
     labs(title = save_name, fill = "Country", shape = "Conditions")+#, y = "", x="") +
     scale_shape_manual(values = c("Current conditions" = 21, "Counterfactual conditions" = 24)) +
     guides(
@@ -2686,7 +2706,7 @@ plot_conterfactual_scenarios <- function(path = path,
           axis.ticks = element_line(linewidth = 0))
   
   
-  ###---- Responders ---####
+  ###---- Responders ---####"
   
   ## Plot the distances in the contribution multidimensional space
   if(plot_responders_on_map){

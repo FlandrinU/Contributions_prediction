@@ -73,3 +73,15 @@ pq_data <- all_survey |>
   dplyr::filter(!survey_id %in% old_pq$survey_id)
 
 # => PAS DE NOUVEAU PQ DATA DEPUIS DEBUT 2023
+
+
+## Proportion de surveys finalement sélectionné sans PQ:
+load("/home/u_flandrin/Bureau/RLS_data/data/derived_data/covariates/raw_covariates_all_surveys.Rdata")
+load(file = here::here("data", "derived_data", "3_all_covariates_to_predict.Rdata"))
+
+raw_cov <- raw_covariates_all |> 
+  dplyr::filter(survey_id %in% rownames(covariates_final))
+summary(raw_cov$coral)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+#  0.0000  0.3027  0.5348  0.6424  0.8254  1.5708    1779 
+1779/4829

@@ -24,6 +24,9 @@ load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
 #Occurrence matrix of communities
 load("data/derived_data/2_occurrence_matrix_sp_survey.Rdata")
 
+#Abundance matrix of communities
+load("data/derived_data/2_abundance_matrix_sp_survey.Rdata")
+
 #RLS observations
 load(file = here::here("data/derived_data/2_rls_actino_trop.Rdata"))
 
@@ -120,12 +123,14 @@ slope_sr     <- 0.20439752
 
 #data
 aesthe_species <- inferred_species_traits |> 
-  tibble::rownames_to_column("rls_species_name")
+  tibble::rownames_to_column("rls_species_name") |> 
+  dplyr::select(rls_species_name, fishbase_name, aesthetic, public_attention)
 sp_pres_matrix <- surveys_sp_occ
+abund_matrix <- surveys_sp_abund
 
 # Compute the aesthe contribution of each species
 # with parameters from Tribot, A.S, Deter, J., Claverie, T., Guillhaumon, F., Villeger, S., & Mouquet, N. (2019). Species diversity and composition drive the aesthetic value of coral reef fish assemblages. Biology letters, 15, 20190703, doi:10.1098/rsbl.2019.0703
-# positive and negative effect are relative to the espected effect computed with the species 
+# positive and negative effect are relative to the expected effect computed with the species 
 
 ## Computing the aesthe_effect
 aesthe_species$aesthe_effect <- (log(aesthe_species$aesthetic) - 7.3468679)/7.937672
@@ -142,10 +147,21 @@ survey_aesth <- do.call(rbind, pbmcapply::pbmclapply((1:length(surveyid_vect)), 
   
   #i=1
   # surveyID <- "1003646"
-  surveyID <-surveyid_vect[i]
+  surveyID <- surveyid_vect[i]
   # presence_absence of the species of the survey
   
   vector_abs_pres <- sp_pres_matrix[surveyID,]
+  
+  
+  vector_abund <- abund_matrix[surveyID,]
+
+  vector_abund <- t(vector_abund)  |> 
+    as.data.frame() |> 
+    dplyr::rename(abundance = all_of(surveyID)) |>
+    dplyr::filter(abundance > 0) |> 
+    tibble::rownames_to_column("rls_species_name") |> 
+    dplyr::left_join(aesthe_species, by="rls_species_name") |> 
+    dplyr::mutate(abund_wtd_effect = log(abundance) * aesthe_effect)
   
   # species present
   sp_survey <- colnames(vector_abs_pres)[vector_abs_pres[1,]>0]
@@ -153,13 +169,8 @@ survey_aesth <- do.call(rbind, pbmcapply::pbmclapply((1:length(surveyid_vect)), 
   # number of species of the survey
   nb_species <- length(sp_survey)
   
-  # species component in community aesthetic
-  species_effect <- sum(
-    aesthe_species$aesthe_effect[aesthe_species$rls_species_name %in%  gsub("_"," ",sp_survey)],
-    na.rm = T
-    )
-  
-  #Prevalence of NA in the survey
+
+  #Prevalence of NA in the survey --> added for this study (Flandrin et al.)
   missing_species <- aesthe_species[aesthe_species$rls_species_name %in%  gsub("_"," ",sp_survey),] |> 
     dplyr::filter(is.na(aesthetic))
   
@@ -175,12 +186,19 @@ survey_aesth <- do.call(rbind, pbmcapply::pbmclapply((1:length(surveyid_vect)), 
     prop_abund_aesth <- 1
   }
   
+  
   # aesthe of the survey
-  E <- intercept_sr + slope_sr * log(nb_species) + species_effect
-  score <-  exp(E)
+  E_presence <- intercept_sr + slope_sr * log(nb_species) + 
+    sum(aesthe_species$aesthe_effect[aesthe_species$rls_species_name %in% sp_survey])
+  score_presence <-  exp(E_presence)
+  
+  E_abundance <- intercept_sr + slope_sr * log(nb_species) + 
+    sum(vector_abund$abund_wtd_effect)
+  score_abundance <- exp(E_abundance)
   
   E <-  intercept_sr + slope_sr * log(nb_species)
   score_SR  <-  exp(E) 
+  
   
   # compute the number of species with positive and negative effect in each survey
   
@@ -190,7 +208,8 @@ survey_aesth <- do.call(rbind, pbmcapply::pbmclapply((1:length(surveyid_vect)), 
   
   cbind.data.frame(survey_id=surveyid_vect[i],
                    nb_species=nb_species,
-                   aesthe_survey=score,
+                   aesthe_survey_pres=score_presence,
+                   aesthe_survey_abund=score_abundance,
                    aesthe_SR_survey=score_SR,
                    nb_sp_pos_survey=nb_sp_pos_survey,
                    nb_sp_neg_survey=nb_sp_neg_survey,
@@ -199,21 +218,33 @@ survey_aesth <- do.call(rbind, pbmcapply::pbmclapply((1:length(surveyid_vect)), 
   
 }, mc.cores = parallel::detectCores()-1))
 
-plot(survey_aesth$nb_species,survey_aesth$aesthe_survey)
+
+par(mfrow=c(1,3))
+plot(survey_aesth$nb_species,survey_aesth$aesthe_survey_pres,
+     xlab="Nb Species", ylab="Aesthetic Value (Presence)")
+points(survey_aesth$nb_species, survey_aesth$aesthe_SR_survey,col=2,pch=19)
+
+plot(survey_aesth$nb_species,survey_aesth$aesthe_survey_abund,
+     xlab="Nb Species", ylab="Aesthetic Value (Abundance)")
+points(survey_aesth$nb_species, survey_aesth$aesthe_SR_survey,col=2,pch=19)
+
+plot(survey_aesth$aesthe_survey_pres,survey_aesth$aesthe_survey_abund,
+     xlab="Aesthetic Value (Presence)", ylab="Aesthetic Value (Abundance)")
+
 
 write.csv(survey_aesth, here::here("outputs", "survey_aesth.csv"), row.names = FALSE)
 
 # ---- 
 
 #Check outputs
-old_surveys_aesth <- read.csv(here::here("data/derived_data/survey_aesth_McLean2024.csv")) |> 
+old_surveys_aesth <- read.csv(here::here("data/derived_data/survey_aesth_McLean2025.csv")) |> 
   dplyr::mutate(SurveyID = as.character(SurveyID)) |> 
   dplyr::select(survey_id = SurveyID,
-                aesthe_old = aesthe_survey, 
+                aesthe_old = aesthe_survey_abund, 
                 aesthe_SR_old = aesthe_SR_survey) |> 
   dplyr::full_join(survey_aesth)
 
-plot(old_surveys_aesth$aesthe_survey ~ old_surveys_aesth$aesthe_old) ; abline(a=0, b=1)
+plot(old_surveys_aesth$aesthe_survey_abund ~ old_surveys_aesth$aesthe_old) ; abline(a=0, b=1)
 plot(old_surveys_aesth$aesthe_SR_survey ~ old_surveys_aesth$aesthe_SR_old) ; abline(a=0, b=1)
 
 
@@ -283,8 +314,9 @@ if(length(na_survey)>0){
 
 cultural_contributions <- public_contrib_survey |>
   dplyr::full_join(survey_aesth_filtered) |> 
-  dplyr::select(survey_id, public_attention, aesthe_survey)
+  dplyr::select(survey_id, public_attention, aesthe_survey_abund)
 
+library(funbiogeo)
 fb_plot_species_traits_completeness(dplyr::rename(cultural_contributions,
                                                   species = survey_id))
 

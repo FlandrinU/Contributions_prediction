@@ -104,7 +104,17 @@ ggsave(plot= last_plot(), file= here::here("figures", "species_traits",
         "1_traits_completedness_tropical.png"), width = 25, height = 10)
 fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
 ggsave(plot= last_plot(), file= here::here("figures", "species_traits" ,
-        "1_percent_species_per_traits_tropical.png"), width = 8, height = 8)
+        "1_percent_species_per_all_traits_tropical.png"), width = 8, height = 8)
+
+used_traits <- c("species", "fishbase_name", "IUCN_category", "Length",  "Importance",
+                 "Troph", "a", "b", "K", "DemersPelag", "trophic_guild",
+                 "IUCN_inferred_Loiseau23", "geographic_range_Albouy19", "Iron",
+                 "VitaminA" , "Zinc", "Calcium", "Omega3", "Selenium" ,
+                 "aesthetic", "public_attention")
+species_traits <- dplyr::select(species_traits, all_of(used_traits))
+fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
+ggsave(plot= last_plot(), file= here::here("figures", "species_traits" ,
+         "1_percent_species_per__traits_tropical.png"), width = 8, height = 8)
 
 # ### espèces manquantes pour l'esthétique
 # sp_missing_aest <- tropical_species_traits[is.na(tropical_species_traits$aesthetic),]
@@ -124,10 +134,11 @@ ggsave(plot= last_plot(), file= here::here("figures", "species_traits" ,
 # RLS data #
 save(rls_actino_trop, file = here::here("data/derived_data/rls_actino_trop.Rdata"))
 save(rls_elasmo_trop, file = here::here("data/derived_data/rls_elasmo_trop.Rdata"))
-
+# 
 # load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
 # load(file = here::here("data/derived_data/rls_elasmo_trop.Rdata"))
 
 # species traits #
 save(tropical_species_traits, file = here::here("data/derived_data/tropical_species_traits.Rdata"))
 
+# load(file = here::here("data/derived_data/tropical_species_traits.Rdata"))

@@ -77,7 +77,7 @@ contributions_surveys <- metadata |>
                 trophic_web_robustness = b_power_law,
                 mean_trophic_level = troph_mTL,
                 public_attention,
-                aesthetic = aesthe_survey,
+                aesthetic = aesthe_survey_abund,
                 available_biomass, 
                 selenium = Selenium_C, 
                 zinc = Zinc_C, 
@@ -501,6 +501,20 @@ pca <- FactoMineR::PCA(contributions_sites_date, scale.unit = T, graph=F, ncp=15
 factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
                             stroke=0, pointsize=3, alpha.ind = 0.7, 
                             fill.ind = "grey", col.quanti.sup = "firebrick")
+
+#Save final distribution
+change_name <- to_log[to_log != "total_biomass"]
+contributions_to_plot <- contributions_sites_date |> 
+  dplyr::mutate(across(.cols = all_of(change_name),
+                       .fns = ~., .names = "log10({.col})")) |> 
+  dplyr::select(-NN_score, -NP_score, -all_of(change_name),
+                -`log10(P_recycling)`, -`log10(N_recycling)`)
+
+distribution_plot(contributions_to_plot, cols_plot = colnames(contributions_to_plot),
+                  strip_txt_size = 16)
+
+ggsave(plot = last_plot(), width=15, height= 10,
+       filename = here::here("figures", "2_contributions_SITE_distribution_log_transformed.jpg"))
 
 
 

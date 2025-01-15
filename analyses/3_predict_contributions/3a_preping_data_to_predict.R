@@ -35,7 +35,8 @@ load(file = here::here("outputs", "2_metadata_backtransformation_contrib.Rdata")
 load(file = here::here("outputs", "2_contributions_site&date.Rdata"))
 
 # MPA data
-mpa_csv <- read.csv("data/raw_data/rls_mpa_MASTER_26112024.csv", header = TRUE)
+# mpa_csv <- read.csv("data/raw_data/rls_mpa_MASTER_26112024.csv", header = TRUE)
+mpa_csv <- read.csv("data/raw_data/rls_mpa_MASTER_09012025.csv", header = TRUE)
 
 
 #Coastline
@@ -429,8 +430,10 @@ covariates <- all_covariates_benthos_inferred |>
 
 
 funbiogeo::fb_plot_number_species_by_trait(dplyr::rename(covariates, species = survey_id))
+ggsave(plot = last_plot(), width=10, height= 10,
+       filename = here::here("figures/models/covariates", "covariates_completedness_sum.jpg"))
 funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates, species = survey_id))
-ggsave(plot = last_plot(), width=15, height= 10,
+ggsave(plot = last_plot(), width=20, height= 10,
        filename = here::here("figures/models/covariates", "covariates_completedness.jpg"))
 
 #FINAL COVARIATES                                       
@@ -486,14 +489,14 @@ covariates_final <- covariates_final[rownames(observations),] |>
 
 observations_final <- observations[rownames(covariates_final),] |> 
   dplyr::select(-NN_score, -NP_score)
-dim(observations_final) #4375 SURVEYS, 22 CONTRIBUTIONS
+dim(observations_final) #4429 SURVEYS, 22 CONTRIBUTIONS
 
 observations_final_aggregated_score <- observations[rownames(covariates_final),] |> 
   dplyr::select(NN_score, NP_score)
 
 observations_final_without_Allen <- observations[rownames(covariates_final_without_Allen),] |> 
   dplyr::select(-NN_score, -NP_score)
-dim(observations_final_without_Allen) #5111 SURVEYS, 22 CONTRIBUTIONS
+dim(observations_final_without_Allen) #5611 SURVEYS, 22 CONTRIBUTIONS
 
 
 #Distribution of observations
@@ -659,7 +662,7 @@ covariates_site_final <- covariates_site_final[rownames(observations_site),] |>
 
 observations_site_final <- observations_site[rownames(covariates_site_final),] |> 
   dplyr::select(-NN_score, -NP_score)
-dim(observations_site_final) #2536 SITE/DATE, 22 CONTRIBUTIONS
+dim(observations_site_final) #2803 SITE/DATE, 22 CONTRIBUTIONS
 
 
 #Distribution of observations
@@ -683,7 +686,7 @@ factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
 
 table(covariates_site_final$protection_status)
 # out restricted       full 
-# 987        742        807 
+# 1132        802        869 
 length(unique(covariates_site_final$country))
 
 plot_mpa <-function(covariates_site_final, xlim=c(-180,180), ylim = c(-36, 31),
@@ -799,6 +802,34 @@ obs_vs_cov("n_fishing_vessels", "trophic_web_robustness")
 obs_vs_cov("gdp", "calcium")
 
 boxplot(covariates_site_final$n_fishing_vessels ~ covariates_site_final$protection_status)
+
+
+## Contributions per realm 
+contrib <- c("selenium", "vitamin_A", "aesthetic", "public_attention", "n_fishing_vessels" )
+data_to_plot <- data |> 
+  dplyr::select(realm, all_of(contrib)) |> 
+  tidyr::pivot_longer(-realm, names_to = "contributions", values_to = "value")
+
+ggplot(data_to_plot)+
+  # geom_violin(aes(x=human_cov, y = value, fill = protection_status))+
+  geom_boxplot(aes(x=contributions, y = value, fill = realm))+
+  hrbrthemes::theme_ipsum()
+ggsave(here::here("figures", "contribution_vs_covariate", 
+                  "contrib_per_realm.jpg"),
+       plot = last_plot(), width=8, height = 7 )
+
+##-------------plot Covariates vs protection -------------
+hum_cov <- covariates_site_final |> 
+  dplyr::select(protection_status, n_fishing_vessels, gravity, neartt) |> 
+  tidyr::pivot_longer(-protection_status, names_to = "human_cov", values_to = "value")
+  
+ggplot(hum_cov)+
+  # geom_violin(aes(x=human_cov, y = value, fill = protection_status))+
+  geom_boxplot(aes(x=human_cov, y = value, fill = protection_status))+
+  hrbrthemes::theme_ipsum()
+ggsave(here::here("figures", "contribution_vs_covariate", 
+                  "Human_covariates_VS_protection_status.jpg"),
+       plot = last_plot(), width=8, height = 7 )
 
 
 ##------------------- save datasets -------------------
