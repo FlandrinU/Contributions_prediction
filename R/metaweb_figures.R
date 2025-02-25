@@ -74,7 +74,7 @@ TL_diff_mean <- TL_difference  |>
                    median_deviation = median(TL_deviation, na.rm=T))
 
 
-jpeg(here::here("figures", "food_web", "Deviation from observed trophic levels.png"),
+jpeg(here::here("figures", "2_food_web", "Deviation from observed trophic levels.png"),
      quality = 100, width = 20, height = 10, units = "cm",   pointsize = 12, res = 400)
   par(mfrow=c(1,2))
   # plot(TL_diff_mean$sum_deviation ~ TL_diff_mean$threshold, pch=1, xlab="Binary threshold",
@@ -100,7 +100,7 @@ ggplot(data = TL_difference, mapping = aes(x = as.factor(threshold), y = TL_devi
   scale_fill_hue(direction = 1) +
   labs(x = "Threshold", y = "distribution of (fishbases's TL - inferred TL)", title = "") +
   theme_light()
-ggsave(width = 20, height = 15, filename=here::here("figures", "food_web", "distribution of (fishbase's - inferred TL) per threshold.png"))
+ggsave(width = 20, height = 15, filename=here::here("figures", "2_food_web", "distribution of (fishbase's - inferred TL) per threshold.png"))
 
 
 
@@ -118,7 +118,7 @@ parallel::mclapply( thres_figures, mc.cores=5, function(bin_threshold){
   binary_web[binary_web<bin_threshold] <- 0 
   binary_web[binary_web>=bin_threshold] <- 1
   Troph <- NetIndices::TrophInd(Flow =binary_web,Tij = t(binary_web))
-  jpeg(here::here("figures", "food_web", paste0("Hist_metaweb_trophic_level_threshold=", bin_threshold,".jpg")),
+  jpeg(here::here("figures", "2_food_web", paste0("Hist_metaweb_trophic_level_threshold=", bin_threshold,".jpg")),
                   quality = 100, width = 10, height = 10, units = "cm",   pointsize = 12, res = 200)
   hist(Troph$TL, main=paste0("Inferred trophic level, threshold = ", bin_threshold), freq=T, breaks=30)
   dev.off()
@@ -127,7 +127,7 @@ parallel::mclapply( thres_figures, mc.cores=5, function(bin_threshold){
   # --> for all species
   sp <- rownames(Troph)[is.element(rownames(Troph), Traits$species)]
   TL <- Troph[sp, "TL"] - Traits[Traits$species == sp,"Troph"]
-  jpeg(here::here("figures", "food_web", paste0("Hist_of_deviation_in_TL_threshold=", bin_threshold,".jpg")),
+  jpeg(here::here("figures", "2_food_web", paste0("Hist_of_deviation_in_TL_threshold=", bin_threshold,".jpg")),
        quality = 100, width = 13,height = 10, units = "cm",   pointsize = 12, res = 200)
   hist(TL, xlab="TL inferred - TL from fishbase ",
        main= paste("Difference between inferred TL and TL from fishbases, treshold =", bin_threshold ), breaks=30)
@@ -197,7 +197,7 @@ parallel::mclapply( thres_figures, mc.cores=5, function(bin_threshold){
       axis.title.x = element_text(face = "bold") )
   P
   ggsave(P, width = 20, height = 15,
-         filename=here::here("figures", "food_web", paste0("distribution of fishbase's and inferred TL per size class _ threshold=", bin_threshold, ".png")))
+         filename=here::here("figures", "2_food_web", paste0("distribution of fishbase's and inferred TL per size class _ threshold=", bin_threshold, ".png")))
   
   df_gap <- cbind(df1,TL); colnames(df_gap) <- c( "Length", "dataset", "fishbase's TL", "Category", "TL difference"); rownames(df_gap) <- sp
   df_gap$`TL difference` <- as.numeric(df_gap$`TL difference`)
@@ -227,7 +227,7 @@ parallel::mclapply( thres_figures, mc.cores=5, function(bin_threshold){
     )
   P_gap
   ggsave(P_gap, width = 20, height = 15,
-         filename=here::here("figures", "food_web", paste0("Difference between fishbase's and inferred TL per size class _ threshold=", bin_threshold, ".png")))
+         filename=here::here("figures", "2_food_web", paste0("Difference between fishbase's and inferred TL per size class _ threshold=", bin_threshold, ".png")))
 
 }) #end of mclapply studying threshold influence on TL
 
@@ -271,7 +271,7 @@ for (i in c(1:3)){
           legend.box.background =element_rect(fill="white", colour="black", size=0.5))
   
   ggsave(P, width = 20, height = 15,
-         filename=here::here("figures", "food_web",  paste0("Trophic_web_", i, ".png")))
+         filename=here::here("figures", "2_food_web",  paste0("Trophic_web_", i, ".png")))
   
   
   P_tree <- ggraph::ggraph(graph, layout = layout.matrix)+
@@ -281,7 +281,7 @@ for (i in c(1:3)){
     ggraph::theme_graph()+
     theme()
   ggsave(P_tree, width = 20, height = 15,
-         filename=here::here("figures", "food_web", paste0("Trophic_web_tree_", i, ".png")))
+         filename=here::here("figures", "2_food_web", paste0("Trophic_web_tree_", i, ".png")))
 
 } # end for(i in 1:3) about metaweb 
 
@@ -322,7 +322,7 @@ plot_local_web <- function(mat_PA = PA_matrix_site,
     theme()
   
   ggsave(P_tree, width = 15, height = 10,
-         filename=here::here("figures", "food_web", "local_food_web",
+         filename=here::here("figures", "2_food_web", "local_food_web",
                              paste0("Local_web_", site_code, ".png")))
 }
 
@@ -381,7 +381,7 @@ plot_TL_size_class_local_web <- function(mat_PA = PA_matrix_site,
          subtitle = site_code) +
     theme_light()
   ggsave(P, width = 20, height = 15,
-         filename=here::here("figures", "food_web", "local_food_web", 
+         filename=here::here("figures", "2_food_web", "local_food_web", 
                              paste0("distribution of fishbase's and inferred TL per size class _ " ,
                                     site_code, ".png")))
   
@@ -393,7 +393,7 @@ plot_TL_size_class_local_web <- function(mat_PA = PA_matrix_site,
          subtitle = site_code) +
     theme_light()
   ggsave(P_gap, width = 20, height = 15,
-         filename=here::here("figures", "food_web", "local_food_web", 
+         filename=here::here("figures", "2_food_web", "local_food_web", 
                              paste0("Difference between fishbase's and inferred TL per size class _ ",
                                     site_code, ".png")))
 }

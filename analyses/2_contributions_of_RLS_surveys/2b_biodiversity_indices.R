@@ -153,17 +153,6 @@ iucn <- inferred_species_traits |>
                 iucn_inferred = IUCN_inferred_Loiseau23, 
                 iucn_redlist = IUCN_category) 
 
-# missing_values <- dplyr::filter(iucn, is.na(iucn$iucn_inferred)) |>
-#   dplyr::mutate(iucn_redlist = dplyr::recode(iucn_redlist,  
-#                                              "NE" = "No Status",
-#                                              "DD" = "No Status",
-#                                              "LC" = "Non Threatened",
-#                                              "NT" = "Non Threatened",
-#                                              "VU" = "Threatened",
-#                                              "EN" = "Threatened",
-#                                              "CR" = "Threatened")) 
-# 
-# iucn[rownames(missing_values), "iucn_inferred"] <- missing_values$iucn_redlist
 
 ## remaining NAs -> recode them into "No Status" to fit with Loiseau 2023.
 iucn[is.na(iucn$iucn_inferred),] #27 species including 8 elasmobranchs

@@ -516,40 +516,14 @@ distribution_plot(contributions_to_plot, cols_plot = colnames(contributions_to_p
 ggsave(plot = last_plot(), width=15, height= 10,
        filename = here::here("figures", "2_contributions_SITE_distribution_log_transformed.jpg"))
 
+# Count NAs:
+data <- tibble::rownames_to_column(contributions_sites_date, "species") |> 
+  dplyr::select(-NN_score, -NP_score, -N_recycling, -P_recycling)
+funbiogeo::fb_plot_species_traits_completeness(data) #93.8 % of full data
+3835 * (1-0.938) # 238 rows
 
-
-# #------------------- Mean contribution values at the site scale -------------------####
-# # Mean the contribution at the site scale, whatever the date:
-# #  we offset the temporal information = look only on the spatial patterns.
-# 
-# synthetic_scores <- contributions_with_synthetic_score[,c( "NN_score", "NP_score")] |> 
-#   tibble::rownames_to_column("survey_id")
-# 
-# contributions_sites_no_date <- contributions_surveys |> 
-#   dplyr::left_join(synthetic_scores) |> 
-#   dplyr::select(-survey_id, -survey_date) |> 
-#   dplyr::group_by(site_code, latitude, longitude, country, ecoregion,
-#                   realm, effectiveness) |> 
-#   dplyr::summarise(across(.cols = everything(),
-#                           .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
-#   dplyr::mutate(across(.cols = everything(),
-#                        .fns = ~ifelse(is.nan(.), NA, .), .names = "{.col}")) |> 
-#   dplyr::mutate(id = paste0(site_code, "_", effectiveness)) |>
-#   dplyr::ungroup()
-# 
-# # /!\ SOME SITES HAVE CHANGED PROTECTION STATUS BETWEEN DIFFERENT SURVEYS
-# 
-# nrow(contributions_sites_no_date) # 2128 sites
-# 
-# contributions_sites_no_date <- contributions_sites_no_date |>
-#   dplyr::mutate(across(.cols = all_of(zero_values),
-#                        .fns = ~ .x +1 , .names = "{.col}")) |>
-#   dplyr::mutate(across(.cols = all_of(to_log),
-#                        .fns = ~ifelse(is.na(.), NA, log10(.)) , .names = "{.col}")) |>  # log(x+1) to avoid -Inf values
-#   tibble::column_to_rownames("id") |> 
-#   dplyr::select(-total_biomass, -any_of(var_metadata))
-# 
-# # Save #
-# save(contributions_sites_no_date, file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
-# # load( file = here::here("outputs", "2_contributions_site_NO_date.Rdata"))
-# 
+no_NA <- data |> tidyr::drop_na() 
+sites_no_na <- metadata_sites[no_NA$species,]
+survey_na <- metadata |> 
+  dplyr::filter(!site_code %in% sites_no_na$site_code)
+nrow(survey_na) #211

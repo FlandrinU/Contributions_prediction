@@ -21,14 +21,11 @@ renv/
 
 # quarto stuffs
 .quarto/
-report/.quarto/
-report/img/
-report/_freeze/
-report/docs/
+report/
+
 
 #remove large data files ----> to include in a data repo.
 data_rfishbase.RData
-data/raw_data/old/
 data/raw_data/phylogeny/
 data/raw_data/World_EEZ_v12_20231025/
 
@@ -41,8 +38,10 @@ data/raw_data/aesthetic_deep_model_Langlois_2022/png/
 HMSC_package/hmsc-venv/
 HMSC_package/*.odt
 
-#Large outputs ----> can be created running make.R file
-figures/
+#Large outputs ----> can be created running make.R file (-> need to recreate the folders)
+figures/2_food_web/
+figures/3_map_covariates/
+figures/3_models/
 outputs/models/
 outputs/2d_cnpflux_sp_size_sst.csv
 

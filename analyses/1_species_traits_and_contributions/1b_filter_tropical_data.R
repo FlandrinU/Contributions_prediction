@@ -111,23 +111,15 @@ used_traits <- c("species", "fishbase_name", "IUCN_category", "Length",  "Import
                  "IUCN_inferred_Loiseau23", "geographic_range_Albouy19", "Iron",
                  "VitaminA" , "Zinc", "Calcium", "Omega3", "Selenium" ,
                  "aesthetic", "public_attention")
-species_traits <- dplyr::select(species_traits, all_of(used_traits))
-fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
-ggsave(plot= last_plot(), file= here::here("figures", "species_traits" ,
-         "1_percent_species_per__traits_tropical.png"), width = 8, height = 8)
 
-# ### espèces manquantes pour l'esthétique
-# sp_missing_aest <- tropical_species_traits[is.na(tropical_species_traits$aesthetic),]
-# a_faire <- dplyr::filter(sp_missing_aest) |>
-#    dplyr::filter(class != "Elasmobranchii",
-#                  order != "Pleuronectiformes",
-#                  order != "Syngnathiformes")
-# readr::write_csv(a_faire, file="~/Téléchargements/missing_species_aesthetic.csv")
-# ###
-# ### espèces manquantes pour le public attention
-# sp_missing_hum_int <- tropical_species_traits[is.na(tropical_species_traits$public_interest),]
-# readr::write_csv(sp_missing_hum_int, file="~/Téléchargements/missing_species_human_interst.csv")
-# ###
+species_traits <- dplyr::select(species_traits, all_of(used_traits)) 
+species_traits$IUCN_category[species_traits$IUCN_category == "DD"] <- NA  #" Data deficient"
+unique(species_traits$IUCN_category)
+
+fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
+ggsave(plot= last_plot(), file= here::here("figures", "1_species_traits" ,
+         "1_percent_species_per_traits_tropical.png"), width = 8, height = 8)
+
 
 
 ##-------------Save tropical data-------------

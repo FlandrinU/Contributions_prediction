@@ -45,6 +45,79 @@ coast <- rnaturalearth::ne_countries(scale = "medium", returnclass = 'sf')
 ## Load functions ##
 source(here::here("R","evaluation_prediction_model.R"))
 
+##------------------- New names-------------------
+new_names_cov <- c(
+    # Environmental variables (SST, DHW, etc.)
+    "SST_5_years"                 = "median_5year_analysed_sst",
+    "DHW_5_years"                 = "median_5year_degree_heating_week",
+    # "Salinity_5_years"            = "median_5year_so_glor",
+    "DHW_1_year"                  = "median_1year_degree_heating_week",
+    "DHW_7_days"                  = "median_7days_degree_heating_week",
+    "Chlorophyll_7_days"          = "median_7days_chl",
+    "pH_5_years"                  = "median_5year_ph",
+    "DHW_quantile95_5_years"      = "q95_5year_degree_heating_week",
+    "Chlorophyll_5_years"         = "median_5year_chl",
+    
+    # Habitat types
+    "Back_reef_slope"             = "Back_Reef_Slope_500m",
+    "Inner_reef_flat"             = "Inner_Reef_Flat_500m",
+    "Plateau"                     = "Plateau_500m",
+    "Rock"                        = "Rock_500m",
+    "Seagrass"                    = "Seagrass_500m",
+    "Coral_algae"                 = "coral_algae_500m",
+    "Microalgal_mats"             = "Microalgal_Mats_500m",
+    "Reef_crest"                  = "Reef_Crest_500m",
+    "Rubble"                      = "Rubble_500m",
+    "Sheltered_reef_slope"        = "Sheltered_Reef_Slope_500m",
+    "Deep_lagoon"                 = "Deep_Lagoon_500m",
+    "Patch_reefs"                 = "Patch_Reefs_500m",
+    "Reef_slope"                  = "Reef_Slope_500m",
+    "Sand"                        = "Sand_500m",
+    "Terrestrial_reef_flat"       = "Terrestrial_Reef_Flat_500m",
+    
+    # Reef Life Survey (RLS) variables
+    "Coral_RLS"                   = "coral",
+    "Rock_RLS"                    = "Rock",
+    "Sand_RLS"                    = "Sand",
+    "Coralline_algae_RLS"         = "coralline_algae",
+    "Other_sessile_invert_RLS"    = "other_sessile_invert",
+    "Coral_rubble_RLS"            = "coral_rubble",
+    
+    # Socioeconomic variables
+    "GDP"                         = "gdp",
+    "Marine_ecosystem_dependency" = "marine_ecosystem_dependency",
+    "Fishing_vessel_density"      = "n_fishing_vessels",
+    "Gravity"                     = "gravity",
+    "Natural_ressource_rent"      = "natural_ressource_rent",
+    "HDI"                         = "hdi",
+    "Travel_time"                 = "neartt"
+  )
+
+
+new_names_contrib <-
+  c("Actinopterygian_richness"     = "actino_richness",                
+    "Endemism"                     = "mean_endemism",
+    "Phylogenetic_entropy"         = "phylogenetic_entropy",     
+    "Piscivores_biomass"           = "piscivores_biomass",     
+    "Public_attention"             = "public_attention",     
+    "Selenium"                     = "selenium"  ,     
+    "Calcium"                      = "calcium" ,     
+    "Available_biomass_turnover"   = "available_biomass_turnover",
+    "Functional_distinctiveness"   = "functional_distinctiveness", 
+    "Evolutionary_distinctiveness" = "evolutionary_distinctiveness", 
+    "Herbivores_biomass"           = "herbivores_biomass" , 
+    "Trophic_web_robustness"       = "trophic_web_robustness" , 
+    "Aesthetic"                    = "aesthetic" , 
+    "Zinc"                         = "zinc", 
+    "Iron"                         = "iron" ,
+    "Iucn_species_richness"        = "iucn_species_richness",
+    "Functional_entropy"           = "functional_entropy",
+    "Invertivores_biomass"         = "invertivores_biomass",
+    "Mean_trophic_level"           = "mean_trophic_level" ,
+    "Available_biomass"            = "available_biomass",
+    "Omega_3"                      = "omega_3" ,
+    "Vitamin_A"                    = "vitamin_A" )  
+
 #----------------- Extract MPA data ---------------------
 colnames(mpa_csv)
 table(mpa_csv$level_fishing_protection)
@@ -201,7 +274,7 @@ env <- as.data.frame(data_to_filter) |>
     )
 M <- cor(env)
 
-png(filename = here::here("figures/models/covariates","corr_matrix_env_covariates.png"), 
+png(filename = here::here("figures/3_models/covariates","corr_matrix_env_covariates.png"), 
     width= 40, height = 30, units = "cm", res = 1000)
   corrplot::corrplot(M, order = 'AOE', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r',
                      tl.cex = 0.5, col = rev(corrplot::COL2('RdBu', 200)))
@@ -234,7 +307,7 @@ others <- as.data.frame(data_to_filter) |>
                 -grep("max", colnames(data_to_filter)),
                 -grep("min", colnames(data_to_filter)))
 M <- cor(others)
-png(filename = here::here("figures/models/covariates","corr_matrix_others_covariates.png"), 
+png(filename = here::here("figures/3_models/covariates","corr_matrix_others_covariates.png"), 
     width= 40, height = 30, units = "cm", res = 1000)
 corrplot::corrplot(M, order = 'AOE', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r', 
                    tl.cex = 0.7, col = rev(corrplot::COL2('RdBu', 200)))
@@ -257,7 +330,7 @@ ggplot(all_covariates_benthos_inferred) +
     axis.text.x = element_text(angle = 50, hjust = 1, vjust = 1),
     legend.position = "right",
     legend.text = element_text(size = 6))
-ggsave(filename = paste0("figures/models/covariates/country_VS_SST.jpg"),
+ggsave(filename = paste0("figures/3_models/covariates/country_VS_SST.jpg"),
        width = 8, height = 6)
 
 
@@ -306,7 +379,7 @@ cov_to_select
 ### OBSERVE COVARIATES THAT ARE STILL CORRELATED
 cor_matrix <- cor(as.data.frame(data_to_filter) |> 
                     dplyr::select(all_of(cov_to_select)))
-png(filename = here::here("figures/models/covariates","corr_matrix_first_selection_covariates.png"),
+png(filename = here::here("figures/3_models/covariates","corr_matrix_first_selection_covariates.png"),
     width= 40, height = 30, units = "cm", res = 1000)
 corrplot::corrplot(cor_matrix, order = 'AOE', tl.pos = 'tp', tl.srt = 60, 
                    cl.pos = 'r', tl.cex = 0.7, col = rev(corrplot::COL2('RdBu', 200)))
@@ -320,7 +393,7 @@ correlated_pairs <- cbind(rownames(cor_matrix)[high_correlation_indices[, "row"]
                           colnames(cor_matrix)[high_correlation_indices[, "col"]])
 network_graph <- igraph::graph_from_edgelist(correlated_pairs, directed = FALSE)
 
-png("figures/models/covariates/Selection of covariates_higly_correlated_cov_(0.7).png",
+png("figures/3_models/covariates/Selection of covariates_higly_correlated_cov_(0.7).png",
     width = 30, height = 30, units = "cm", res = 300)
 plot(network_graph, 
      layout = igraph::layout_with_kk(network_graph),
@@ -337,6 +410,7 @@ cov_to_select2 <-
                            "median_7days_o2",
                            "median_5year_o2",
                            "median_7days_so_glor",
+                           "median_5year_so_glor", # low ecological meaning
                            # "median_5year_ph", #correlated with sst, low ecological meaning
                            "q05_5year_nppv",
                            "q05_5year_chl",
@@ -372,13 +446,17 @@ cov_to_select2 <-
                          ))]
 
 
-selection2 <- as.data.frame(data_to_filter) |> dplyr::select(all_of(cov_to_select2))
-png("figures/models/covariates/Selected_covariates_correlation.png",
+selection2 <- as.data.frame(data_to_filter) |> 
+  dplyr::select(all_of(cov_to_select2))
+
+to_plot <- selection2 |> 
+  dplyr::rename(all_of(new_names_cov))
+png("figures/3_models/covariates/Selected_covariates_correlation.png",
     width = 35, height = 25, units = "cm", res = 300)
-corrplot::corrplot(cor(selection2), order = 'AOE', tl.pos = 'tp', tl.srt = 60, 
-                   cl.pos = 'r', tl.cex = 0.7, tl.offset = 0.5, 
+corrplot::corrplot(cor(to_plot), order = 'AOE', tl.pos = 'tp', tl.srt = 60, 
+                   cl.pos = 'r', tl.cex = 1, tl.offset = 0.5, 
                    col = rev(corrplot::COL2('RdBu', 200)))
-corrplot::corrplot(cor(selection2), add = TRUE, type = 'upper', method = 'number',
+corrplot::corrplot(cor(to_plot), add = TRUE, type = 'upper', method = 'number',
                    order = 'AOE', insig = 'p-value', diag = FALSE, tl.pos = 'n', 
                    cl.pos = 'n', number.digits = 1, number.cex = 0.7, 
                    col = rev(corrplot::COL2('RdBu', 200)))
@@ -400,7 +478,7 @@ print(vif_values[order(vif_values)]) #No covariates with VIF > 5.
 ### DISTRIBUTION OF COVARIATES
 distribution_plot(selection2, longer = T,  cols_plot = cov_to_select2 )
 ggsave( width=15, height= 10,
-        filename = here::here("figures/models/covariates", "3_raw_covariates_distribution.jpg"))
+        filename = here::here("figures/3_models/covariates", "3_raw_covariates_distribution.jpg"))
 
 cov_to_log_transformed <- 
   c("Back_Reef_Slope_500m", "Deep_Lagoon_500m", "gdp", "gravity",
@@ -431,10 +509,10 @@ covariates <- all_covariates_benthos_inferred |>
 
 funbiogeo::fb_plot_number_species_by_trait(dplyr::rename(covariates, species = survey_id))
 ggsave(plot = last_plot(), width=10, height= 10,
-       filename = here::here("figures/models/covariates", "covariates_completedness_sum.jpg"))
+       filename = here::here("figures/3_models/covariates", "covariates_completedness_sum.jpg"))
 funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates, species = survey_id))
 ggsave(plot = last_plot(), width=20, height= 10,
-       filename = here::here("figures/models/covariates", "covariates_completedness.jpg"))
+       filename = here::here("figures/3_models/covariates", "covariates_completedness.jpg"))
 
 #FINAL COVARIATES                                       
 covariates_final <- covariates |> 
@@ -467,7 +545,7 @@ covariates_final <- covariates |>
 #Distribution of covariates
 distribution_plot(covariates_final, longer = T, cols_plot = cov_to_select2 )
 ggsave(plot = last_plot(), width=15, height= 10,
-       filename = here::here("figures/models/covariates", 
+       filename = here::here("figures/3_models/covariates", 
                              "covariates_distribution_log_transformed_and_scaled.jpg"))
 
 # ## Check covariates with low heterogeneity
@@ -478,9 +556,20 @@ ggsave(plot = last_plot(), width=15, height= 10,
 #   ylim(c(0,5))
 
 
+
+#### RENAME COVARIATES AND CONTRIBUTIONS ####
+
+covariates_final <- covariates_final |> 
+  dplyr::rename(all_of(new_names_cov))
+
+observations <- observations |> 
+  dplyr::rename(all_of(new_names_contrib))
+
+
+
 #### COMMON SURVEYS FOR COVARIATES AND OBSERVATIONS ####
 covariates_final_without_Allen <- covariates_final[rownames(observations),] |> 
-  dplyr::select(-grep("_500m", colnames(covariates_final))) |> 
+  dplyr::select(-grep("(%)", colnames(covariates_final))) |> 
   tidyr::drop_na() 
 
 covariates_final <- covariates_final[rownames(observations),] |> 
@@ -503,7 +592,7 @@ dim(observations_final_without_Allen) #5611 SURVEYS, 22 CONTRIBUTIONS
 distribution_plot(observations_final, longer = T,
                   cols_plot = colnames(observations_final)) #OK: log transformed and scaled values
 ggsave(plot = last_plot(), width=15, height= 10,
-       filename = here::here("figures/models/covariates", 
+       filename = here::here("figures/3_models/covariates", 
                              "contributions_distribution_log_transformed_and_scaled.jpg"))
 
 
@@ -550,7 +639,7 @@ save(observations_final_without_Allen, file = here::here("data", "derived_data",
 # }
 
 
-###############################################################################"
+###############################################################################
 ##
 ##                            #### SITE SCALE ####
 ##   (WE MEAN CONTRIBUTIONS AND COVARIATES IN THE SAME SITE AT THE SAME DATE)
@@ -609,7 +698,7 @@ covariates_site <- all_covariates_benthos_inferred |>
 funbiogeo::fb_plot_number_species_by_trait(dplyr::rename(covariates_site, species = id))
 funbiogeo::fb_plot_species_traits_completeness(dplyr::rename(covariates_site, species = id))
 # ggsave(plot = last_plot(), width=15, height= 10,
-#        filename = here::here("figures/models/covariates", "covariates_completedness.jpg"))
+#        filename = here::here("figures/3_models/covariates", "covariates_completedness.jpg"))
 
 # ## Extract missing data on MPas:
 # missing_mpa <- covariates_site |> 
@@ -648,12 +737,22 @@ covariates_site_final <- covariates_site |>
 #Distribution of covariates
 distribution_plot(covariates_site_final, longer = T, cols_plot = cov_to_select2 )
 # ggsave(plot = last_plot(), width=15, height= 10,
-#        filename = here::here("figures/models/covariates", 
+#        filename = here::here("figures/3_models/covariates", 
 #                              "covariates_distribution_log_transformed_and_scaled.jpg"))
 
 
 
+#### RENAME COVARIATES AND CONTRIBUTIONS ####
 
+covariates_site_final <- covariates_site_final |> 
+  dplyr::rename(all_of(new_names_cov))
+
+observations_site <- observations_site |> 
+  dplyr::rename(all_of(new_names_contrib))
+
+contributions_transformation <- contributions_transformation |> 
+  dplyr::mutate(contribution = dplyr::recode(contribution,
+                       !!!setNames(names(new_names_contrib),new_names_contrib)))
 
 #### COMMON SITES FOR COVARIATES AND OBSERVATIONS ####
 covariates_site_final <- covariates_site_final[rownames(observations_site),] |> 
@@ -669,7 +768,7 @@ dim(observations_site_final) #2803 SITE/DATE, 22 CONTRIBUTIONS
 distribution_plot(observations_site_final, longer = T,
                   cols_plot = colnames(observations_site_final)) #OK: log transformed and scaled values
 # ggsave(plot = last_plot(), width=15, height= 10,
-#        filename = here::here("figures/models/covariates", 
+#        filename = here::here("figures/3_models/covariates", 
 #                              "contributions_distribution_log_transformed_and_scaled.jpg"))
 
 
@@ -679,6 +778,80 @@ pca <- FactoMineR::PCA(observations_site_final,
 factoextra::fviz_pca_biplot(pca, repel = TRUE, geom="point", pointshape=21,
                             stroke=0, pointsize=3, alpha.ind = 0.7, 
                             fill.ind = "grey")
+
+##------------------- PCA on habitat covariates -------------------
+colnames(covariates_site_final)
+
+hab_rls <- c(
+  "Coral_RLS",             "Sand_RLS",                "Other_sessile_invert_RLS",  
+  "Rock_RLS",              "Coralline_algae_RLS",     "Coral_rubble_RLS")
+
+habitat_geomorph <- c(
+  "Back_reef_slope",       "Deep_lagoon",             "Inner_reef_flat",     
+  "Patch_reefs",           "Plateau",                 "Reef_crest",          
+  "Reef_slope",            "Sheltered_reef_slope",    "Terrestrial_reef_flat")
+
+habitat_benthos_allen <- c(
+   "Rock",                  "Rubble",                  "Sand",                
+  "Seagrass",              "Microalgal_mats",         "Coral_algae")        
+  
+
+habitat_cov <- c(hab_rls, habitat_geomorph, habitat_benthos_allen)
+
+
+
+
+pca_rls <- FactoMineR::PCA(covariates_site_final[,hab_rls],
+                               scale.unit = T, graph=F, ncp=15)
+
+pca_geomorph <- FactoMineR::PCA(covariates_site_final[,habitat_geomorph],
+                                scale.unit = T, graph=F, ncp=15)
+
+pca_benthos_allen <- FactoMineR::PCA(covariates_site_final[,habitat_benthos_allen],
+                               scale.unit = T, graph=F, ncp=15)
+
+
+factoextra::fviz_pca_biplot(pca_benthos_allen, repel = TRUE, geom="point", 
+                            pointshape=21, stroke=0, pointsize=3, alpha.ind = 0.7, 
+                            fill.ind = "grey", axes = c(1,2))
+factoextra::fviz_eig(pca_benthos_allen, addlabels = TRUE)
+
+
+hab_pca <- hab_pca <- data.frame(
+  benthic_composition_RLS_Dim1 = pca_rls$ind$coord[, 1], 
+  benthic_composition_RLS_Dim2 = pca_rls$ind$coord[, 2],
+  benthic_composition_RLS_Dim3 = pca_rls$ind$coord[, 3],
+  geomorphic_composition_Dim1 = pca_geomorph$ind$coord[, 1], 
+  geomorphic_composition_Dim2 = pca_geomorph$ind$coord[, 2],  
+  geomorphic_composition_Dim3 = pca_geomorph$ind$coord[, 3],  
+  surrounding_benthic_composition_Dim1 = pca_benthos_allen$ind$coord[, 1], 
+  surrounding_benthic_composition_Dim2 = pca_benthos_allen$ind$coord[, 2],
+  surrounding_benthic_composition_Dim3 = pca_benthos_allen$ind$coord[, 3]
+)
+
+
+covariates_site_PCA_hab <- covariates_site_final |> 
+  dplyr::select(-all_of(habitat_cov)) |> 
+  dplyr::bind_cols(hab_pca)
+
+colnames(covariates_site_PCA_hab)
+
+##------------------- save datasets -------------------
+save(covariates_site_final, 
+     file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
+save(observations_site_final,
+     file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
+
+# load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
+# load(file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
+save(covariates_site_PCA_hab,
+     file = here::here("data", "derived_data",
+                       "3_sites_summarized_PCA_covariates_to_predict.Rdata"))
+
+save(contributions_transformation,
+     file = here::here("outputs", "3_metadata_backtransformation_contrib.Rdata") )
+
+
 
 
 
@@ -741,7 +914,7 @@ ggsave(plot = last_plot(), width = 14, height = 7,
        
 
 ##-------------plot Covariates on map-------------
-covariate <- colnames(dplyr::select(covariates_site_final, depth:n_fishing_vessels))
+covariate <- colnames(dplyr::select(covariates_site_final, depth:Fishing_vessel_density))
 
 # save world maps
 parallel::mclapply(covariate, function(cov){
@@ -749,7 +922,7 @@ parallel::mclapply(covariate, function(cov){
                             cov, xlim=c(-180,180), ylim = c(-36, 31), 
                             title="", jitter=1.5, pt_size=2,
                             save=F)
-  ggsave( here::here("figures", "map_covariates", paste0( "world_map_with_" , cov, ".jpg")),
+  ggsave( here::here("figures", "3_map_covariates", paste0( "world_map_with_" , cov, ".jpg")),
           plot = last_plot(), width=15, height = 7 )
   
 },mc.cores=parallel::detectCores()-5)
@@ -770,8 +943,8 @@ custom_colors <- colorRampPalette(c(
 ))(length(unique(data$country)))
 
 obs_vs_cov <- function(X, Y, save = T){
-  # X = "gravity"
-  # Y = "aesthetic"
+  # X = "Gravity"
+  # Y = "Available biomass turnover"
   ggplot(data)+
     geom_point(aes_string(x = X, y = Y, fill = "country"),
                color = "grey40", alpha = 0.7, shape = 21) +
@@ -785,27 +958,27 @@ obs_vs_cov <- function(X, Y, save = T){
           axis.ticks.x=element_blank())
   
   if(save){
-    ggsave(here::here("figures", "contribution_vs_covariate", 
+    ggsave(here::here("figures", "3_contribution_vs_covariate", 
                       paste0( Y, "_VS_", X, ".jpg")),
             plot = last_plot(), width=15, height = 7 )
   }
 }
 
-obs_vs_cov("gravity", "aesthetic")
-obs_vs_cov("gravity", "available_biomass_turnover")
-obs_vs_cov("gravity", "evolutionary_distinctiveness")
+obs_vs_cov("Gravity", "Aesthetic")
+obs_vs_cov("Gravity", "`Available_biomass_turnover`")
+obs_vs_cov("Gravity", "`Evolutionary_distinctiveness`")
 
-obs_vs_cov("n_fishing_vessels", "vitamin_A")
-obs_vs_cov("n_fishing_vessels", "selenium")
-obs_vs_cov("n_fishing_vessels", "trophic_web_robustness")
+obs_vs_cov("Fishing_vessel_density", "`Vitamin_A`")
+obs_vs_cov("Fishing_vessel_density", "Selenium")
+obs_vs_cov("Fishing_vessel_density", "`Trophic_web_robustness`")
 
-obs_vs_cov("gdp", "calcium")
+obs_vs_cov("GDP", "Calcium")
 
-boxplot(covariates_site_final$n_fishing_vessels ~ covariates_site_final$protection_status)
+boxplot(covariates_site_final$Fishing_vessel_density ~ covariates_site_final$protection_status)
 
 
 ## Contributions per realm 
-contrib <- c("selenium", "vitamin_A", "aesthetic", "public_attention", "n_fishing_vessels" )
+contrib <- c("Selenium", "Vitamin_A", "Aesthetic", "Public_attention", "Fishing_vessel_density" )
 data_to_plot <- data |> 
   dplyr::select(realm, all_of(contrib)) |> 
   tidyr::pivot_longer(-realm, names_to = "contributions", values_to = "value")
@@ -814,31 +987,123 @@ ggplot(data_to_plot)+
   # geom_violin(aes(x=human_cov, y = value, fill = protection_status))+
   geom_boxplot(aes(x=contributions, y = value, fill = realm))+
   hrbrthemes::theme_ipsum()
-ggsave(here::here("figures", "contribution_vs_covariate", 
+ggsave(here::here("figures", "3_contribution_vs_covariate", 
                   "contrib_per_realm.jpg"),
        plot = last_plot(), width=8, height = 7 )
 
 ##-------------plot Covariates vs protection -------------
 hum_cov <- covariates_site_final |> 
-  dplyr::select(protection_status, n_fishing_vessels, gravity, neartt) |> 
+  dplyr::select(protection_status, Fishing_vessel_density, Gravity, Travel_time) |> 
   tidyr::pivot_longer(-protection_status, names_to = "human_cov", values_to = "value")
   
 ggplot(hum_cov)+
   # geom_violin(aes(x=human_cov, y = value, fill = protection_status))+
   geom_boxplot(aes(x=human_cov, y = value, fill = protection_status))+
   hrbrthemes::theme_ipsum()
-ggsave(here::here("figures", "contribution_vs_covariate", 
+ggsave(here::here("figures", "3_contribution_vs_covariate", 
                   "Human_covariates_VS_protection_status.jpg"),
        plot = last_plot(), width=8, height = 7 )
 
 
+
+
+
+
+###############################################################################
+##
+##            #### SITE SCALE WITHOUT INFERRED PQ DATA ####
+##   (WE MEAN CONTRIBUTIONS AND COVARIATES IN THE SAME SITE AT THE SAME DATE,
+##       AFTER REMOVING ALL SURVEYS WHRE PQ DATA HAVE BEEN INFERRED)
+##
+###############################################################################"
+
+load(file = here::here("data", "raw_data", "environmental_covariates", 
+                       "raw_covariates_all_surveys.Rdata"))
+cov_without_NA_PQ <- raw_covariates_all |> 
+  dplyr::select(survey_id:survey_date, algae:seagrass) |> 
+  tidyr::drop_na()
+
+##------------------- Clean observations -------------------
+observations_site_PQ <- contributions_sites_date |>
+  dplyr::select(-N_recycling, -P_recycling,) |> 
+  tidyr::drop_na() |> 
+  dplyr::mutate(across(-c(iucn_species_richness), scale)) |> 
+  dplyr::mutate(across(everything(), as.numeric))
+
+##------------------- REMOVE NAs IN PQ -------------------
+all_covariates_benthos_full <- all_covariates_benthos_inferred |> 
+  dplyr::filter(survey_id %in% cov_without_NA_PQ$survey_id)
+
+
+##------------------- Mean covariates -------------------
+# Mean the covariates at the site scale, for a given date: all surveys in the
+# same place, observed at the same date are merged
+#### FINAL SELECTION OF COVARIATES ####
+metadata_to_select
+cov_to_select2
+
+covariates_site_PQ <- all_covariates_benthos_full |> 
+  dplyr::select(all_of(c(metadata_to_select, "survey_date",cov_to_select2))) |> 
+  #Agregate at the site scale
+  dplyr::select(-survey_id, -protection_status_detailed) |> 
+  dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
+                  survey_date, year, protection_status) |> 
+  dplyr::summarise(across(.cols = everything(),
+                          .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
+  dplyr::mutate(across(.cols = all_of(cov_to_select2),
+                       .fns = ~ifelse(is.nan(.), NA, .), .names = "{.col}")) |> 
+  dplyr::mutate(id = paste0(site_code, "_", survey_date)) |> 
+  dplyr::ungroup() |> 
+  dplyr::select(id, everything(), -survey_date) |> 
+  #log-transform
+  dplyr::mutate(across(.cols = all_of(cov_to_log_transformed),
+                       .fns = ~ .x +1 , .names = "{.col}")) |>
+  dplyr::mutate(across(.cols = all_of(cov_to_log_transformed),
+                       .fns = log10 , .names = "{.col}"))      # log(x+1) to avoid -Inf values
+
+
+
+#FINAL COVARIATES                                       
+covariates_site_PQ_final <- covariates_site_PQ |> 
+  #Change the order of levels of MPAs for the GLM
+  dplyr::mutate(protection_status =factor(protection_status, 
+                              levels = c("out", "restricted", "full")) ) |> 
+  # tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
+  dplyr::filter(id %in% rownames(observations_site_PQ)) |> 
+  tibble::column_to_rownames("id") |>
+  dplyr::mutate(across(-c(longitude, latitude,
+                          site_code,
+                          protection_status, #protection_status_detailed,
+                          country,
+                          realm,
+                          ecoregion), scale)) |> #SCALE ALL COVARIATES
+  dplyr::mutate(across(-c(site_code, protection_status, #protection_status_detailed,
+                          country, realm, ecoregion), as.numeric))
+
+
+
+
+#### COMMON SITES FOR COVARIATES AND OBSERVATIONS ####
+covariates_site_without_NA_in_PQ <- covariates_site_PQ_final[rownames(observations_site_PQ),] |> 
+  tidyr::drop_na() # loss notably due to the Allen Atlas
+
+
+observations_site_without_NA_in_PQ <- observations_site_PQ[rownames(covariates_site_without_NA_in_PQ),] |> 
+  dplyr::select(-NN_score, -NP_score)
+dim(observations_site_without_NA_in_PQ) #1829 SITE/DATE, 22 CONTRIBUTIONS
+
+
+#### RENAME COVARIATES AND CONTRIBUTIONS ####
+
+covariates_site_without_NA_in_PQ <- covariates_site_without_NA_in_PQ |> 
+  dplyr::rename(all_of(new_names_cov))
+
+observations_site_without_NA_in_PQ <- observations_site_without_NA_in_PQ |> 
+  dplyr::rename(all_of(new_names_contrib))
+
 ##------------------- save datasets -------------------
-save(covariates_site_final, file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
-save(observations_site_final, file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
-
-# load(file = here::here("data", "derived_data", "3_sites_covariates_to_predict.Rdata"))
-# load(file = here::here("data", "derived_data", "3_sites_contributions_to_predict.Rdata"))
-
-save(contributions_transformation,
-     file = here::here("outputs", "3_metadata_backtransformation_contrib.Rdata") )
-
+save(covariates_site_without_NA_in_PQ,
+     file = here::here("data", "derived_data", 
+                       "3_sites_without_NA_in_PQ_covariates_to_predict.Rdata"))
+save(observations_site_without_NA_in_PQ,
+     file = here::here("data", "derived_data","3_sites_without_NA_in_PQ_contributions_to_predict.Rdata"))

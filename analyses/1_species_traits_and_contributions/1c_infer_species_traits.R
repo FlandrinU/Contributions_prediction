@@ -94,189 +94,6 @@ fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1
 
 ################################################################################
 ##
-##   Try missforest without all taxonomical data (only Phylum, class, order)
-##
-###############################################################################"
-# ##-------------Evaluate MissForest performance-------------
-# 
-# # Preping data
-# data_for_missforest <- preping_data(tropical_species_traits)
-# 
-# data_to_infer <- data_for_missforest[[1]]
-# traits_data_factors <- data_for_missforest[[2]]
-# traits_data_num <- data_for_missforest[[3]]
-# factor_length <- data_for_missforest[[4]]
-# 
-# 
-# # Run Missforest
-# model_eval_missforest <- fct_missforest_evaluation(
-#   data_to_infer, 
-#   model_iteration = 100, #100
-#   maxiter_mf=10, #10
-#   ntree_mf=100,  #100
-#   prop_NA = 0.2) #long time to run: 24 cores, 100 iterations, mtree=100, miter=10 -> 1h
-# 
-# 
-# save(model_eval_missforest, file = here::here("outputs", "predictive_model_eval_species_traits.Rdata"))
-# # load(file = here::here("outputs", "predictive_model_eval_species_traits.Rdata"))
-# 
-# 
-# # Extract results
-# results <- extract_model_perf(raw_result = model_eval_missforest)
-# traits_performance <- results[[1]]
-# order_performance <- results[[2]]
-# raw_factors_perf <- results[[3]]
-# raw_numeric_perf <- results[[4]]
-# 
-# 
-# ## Plot performance of prediction
-#   # Estimate distributions (boxplot)
-#   boxplot_missforest <- estimates_boxplot(df_estimates = traits_performance)
-#   boxplot_missforest
-#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_boxplot_traits.jpg"),
-#          boxplot_missforest, width = 12, height =8 )
-#   
-#   # Estimate distributions (Histograms)
-#   hist_missforest <- estimates_histogramm(data = traits_performance)
-#   hist_missforest
-#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_distribution.png"),
-#          hist_missforest, width = 22, height =14 )
-#   
-#   boxplot_missforest_order <- estimates_boxplot_per_order(df_estimates = order_performance)
-#   boxplot_missforest_order #very large plot
-#   ggpubr::ggexport(boxplot_missforest_order, 
-#                    filename = here::here("figures","species_traits", "1_Missforest_performance_boxplot_order.pdf"),
-#                    width = 16, height =11)
-#   
-#   # Influence of NAs proportions in initial data
-#   NA_proportion <- fct_test_NA_proportion(data_to_infer = data_to_infer)
-#   NA_prop_plot <- estimates_initial_NA(NA_proportion = NA_proportion)
-#   NA_prop_plot
-#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion.jpg"),
-#          NA_prop_plot[[1]], width = 12, height =7 )
-#   ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion_per_trait.jpg"),
-#          NA_prop_plot[[2]], width = 12, height =7 )
-# 
-# 
-# ## Sum up missforest performance
-# max_proportion <- apply(data_to_infer, 2, FUN = function(x){
-#   table(x)[which.max(table(x))]
-# }) / nrow(data_to_infer)
-# 
-# resumed_data <- traits_performance |> 
-#   dplyr::group_by(variable) |> 
-#   dplyr::summarise(median_estimate = median(estimate))
-# 
-# prop_NA <- c()
-# for( i in resumed_data$variable){
-#   p_NA <- sum(is.na(tropical_species_traits[,i]))/nrow(tropical_species_traits)
-#   prop_NA <- c(prop_NA, p_NA)
-# }
-# 
-# #assess the risk: proportion of NA * (1- Rsquared or Accuracy) ~= proportion of error in the final matrix
-# resumed_data <- resumed_data |> 
-#   dplyr::mutate(prop_NA = prop_NA,
-#                 prop_error = prop_NA * (1-median_estimate))
-# 
-# useful <- c("a", "b", "DemersPelag", "Length", "Calcium", "Iron", "Omega3",
-#             "Selenium", "VitaminA", "Zinc", "K", "ClimVuln_SSP585", "public_interest",
-#             "aesthetic", "range_n_cells_01", "IUCN_category", "trophic_guild", 
-#             "recycling_P", "recycling_N")
-# hist(resumed_data$prop_error, breaks = 20)
-# hist(resumed_data[resumed_data$variable %in% useful,]$prop_error, breaks = 20)
-# 
-# 
-# ##------------- Infer data on chosen variables-------------
-# #Choose variable to infer
-# var_to_infer <- c("Length", "K", "trophic_guild",
-#                   "Calcium", "Iron", "Omega3", "Selenium", "VitaminA", "Zinc",
-#                   "ClimVuln_SSP585", "geographic_range_Albouy19", "recycling_P",
-#                   "recycling_N")
-# 
-# #Run several missforest, and keep the most frequent inference if most models converge to the same result
-# inferred_data <- missforest_applied(data_to_infer, 
-#                                    factor_length,
-#                                    traits_data_factors,
-#                                    traits_data_num,
-#                                    var_to_infer,
-#                                    confidence_threshold = 0.8, #factors: proportion of consistency with the norm, or numeric: 1-Coefficient of variation > 0.8
-#                                    model_iteration = 100,
-#                                    maxiter_mf=10, #missforest parameter
-#                                    ntree_mf=100) #missforest parameter
-# 
-# 
-# # Explore data
-# species_traits <- inferred_data |> 
-#   tibble::rownames_to_column(var = "species") |> 
-#   dplyr::select(-phylum, -class, -order)
-# 
-# fb_plot_species_traits_completeness(species_traits)
-# fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 0.75)
-# 
-# #check trophic guil inference
-# troph <- data_to_infer$Troph[which(is.na(data_to_infer$trophic_guild))]
-# guild_inferred <- inferred_data$trophic_guild[which(is.na(data_to_infer$trophic_guild))]
-# df <- data.frame(troph_fishbase  = troph,
-#                  trophic_guild_inferred =guild_inferred)
-# 
-# ggplot(data=df, aes(x=troph_fishbase, group=trophic_guild_inferred, fill=trophic_guild_inferred)) +
-#   geom_histogram(aes(y = ..density..), bins = 20, color = "grey40", fill ="white") +
-#   geom_density(aes(fill = trophic_guild_inferred), alpha = 0.2) +
-#   hrbrthemes::theme_ipsum() +
-#   facet_wrap(~trophic_guild_inferred, scales = "free_y") +
-#   theme(
-#     legend.position="none",
-#     panel.spacing = unit(0.1, "lines"),
-#     axis.ticks.x=element_blank()
-#   )
-# # ggsave(filename = here::here("figures","species_traits", "1_trophic_guild_inference_VS_troph.jpg"),
-# #        width = 12, height = 8)
-# 
-# 
-# # ##-------------save data-------------
-# # save(inferred_data, file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
-# # # load(file= here::here("outputs", "RLS_species_traits_inferred.Rdata"))
-# 
-# 
-# ##-------------Test randomisation-------------
-# # melt all species traits
-# random_species_traits <- tropical_species_traits |>
-#   dplyr::mutate(across(.cols = c("IUCN_category":"recycling_N"), .fns = sample, .names = "{.col}"))
-# 
-# # Preping data
-# data_for_missforest <- preping_data(random_species_traits)
-# 
-# data_to_infer <- data_for_missforest[[1]]
-# traits_data_factors <- data_for_missforest[[2]]
-# traits_data_num <- data_for_missforest[[3]]
-# factor_length <- data_for_missforest[[4]]
-# 
-# 
-# # Run Missforest
-# model_eval_missforest <- fct_missforest_evaluation(
-#   data_to_infer, 
-#   model_iteration = 25, #100
-#   maxiter_mf=10, #10
-#   ntree_mf=100,  #100
-#   prop_NA = 0.2) #long time to run: 24 cores, 100 iterations, mtree=100, miter=10 -> 1h
-# 
-# 
-# # Extract results
-# results <- extract_model_perf(raw_result = model_eval_missforest)
-# traits_performance <- results[[1]]
-# 
-# 
-# # Estimate distributions (boxplot)
-# boxplot_missforest <- estimates_boxplot(df_estimates = traits_performance)
-# boxplot_missforest
-# ggsave(filename = here::here("figures","species_traits", "1_Missforest_RANDOM_traits.jpg"),
-#        boxplot_missforest, width = 12, height =8 )
-
-
-
-
-################################################################################
-##
 ##         Integrate phylogeny with Principal Component Analyses
 ##
 ###############################################################################"
@@ -385,7 +202,7 @@ ggplot(resumed_data) +
         axis.title = element_text(size = 10),
         axis.text.x = element_text(size = 10))
   
-ggsave(filename = here::here("figures","species_traits", "1_phylogeny_importance_in_MF_perf.jpg"),
+ggsave(filename = here::here("figures","1_species_traits", "1_phylogeny_importance_in_MF_perf.jpg"),
        plot = last_plot(), width = 10, height =8 )
 
 
@@ -395,7 +212,7 @@ res <- dimensionality_res |> dplyr::filter(dimensions == dim)
 # Estimate distributions (boxplot)
 boxplot_missforest <- estimates_boxplot(df_estimates = res)
 boxplot_missforest
-ggsave(filename = here::here("figures","species_traits", paste0("1_Missforest_performance_boxplot_traits_phylogeny_",dim,".jpg")),
+ggsave(filename = here::here("figures","1_species_traits", paste0("1_Missforest_performance_boxplot_traits_phylogeny_",dim,".jpg")),
        boxplot_missforest, width = 12, height =8 )
 
 # Estimate distribution (Histograms)
@@ -460,7 +277,7 @@ raw_numeric_perf <- results[[4]]
 # Estimate distributions (boxplot)
 boxplot_missforest <- estimates_boxplot(df_estimates = traits_performance)
 boxplot_missforest
-ggsave(filename = here::here("figures","species_traits", "1_Missforest_final_performance_boxplot_traits.jpg"),
+ggsave(filename = here::here("figures","1_species_traits", "1_Missforest_final_performance_boxplot_traits.jpg"),
        boxplot_missforest, width = 12, height =8 )
 
 #Choose variable to plot
@@ -474,29 +291,20 @@ boxplot_missforest <- estimates_boxplot(df_estimates = dplyr::filter(
   traits_performance, variable %in% var_to_plot),
   add_mean = F)
 boxplot_missforest
-ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_distribution_selected_traits.jpg"),
+ggsave(filename = here::here("figures","1_species_traits", "1_Missforest_performance_distribution_selected_traits.jpg"),
        boxplot_missforest, width = 10, height =7 )
 
 # Estimate distributions (Histograms)
 hist_missforest <- estimates_histogramm(data = traits_performance)
 hist_missforest
-ggsave(filename = here::here("figures","species_traits", "1_Missforest_performance_distribution.png"),
+ggsave(filename = here::here("figures","1_species_traits", "1_Missforest_performance_distribution.png"),
        hist_missforest, width = 22, height =14 )
 
 boxplot_missforest_order <- estimates_boxplot_per_order(df_estimates = order_performance)
 boxplot_missforest_order #very large plot
 ggpubr::ggexport(boxplot_missforest_order, 
-                 filename = here::here("figures","species_traits", "1_Missforest_performance_boxplot_order.pdf"),
+                 filename = here::here("figures","1_species_traits", "1_Missforest_performance_boxplot_order.pdf"),
                  width = 16, height =11)
-
-# # Influence of NAs proportions in initial data
-# NA_proportion <- fct_test_NA_proportion(data_to_infer = data_to_infer)
-# NA_prop_plot <- estimates_initial_NA(NA_proportion = NA_proportion)
-# NA_prop_plot
-# ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion.jpg"),
-#        NA_prop_plot[[1]], width = 12, height =7 )
-# ggsave(filename = here::here("figures","species_traits", "1_Missforest_NA_proportion_per_trait.jpg"),
-#        NA_prop_plot[[2]], width = 12, height =7 )
 
 
 ## Sum up missforest performance
@@ -588,7 +396,7 @@ species_traits <- inferred_data |>
 fb_plot_species_traits_completeness(species_traits)
 fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
 ggsave(plot= last_plot(), width = 8, height = 8, 
-       file= here::here("figures","species_traits","1_percent_species_INFERRED_TRAITS_tropical.png"))
+       file= here::here("figures","1_species_traits","1_percent_species_INFERRED_TRAITS_tropical.png"))
 
 #check trophic guild inference
 df <- data.frame(troph_fishbase  = data_to_infer$Troph[which(is.na(data_to_infer$trophic_guild))],
@@ -604,7 +412,7 @@ ggplot(data=df, aes(x=troph_fishbase, group=trophic_guild_inferred, fill=trophic
     panel.spacing = unit(0.1, "lines"),
     axis.ticks.x=element_blank()
   )
-ggsave(filename = here::here("figures","species_traits", "1_trophic_guild_inference_VS_troph.jpg"),
+ggsave(filename = here::here("figures","1_species_traits", "1_trophic_guild_inference_VS_troph.jpg"),
        width = 12, height = 8)
 
 
@@ -633,4 +441,4 @@ species_traits <- dplyr::select(inferred_species_traits, all_of(used_traits)) |>
   tibble::rownames_to_column("species")
 fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
 ggsave(plot= last_plot(), width = 8, height = 8, 
-       file= here::here("figures","species_traits","1_percent_species_INFERRED_used_TRAITS_tropical.png"))
+       file= here::here("figures","1_species_traits","1_percent_species_INFERRED_used_TRAITS_tropical.png"))

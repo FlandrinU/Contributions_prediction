@@ -326,180 +326,6 @@ estimates_histogramm <- function(data = traits_performance){
 
 
 
-##-------------4) study relationship between r squared and NAs-------------
-estimates_NA_plot <- function(df_estimates = traits_performance){
-
-  plot_correlation <- function(trait,data){
-    col <- fishualize::fish(n = length(unique(df_estimates$variable)), option = "Ostracion_whitleyi", begin = 0.2, end = 0.9)
-    names(col) <- unique(df_estimates$variable)[order(unique(df_estimates$variable))]
-    
-    data <- dplyr::filter(df_estimates, variable == trait)
-    ggplot() +
-      geom_point(aes(y = data$estimate,
-                     x = data$NA_created),
-                 color = col[trait][[1]], alpha = 0.6, size = 1) +
-      theme_bw() +
-      labs(x = "NA created", y = "Estimate", title = trait) +
-      theme(panel.grid.minor = element_blank(),
-            axis.text = element_text(color = "black"), 
-            axis.title = element_text(size = 10))
-  } 
-  
-  plots <- lapply(unique(df_estimates$variable)[order(unique(df_estimates$variable))], FUN = plot_correlation, data )
- 
-  vect_plots <- c()
-  for(i in c(1:length(plots))){ vect_plots <- c(vect_plots, paste0("plots[[", i, "]]")) }
-  code_expr <- paste(vect_plots, collapse = "+")
-  
-  all_plot <- eval(parse(text=code_expr)) +
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  
-  all_plot
-} # END of estimates_NA_plot (4)
-
-
-##-------------5) Influence of phylogeny on estimates------------- 
-estimates_phylogeny <- function(data = model_eval_missforest,                   ## check the measures + number of order different per traits...?###
-                                traits = unique(traits_performance$variable),
-                                level_name = FALSE){
-  #color
-  col <- fishualize::fish(n = length(traits), option = "Ostracion_whitleyi", begin = 0.2, end = 0.9)
-  names(col) <- traits[order(traits)]
-
-  #data
-  flat_list <- unlist(data, recursive = F)
-  raw_estimates_factor <- do.call(rbind,flat_list[seq(1,length(flat_list),2)])
-  raw_estimates_num <- do.call(rbind,flat_list[seq(2,length(flat_list),2)])  
-  
-  boxplot_error_phylo <- function(trait){
-    
-    #trait = "IUCN_category"
-    ### the trait is categorical ###
-    if( trait %in% raw_estimates_factor$variable){
-      
-      temp_trait <- raw_estimates_factor |>
-        dplyr::filter(variable == trait) |>
-        dplyr::mutate(accuracy = (observed == imputed)) |> 
-        dplyr::group_by(order, missForest) |>
-        dplyr::summarise(prop_accuracy = mean(accuracy)*100,
-                         n_sp = dplyr::n_distinct(rls_species_name))
-      
-      #order boxplot
-      order_taxa <- temp_trait |>
-        dplyr::group_by(order) |>
-        dplyr::summarise(median_accuracy = median(prop_accuracy, na.rm = T))
-      
-      order_boxplot <- order_taxa$order[order(order_taxa$median_accuracy)]
-      
-      #merge data
-      data <- merge(temp_trait, order_taxa)
-      data$order <- factor(data$order, levels = order_boxplot)
-      
-
-      #New labels
-      replacement_labels <- lapply(order_boxplot, function(x) {
-        x <- as.character(x)
-        paste0(x, " (", median(temp_trait[temp_trait$order == x, "n_sp"][[1]]), ")")
-      })
-      
-      #Boxplot
-      plot <- ggplot(data)+
-        geom_boxplot(aes(x = order, y = prop_accuracy),
-                     color = col[trait][[1]], alpha = 0.6, linewidth = 1)+
-        theme_bw() +
-        labs(x = "", y = "Model accuracy (%)", title = trait) +
-        theme(panel.grid.minor = element_blank(),
-              axis.text = element_text(color = "black"),
-              axis.title = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1,
-                                         size= ifelse(level_name,10,0)))+
-        
-        #Add median error
-        geom_hline(yintercept = median(data$prop_accuracy),
-                   linetype="dashed",
-                   color = "firebrick4", linewidth=1)+
-        # annotate(geom = "text", x = Inf, y = Inf, hjust = 1.1, vjust = 1.5,
-        #          label=paste("median error = ", round(median(temp_trait$prop_error), 2) ),
-        #          col="firebrick4")+
-        #Add the number of species in each class
-        scale_x_discrete(labels = setNames(replacement_labels, order_boxplot))
-    } ### end of if categorical
-    
-    
-    #trait = "K"
-    ### the trait is numerical ##
-    if( trait %in% raw_estimates_num$variable){
-      
-      temp_trait <- raw_estimates_num |>
-        dplyr::filter(variable == trait) |>
-        dplyr::mutate(accuracy = 1 - abs(observed - imputed)/(max(observed)-min(observed)) ) |> 
-        dplyr::group_by(order, missForest) |>
-        dplyr::summarise(prop_accuracy = mean(accuracy)*100,
-                         n_sp = dplyr::n_distinct(rls_species_name))
-      
-      #order boxplot
-      order_taxa <- temp_trait |>
-        dplyr::group_by(order) |>
-        dplyr::summarise(median_accuracy = median(prop_accuracy, na.rm = T))
-      
-      order_boxplot <- order_taxa$order[order(order_taxa$median_accuracy)]
-      
-      #merge data
-      data <- merge(temp_trait, order_taxa)
-      data$order <- factor(data$order, levels = order_boxplot)
-      
-      
-      #New labels
-      replacement_labels <- lapply(order_boxplot, function(x) {
-        x <- as.character(x)
-        paste0(x, " (", median(temp_trait[temp_trait$order == x, "n_sp"][[1]]), ")")
-      })
-      
-      #Boxplot
-      plot <- ggplot(data)+
-        geom_boxplot(aes(x = order, y = prop_accuracy),
-                     color = col[trait][[1]], alpha = 0.6, linewidth = 1)+
-        theme_bw() +
-        labs(x = "", y = "Model precision (%)", title = trait) +
-        theme(panel.grid.minor = element_blank(),
-              axis.text = element_text(color = "black"),
-              axis.title = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1,
-                                         size= ifelse(level_name,10,0)))+
-        
-        #Add median error
-        geom_hline(yintercept = median(data$prop_accuracy),
-                   linetype="dashed",
-                   color = "firebrick4", linewidth=1)+
-        # annotate(geom = "text", x = Inf, y = Inf, hjust = 1.1, vjust = 1.5,
-        #          label=paste("median error = ", round(median(temp_trait$prop_error), 2) ),
-        #          col="firebrick4")+
-        #Add the number of species in each class
-        scale_x_discrete(labels = setNames(replacement_labels, order_boxplot))
-    } ### end of if numerical
-    
-    plot
-  } #END OF FUNCTION boxplot_error_phylo
-
-  plots <- lapply(traits[order(traits)], FUN = boxplot_error_phylo)
-  
-  vect_plots <- c()
-  for(i in c(1:length(plots))){ vect_plots <- c(vect_plots, paste0("plots[[", i, "]]")) }
-  code_expr <- paste(vect_plots, collapse = "+")
-  
-  all_plot <- eval(parse(text=code_expr)) +
-    theme(axis.title.y = element_text(margin = margin(r = -100, unit = "pt"))) +
-    plot_annotation(tag_levels = "a") &
-    theme(plot.tag = element_text(face = 'bold'))
-  
-  return(all_plot)
-} # END of estimates_phylogeny (5)
-
-
-##-------------6) Effect of NAs on estimates ------------- 
 estimates_initial_NA <- function(NA_proportion = NA_proportion){
   data <- NA_proportion[[1]]
   
@@ -611,7 +437,7 @@ estimates_according_NA_sp <- function(order_performance = order_performance,
 
 
 
-##-------------7) Check NA on map-------------
+##-------------4) Check NA on map-------------
 
 NA_on_map <- function(data=covariates,
                       variable = "coral_algae_10km",
@@ -658,44 +484,7 @@ NA_on_map <- function(data=covariates,
 }
 
 
-##-------------8) Extract result contributions model -------------
-
-extract_result_contrib <- function(raw_result = cross_val){
-
-  ### Extract evaluation measure per traits ###
-  traits_perf = list()
-  
-  for(i in 1:length(raw_result)){ 
-    model_i <- list()
-    temp <- raw_result[[i]]
-    
-    for( var in unique(temp$variable)){
-      temp_trait <- temp |> dplyr::filter(variable == var)
-      model_number <- unique(temp_trait$model)
-      
-      # lm_test = cor(temp_trait$observed, temp_trait$imputed) # Pearson correlation between observed and inferred
-      lm_test = base::summary(lm(temp_trait$observed ~ temp_trait$imputed))[["r.squared"]] #R-squared evaluation
-      
-      #Saving accuracy measure into list
-      model_i[[var]] <- c(lm_test, model_number)
-    }
-    
-    res <- as.data.frame(do.call(rbind,model_i)) |> 
-      dplyr::rename(estimate = V1, model = V2) |> 
-      dplyr::mutate(method = "r_squared") |> 
-      tibble::rownames_to_column(var = "variable")
-    
-    traits_perf[[i]] <- res
-  } #End num estimates per trait
-  
-  traits_performance = as.data.frame(do.call(rbind,traits_perf))
-  
-  return(traits_performance)
-  
-} # END of function extract_model_perf
-
-
-##-------------9) Density plot predictive models -------------
+##-------------5) Density plot predictive models -------------
 
 density_prediction <- function(raw_result = all_res){
   
@@ -742,7 +531,7 @@ density_prediction <- function(raw_result = all_res){
 
 
 
-##-------------10) plot distributions of variables -------------
+##-------------6) plot distributions of variables -------------
 
 distribution_plot <- function(dataframe = covariates_final,
                               longer = TRUE,
@@ -800,7 +589,7 @@ distribution_plot <- function(dataframe = covariates_final,
 
 
 
-##-------------11) plot relationship of X and Y -------------
+##-------------7) plot relationship of X and Y -------------
 
 plot_interaction <- function(dataframe = residuals,
                               var_facet_wrap = NULL, #give the name of the column giving the different elements of the facet wrap
@@ -847,7 +636,7 @@ plot_interaction <- function(dataframe = residuals,
 
 
 
-##-------------12) plot Contributions on map-------------
+##-------------8) plot Contributions on map-------------
 
 plot_Contrib_on_world_map <-function(data=contributions_surveys_log[order(contributions_surveys_log[,NCP]),],
                                      NCP = "Taxonomic_Richness",
@@ -890,6 +679,6 @@ plot_Contrib_on_world_map <-function(data=contributions_surveys_log[order(contri
     )
   
   if(save){
-    ggsave( here::here("figures", "map_contributions", paste0( title , NCP, ".jpg")), plot = map, width=15, height = 7 )
+    ggsave( here::here("figures", "2_map_contributions", paste0( title , NCP, ".jpg")), plot = map, width=15, height = 7 )
   }else{map}
 }

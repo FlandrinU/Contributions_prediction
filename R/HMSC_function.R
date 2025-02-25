@@ -1,6 +1,6 @@
 ###############################################################################'
 ##
-##  This function contains all code necessary to run Hmsc models and plot results
+##  This code contains all functions necessary to run Hmsc models and plot results
 ##
 ## HMSC_function.R
 ##
@@ -76,10 +76,10 @@ hmsc_function <- function(nSamples,
                                           -ecoregion,
                                           -realm
                                           # ,                     #country level covariates
-                                          # -hdi,
-                                          # -marine_ecosystem_dependency
+                                          # -HDI,
+                                          # -Marine_ecosystem_dependency
                                           # -ngo,
-                                          # -natural_ressource_rent
+                                          # -Natural_ressource_rent
   ))
   
   linear_effects <- fixed_effects[!fixed_effects %in% quadratic_effects]
@@ -100,7 +100,7 @@ hmsc_function <- function(nSamples,
   if(!is.null(test_null_model)){ formula <- as.formula("~1")}
   
   # response_distribution <- rep("normal", ncol(Y_data))
-  # response_distribution[colnames(Y_data) == "iucn_species_richness"] <- "poisson"
+  # response_distribution[colnames(Y_data) == "Iucn_species_richness"] <- "poisson"
   
   
   ## Set random effects ##
@@ -415,7 +415,7 @@ plot_hmsc_result <- function(metadata = metadata,
                              check_spatial_autocorrelation = F,
                              latent_factors = T,
                              drivers_to_plot =  list(
-                               c("n_fishing_vessels", "gravity", "gdp", "neartt"))
+                               c("Fishing_vessel_density", "Gravity", "GDP", "Travel_time"))
                             ){
   
   color_grad = rev(c("#A50026", "#D73027", "#FDAE61", "#FEE090","white",
@@ -430,20 +430,70 @@ plot_hmsc_result <- function(metadata = metadata,
   
   # Contributions classifications
   grp_NN_NP <- data.frame(
-    contribution = c("actino_richness","functional_distinctiveness",
-                      "iucn_species_richness" ,"mean_endemism",
-                      "evolutionary_distinctiveness","functional_entropy",
-                      "phylogenetic_entropy","herbivores_biomass",
-                      "invertivores_biomass",  "piscivores_biomass",
-                      "trophic_web_robustness", "mean_trophic_level",
+    contribution = c("Actinopterygian_richness","Functional_distinctiveness",
+                      "Iucn_species_richness" ,"Endemism",
+                      "Evolutionary_distinctiveness","Functional_entropy",
+                      "Phylogenetic_entropy","Herbivores_biomass",
+                      "Invertivores_biomass",  "Piscivores_biomass",
+                      "Trophic_web_robustness", "Mean_trophic_level",
       
-                      "public_attention", "aesthetic",
-                      "available_biomass", "selenium",
-                      "zinc",   "omega_3", "calcium",
-                      "iron","vitamin_A", "available_biomass_turnover"),
+                      "Public_attention", "Aesthetic",
+                      "Available_biomass", "Selenium",
+                      "Zinc",   "Omega_3", "Calcium",
+                      "Iron","Vitamin_A", "Available_biomass_turnover"),
     group = c(rep("NN", 12), 
               rep("NC", 2),
               rep("NS", 8)))
+  
+  ## Names for plotting
+  new_names_cov <- c(
+    # Environmental variables
+    "Depth"                      = "depth",
+    "SST (5 years)"              = "SST_5_years",
+    "DHW (5 years)"              = "DHW_5_years",
+    # "Salinity (5 years)"         = "Salinity_5_years",
+    "DHW (1 years)"              = "DHW_1_year",
+    "DHW (7 days)"               = "DHW_7_days",
+    "Chlorophyll (7 days)"       = "Chlorophyll_7_days",
+    "pH (5 years)"               = "pH_5_years",
+    "DHW_quantile95 (5 years)"   = "DHW_quantile95_5_years",
+    "Chlorophyll (5 years)"      = "Chlorophyll_5_years",
+    
+    # Habitat types
+    "Back reef slope (%)"         = "Back_reef_slope",
+    "Inner reef flat (%)"         = "Inner_reef_flat",
+    "Plateau (%)"                 = "Plateau",
+    "Rock (%)"                    = "Rock",
+    "Seagrass (%)"                = "Seagrass",
+    "Coral algae (%)"             = "Coral_algae",
+    "Microalgal mats (%)"         = "Microalgal_mats",
+    "Reef crest (%)"              = "Reef_crest",
+    "Rubble (%)"                  = "Rubble",
+    "Sheltered reef slope (%)"    = "Sheltered_reef_slope",
+    "Deep lagoon (%)"             = "Deep_lagoon",
+    "Patch reefs (%)"             = "Patch_reefs",
+    "Reef slope (%)"              = "Reef_slope",
+    "Sand (%)"                    = "Sand",
+    "Fringing reef area (%)"   = "Terrestrial_reef_flat",
+    
+    # Reef Life Survey (RLS) variables
+    "Coral (photo-quadrat)"                = "Coral_RLS",
+    "Rock (photo-quadrat)"                 = "Rock_RLS",
+    "Sand (photo-quadrat)"                 = "Sand_RLS",
+    "Coralline algae (photo-quadrat)"      = "Coralline_algae_RLS",
+    "Other sessile invert (photo-quadrat)" = "Other_sessile_invert_RLS",
+    "Coral rubble (photo-quadrat)"         = "Coral_rubble_RLS",
+    
+    # Socioeconomic variables
+    "GDP"                                  = "GDP",
+    "Marine ecosystem dependency"          = "Marine_ecosystem_dependency",
+    "Fishing vessel density"               = "Fishing_vessel_density",
+    "Gravity"                              = "Gravity",
+    "Natural ressource rent"               = "Natural_ressource_rent",
+    "HDI"                                  = "HDI",
+    "Travel time"                          = "Travel_time",
+    "Protection status"                    = "protection_status"
+  )
   
   ##----Source packages and functions----
   
@@ -536,7 +586,7 @@ plot_hmsc_result <- function(metadata = metadata,
       ),
       # Extract the responses
       response = dplyr::case_when(
-        # Handle polynomial terms like poly(reef_500m, omega_3)
+        # Handle polynomial terms like poly(reef_500m, Omega_3)
         grepl("poly\\(", Parameter) ~ str_replace(
           str_replace(
             str_extract(Parameter, ",\\s*([a-zA-Z0-9_]+)\\s*\\("), ",\\s*", ""), 
@@ -557,7 +607,7 @@ plot_hmsc_result <- function(metadata = metadata,
   
   
   ##---- create directory to save figures ----
-  path_file <- here::here("figures","models","hmsc", save_name)    
+  path_file <- here::here("figures","3_models","hmsc", save_name)    
   dir.exists(path_file)
   
   if(!dir.exists(path_file)) dir.create(path_file)
@@ -576,14 +626,18 @@ plot_hmsc_result <- function(metadata = metadata,
   # Omega is the matrix of species-to-species residual covariances.
   png(paste0(path_file,"/convergence_estimates_effective_size_", save_name,".png"),
       width = 20, height = 20, units = "cm", res = 200)
-  par(mfrow=c(2,2), mar = c(4,4,4,4))
-  hist(coda::effectiveSize(mpost$Beta), main="fixed_effects: ess(beta)", breaks = 30)
+  par(mfrow=c(2,2), mar = c(4,4,4,4), cex.main = 1.5, cex.lab = 1.3, cex.axis = 1.2)
+  hist(coda::effectiveSize(mpost$Beta), main="fixed_effects: ess(beta)",
+       breaks = 30, xlab = "Effective Sample Size")
   abline(v= nSamples*nChains, col = "red4", lty = 2, lwd = 3)
-  hist(coda::gelman.diag(mpost$Beta, multivariate=FALSE)$psrf, main="psrf(beta)", breaks = 30)
+  hist(coda::gelman.diag(mpost$Beta, multivariate=FALSE)$psrf, main="psrf(beta)",
+       breaks = 30, xlab = "Effective Sample Size")
   abline(v= 1, col = "red4", lty = 2, lwd = 3)
-  hist(coda::effectiveSize(mpost$Omega[[1]]), main="random_effects: ess(omega)", breaks = 30) #also check associations between y
+  hist(coda::effectiveSize(mpost$Omega[[1]]), main="random_effects: ess(omega)",
+       breaks = 30, xlab = "Effective Sample Size") #also check associations between y
   abline(v= nSamples*nChains, col = "red4", lty = 2, lwd = 3)
-  hist(coda::gelman.diag(mpost$Omega[[1]], multivariate=FALSE)$psrf, main="psrf(omega)", breaks = 30)
+  hist(coda::gelman.diag(mpost$Omega[[1]], multivariate=FALSE)$psrf, main="psrf(omega)",
+       breaks = 30, xlab = "Effective Sample Size")
   abline(v= 1, col = "red4", lty = 2, lwd = 3)
   dev.off()
   
@@ -594,7 +648,7 @@ plot_hmsc_result <- function(metadata = metadata,
   # library("ggmcmc")
   # see help at : http://xavier-fim.net/post/using_ggmcmc/
   
-  cov <- "median_5year_analysed_sst"
+  cov <- "SST_5_years"
   S <- S_arranged |> dplyr::filter(grepl(cov, covariate))
   # # quick look on the distribution of the values and the shape of the posterior distribution.
   # ggmcmc::ggs_histogram(S)+facet_wrap(~ Parameter, ncol = 5)
@@ -605,13 +659,21 @@ plot_hmsc_result <- function(metadata = metadata,
   
   # assess convergence and diagnose chain problems. the expected outcome is to produce 
   # “white noise”. + a good tool to assess within-chain convergence
-  ggmcmc::ggs_traceplot(S)+facet_wrap(~ Parameter, ncol = 5)
+  ggmcmc::ggs_traceplot(S)+facet_wrap(~ Parameter, ncol = 4)+
+    theme(
+      axis.text = element_text(size = 13),     
+      axis.title = element_text(size = 15),   
+      strip.text = element_text(size = 13) )
   ggsave(filename = paste0(path_file,"/traceplot_", save_name,".jpg"),
          width = 15, height = 10)
   
   # The expected output is a line that quickly approaches the overall mean, in addition
   # to the fact that all chains are expected to have the same mean
-  ggmcmc::ggs_running(S)+facet_wrap(~ Parameter, ncol = 5)
+  ggmcmc::ggs_running(S)+facet_wrap(~ Parameter, ncol = 4)+
+    theme(
+      axis.text = element_text(size = 13),     
+      axis.title = element_text(size = 15),   
+      strip.text = element_text(size = 13))
   ggsave(filename = paste0(path_file,"/Chain_convergence_", save_name,".jpg"),
          width = 15, height = 10)
   
@@ -624,7 +686,11 @@ plot_hmsc_result <- function(metadata = metadata,
   # beyond it. While autocorrelation is not per se a signal of lack of convergence,
   # it may indicate some misbehaviour of several chains or parameters, or indicate that
   # a chain needs more time to converge. 
-  ggmcmc::ggs_autocorrelation(S)+facet_wrap(~ Parameter, ncol = 5)
+  ggmcmc::ggs_autocorrelation(S)+facet_wrap(~ Parameter, ncol = 4)+
+    theme(
+      axis.text = element_text(size = 13),     
+      axis.title = element_text(size = 15),   
+      strip.text = element_text(size = 13))
   ggsave(filename = paste0(path_file,"/autocorrelation_", save_name,".jpg"),
          width = 15, height = 10)
   
@@ -658,8 +724,10 @@ plot_hmsc_result <- function(metadata = metadata,
     png(paste0(path_file,"/explanatory_power_", save_name,".png"),
         width = 20, height = 13, units = "cm", res = 300)
     par(mfrow=c(1,2), mar = c(4,4,10,4))
-    hist(MF$R2, xlim = c(0,1), main=paste0("Mean R2 = ", round(mean(MF$R2),2)))
-    hist(MF$RMSE, xlim = c(0,1), main=paste0("Mean RMSE = ", round(mean(MF$RMSE),2)))
+    hist(MF$R2, xlim = c(0,1), main=paste0("Mean R2 = ", round(mean(MF$R2),2),
+                                           "\n sd = ", round(sd(MF$R2),2)))
+    hist(MF$RMSE, xlim = c(0,1), main=paste0("Mean RMSE = ", round(mean(MF$RMSE),2),
+                                             "\n sd = ", round(sd(MF$RMSE),2)))
     mtext(paste0("WAIC = ", AIC, "     Computing Time: ", comput_time, "h"),
           side = 3, line = -2.5, outer = TRUE, cex = 1.1, font = 2)
     dev.off()
@@ -786,26 +854,30 @@ plot_hmsc_result <- function(metadata = metadata,
       )
     
     #classify covariates
-    human <- c("gdp", "gravity", "protection_status", "natural_ressource_rent",
+    human <- c("GDP", "Gravity", "protection_status", "Natural_ressource_rent",
                # "protection_status2",
-               "neartt","n_fishing_vessels", "hdi", "marine_ecosystem_dependency")
+               "Travel_time","Fishing_vessel_density", "HDI", "Marine_ecosystem_dependency")
     
-    habitat <- c("depth", #"algae",
-                 "coral", "Sand", #"seagrass", "microalgal_mats",
-                 "other_sessile_invert", "Rock", "coralline_algae", "coral_rubble",
-                 "Back_Reef_Slope_500m", "coral_algae_500m",  "Deep_Lagoon_500m", 
-                 "Inner_Reef_Flat_500m", "Microalgal_Mats_500m", "Patch_Reefs_500m",   
-                 "Plateau_500m", "Reef_Crest_500m", "Reef_Slope_500m", 
-                 "Rock_500m", "Rubble_500m", "Sand_500m", "Seagrass_500m", 
-                 "Sheltered_Reef_Slope_500m", "Terrestrial_Reef_Flat_500m")
+    habitat <- c("depth",
+                 "Coral_RLS", "Sand_RLS",
+                 "Other_sessile_invert_RLS", "Rock_RLS", "Coralline_algae_RLS", 
+                 "Coral_rubble_RLS",
+                 "Back_reef_slope", "Coral_algae",  "Deep_lagoon", 
+                 "Inner_reef_flat", "Microalgal_mats", "Patch_reefs",   
+                 "Plateau", "Reef_crest", "Reef_slope", 
+                 "Rock", "Rubble", "Sand", "Seagrass", 
+                 "Sheltered_reef_slope", "Terrestrial_reef_flat",
+                 #if PCA dimensions in habitat
+                 unique(VP_long$Covariate)[grepl("_Dim", unique(VP_long$Covariate))])
     
-    envir <-  c("median_5year_analysed_sst", "median_5year_chl", 
-                "median_5year_degree_heating_week", #"q05_5year_ph",
-                "median_5year_so_glor", "median_1year_degree_heating_week",
-                "median_7days_degree_heating_week", #"median_7days_analysed_sst",
-                "median_7days_chl", #"q95_1year_degree_heating_week", 
-                "median_5year_ph",
-                "q95_5year_degree_heating_week")
+    envir <-  c("SST_5_years", "Chlorophyll_5_years", 
+                "DHW_5_years", #"q05_5year_ph",
+                # "Salinity_5_years",
+                "DHW_1_year",
+                "DHW_7_days", #"median_7days_analysed_sst",
+                "Chlorophyll_7_days", #"q95_1year_degree_heating_week", 
+                "pH_5_years",
+                "DHW_quantile95_5_years")
     
     random <- unique(VP_long$Covariate)[grepl("Random", unique(VP_long$Covariate))]
     
@@ -824,6 +896,7 @@ plot_hmsc_result <- function(metadata = metadata,
       envir = colorRampPalette(c("#FF7A33FF", "#FFC199"))(length(envir)),
       random = colorRampPalette(c("grey95", "grey50"))(length(random))
     )
+    
     
     VP_long <- VP_long |>
       dplyr::mutate(
@@ -869,15 +942,7 @@ plot_hmsc_result <- function(metadata = metadata,
     #Rename covariates
     VP_long <- VP_long |> 
       dplyr::mutate(Covariate = dplyr::recode(Covariate,
-                                              "median_5year_analysed_sst" = "SST_5years",
-                                              "median_5year_degree_heating_week" = "DHW_5years",
-                                              "median_5year_so_glor" = "Salinity_5_years",
-                                              "median_1year_degree_heating_week" = "DHW_1year",
-                                              "median_7days_degree_heating_week" = "DHW_7days",
-                                              "median_7days_chl" = "Chlorophyll_7days",
-                                              "median_5year_ph" = "pH_5years",
-                                              "q95_5year_degree_heating_week" = "DHW_quantile95_5years",
-                                              "median_5year_chl" = "Chlorophyll_5years"))
+                              !!!setNames(names(new_names_cov), new_names_cov)))
     
     # Mean contribution of covariates
     mean_contrib <-  VP_long |> 
@@ -956,7 +1021,7 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::group_by(Covariate, color) |> 
       dplyr::summarise(mean_imp = mean(Value)) 
     
-    ggplot(VP_aggregated) +
+    plot_categ <- ggplot(VP_aggregated) +
       geom_col(aes(x = reorder(category, prop_variance),
                    y = prop_variance, fill = category),
                color = "grey20") +
@@ -973,7 +1038,7 @@ plot_hmsc_result <- function(metadata = metadata,
       annotate("text", label = stringr::word(VP_random$Covariate[2], sep = " ", 2),
                x = which(levels(reorder(VP_aggregated$category,
                                     VP_aggregated$prop_variance)) == "random"),
-               y = VP_random$mean_imp[2]/2)+
+               y = VP_random$mean_imp[2]/2, size = 5)+
       
       annotate("rect", 
                xmin = which(levels(reorder(VP_aggregated$category, 
@@ -986,7 +1051,8 @@ plot_hmsc_result <- function(metadata = metadata,
       annotate("text", label = stringr::word(VP_random$Covariate[1], sep = " ", 2),
                x = which(levels(reorder(VP_aggregated$category,
                                         VP_aggregated$prop_variance)) == "random"),
-               y = VP_random$mean_imp[2] + VP_random$mean_imp[1]/2.5)+
+               y = VP_random$mean_imp[2] + VP_random$mean_imp[1]/2.5,
+               size = 5)+
       
       #plot parameters
       geom_errorbar(aes(x = category, y = prop_variance,
@@ -1006,14 +1072,23 @@ plot_hmsc_result <- function(metadata = metadata,
       coord_flip() +
       labs(y = "Proportion in the variance explained", x = "") +
       theme(legend.position = "none") +
-      theme(axis.text.x = element_text(size = 12),
-            axis.text.y = element_text(size = 12)) 
+      theme(axis.text.x = element_text(size = 13),
+            axis.text.y = element_text(size = 13)) 
+    plot_categ
     ggsave(filename = paste0(path_file,"/variance_explained_per_category_",
-                             save_name,".jpg"), width = 15, height = 10)
+                             save_name,".jpg"),
+           plot = plot_categ, width = 15, height = 10)
     
     
     
     ## Relative variance partitioning
+    VP_long <- VP_long |> 
+      dplyr::mutate(Response = gsub("_", " ", Response),
+                    Response = dplyr::case_when(
+                      Response == "Iucn species richness" ~ "IUCN species richness",
+                      TRUE ~ Response
+                    ))
+                    
     ggplot(dplyr::filter(VP_long,!Response %in% c("","Mean contribution"))) +    
       aes(x = Response, y = Value, fill = Covariate)+
       geom_bar(stat = "identity", position = "stack", 
@@ -1047,13 +1122,19 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::summarise(prop_variance = sum(Value)) |> 
       dplyr::group_by(category) |> 
       dplyr::summarise(sd = sd(prop_variance),
-                       prop_variance = mean(prop_variance))
+                       prop_variance = mean(prop_variance)) 
     
     VP_long_absolute[VP_long_absolute$Response == "Mean contribution", "R2"] <- -1
     
+    VP_long_absolute <- VP_long_absolute |> 
+      dplyr::mutate(Response = gsub("_", " ", Response),
+                    Response = dplyr::case_when(
+                      Response == "Iucn species richness" ~ "IUCN species richness",
+                      TRUE ~ Response
+                    ))
     
     
-    ## Plot Figure 1
+    ### Plot Figure 1 ####
     VP_plot_absolute <- 
       ggplot(dplyr::filter(VP_long_absolute, !Response %in% c("", "Mean contribution")))+
       aes(x = reorder(Response,-R2), y = Value, fill = Covariate) +
@@ -1062,23 +1143,26 @@ plot_hmsc_result <- function(metadata = metadata,
       scale_fill_manual(values = setNames(VP_long_absolute$color, VP_long_absolute$Covariate),
                         labels = unique(VP_long_absolute$labels)) +
       labs(title = "", x = "", y = "", fill ="Covariates") +
-      theme_classic(base_size = 11,
+      theme_bw(base_size = 11,
                     base_line_size = 0.1) +
       theme(
-        axis.text.x = element_text(size=15, angle = 50, hjust = 1, vjust = 1),
-        axis.text.y = element_text(size=15),
+        axis.text.x = element_text(size=18, angle = 50, hjust = 1, vjust = 1),
+        axis.text.y = element_text(size=18),
         legend.position = "bottom",
-        legend.title = element_text(size = 20, hjust = 0.5, vjust= 5, angle = 90),
-        legend.text = element_text( size = 14),
-        legend.key.spacing.y = unit(0, units = "cm"))+
-      guides(fill = guide_legend(nrow = 9)) +
+        legend.title = element_text(size = 25, hjust = 0.5, vjust= 5, angle = 90),
+        legend.text = element_text( size = 17),
+        legend.key.spacing.y = unit(0.1, units = "cm"))+
+      guides(fill = guide_legend(nrow = 10)) +
       geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
                                        !Response %in% c("", "Mean contribution")),
-                aes(y = mid_y, label = Symbol), size = 4, color = "black")+
+                aes(y = mid_y, label = Symbol), size = 6, color = "black")+
       geom_text(data = dplyr::filter(VP_long_absolute, Value > 0.02 &
                                        !Response %in% c("", "Mean contribution")&
                                        Symbol %in% c("1", "2", "3")),
-                aes(y = mid_y, label = Symbol), size = 4, color = "white")
+                aes(y = mid_y, label = Symbol), size = 6, color = "white")
+    
+    ggsave(filename =  paste0(path_file,"/variance_partitioning_absolute_values_", save_name,".jpg"),
+           width = 19, height = 17)
     
     # #Custom mean bar
     # geom_rect(aes(xmin = length(unique(Response))-1 - 0.5, # Hide gap bar
@@ -1127,8 +1211,8 @@ plot_hmsc_result <- function(metadata = metadata,
     #Merge the plot
     library(patchwork)
     VP_plot_absolute + plot_spacer() + VP_plot_mean_imp + plot_layout(widths = c(20, 0.2, 1))
-    ggsave(filename =  paste0(path_file,"/variance_partitioning_absolute_values_", save_name,".jpg"),
-           width = 18, height = 16)
+    ggsave(filename =  paste0(path_file,"/variance_partitioning_absolute_values_mean_bar_", save_name,".jpg"),
+           width = 19, height = 16)
     
     
     
@@ -1140,7 +1224,7 @@ plot_hmsc_result <- function(metadata = metadata,
                        contribution = mean(Value)) |> 
       dplyr::filter(!grepl("Random",Covariate))
     
-    ggplot(covariate_contrib) +
+    mean_contrib_plot <- ggplot(covariate_contrib) +
       geom_col(aes(x = reorder(Covariate, contribution),
                    y = contribution, fill = category)) +
       # geom_errorbar(aes(x = Covariate, y = contribution,
@@ -1157,12 +1241,150 @@ plot_hmsc_result <- function(metadata = metadata,
       coord_flip() +
       labs(y = "Proportion in the variance explained", x = "") +
       theme(legend.position = "right") +
-      theme(axis.text.x = element_text(size = 12),
-            axis.text.y = element_text(size = 12),
-            legend.title = element_text(size = 15, hjust = 0),
-            legend.text = element_text( size = 12)) 
+      theme(axis.text.x = element_text(size = 15),
+            axis.text.y = element_text(size = 15),
+            axis.title = element_text(size = 17),
+            legend.title = element_text(size = 20, hjust = 0),
+            legend.text = element_text( size = 17)) 
+    
+    mean_contrib_plot
     ggsave(filename =  paste0(path_file,"/contributions_of_covariate_in_variance_",
-                              save_name,".jpg"), width = 15, height = 10)
+                              save_name,".jpg"),
+           plot = mean_contrib_plot, width = 15, height = 12)
+    
+    
+
+    mean_contrib_plot_with_inser <- mean_contrib_plot +
+      annotation_custom(
+        ggplotGrob(
+          plot_categ+
+            ylab("Cumulative importance in the variance explained")+
+            theme(axis.text.x = element_text(size = 15),
+                  axis.text.y = element_text(size = 15),
+                  axis.title =  element_text(size = 15),
+                  panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+                  panel.background = element_rect(fill = "white", color = NA))),
+                        xmin = 3.5,
+                        xmax = 21.3,
+                        ymin = 0.01,
+                        ymax = 0.06)
+    mean_contrib_plot_with_inser
+    
+    ggsave(filename =  paste0(path_file,"/mean_contributions_of_covariate_with_insert_",
+                              save_name,".jpg"),
+           plot = mean_contrib_plot_with_inser, width = 15, height = 12)
+    
+    
+    
+    ### Plot Figure 1 stacked ####
+    VP_stacked <- VP_long_absolute |> 
+      dplyr::filter(!Response %in% c("", "Mean contribution")) |> 
+      dplyr::mutate(
+        category = dplyr::case_when(
+          category == "random" ~ Covariate, 
+          TRUE ~ category )) |> 
+      dplyr::group_by(Response, category) |> 
+      dplyr::summarise(Value = sum(Value), .groups = "drop") |> 
+      dplyr::group_by(Response) |> 
+      dplyr::mutate( R2 = sum(Value),
+                     category = factor(
+                       category, 
+                       levels = c("human", "habitat",  "envir",
+                                  "Random: sample_unit","Random: country" ) ) )
+    
+    fig1_stacked <- ggplot(VP_stacked)+
+      aes(x = reorder(Response,-R2), y = Value, fill = category) +
+      geom_bar(stat = "identity", position = "stack",
+               color = "black", linewidth = 0.2) +
+      scale_fill_manual(values = c("Random: country" =  "#7F7F7F",
+                                   "Random: sample_unit" =  "#F2F2F2",
+                                   "envir" = "#FF9459",
+                                   "habitat" = "#FFCF7A",
+                                   "human" =  "#9B7D9E"),
+                        labels = c("Random: country" =  "Random: country level",
+                                   "Random: sample_unit" =  "Random: reef level",
+                                   "envir" = "Environment", 
+                                   "habitat" = "Habitat", 
+                                   "human" = "Human")) +
+      labs(title = "", x = "", y = "Proportion of variance explained", fill ="Covariates:") +
+      theme_classic(base_size = 13,
+                    base_line_size = 0.2) +
+      guides(fill = guide_legend(override.aes = list(size = 10)))+
+      theme(
+        axis.text.x = element_text(size=19, angle = 50, hjust = 1, vjust = 1),
+        axis.text.y = element_text(size=19),
+        axis.title = element_text(size = 20, color = "grey30"),
+        legend.position = "bottom",
+        legend.title = element_text(size = 25, hjust = 0, vjust= 1, angle = 0,
+                                    margin = margin(r = 2, unit = "cm")),
+        legend.text = element_text( size = 20),
+        legend.key.spacing.x = unit(1, units = "cm"),
+        legend.key.spacing.y = unit(0, units = "cm"),
+        plot.margin = margin(l = 1, r = 1, unit = "cm") )
+    
+    fig1_stacked
+    ggsave(filename =  paste0(path_file,"/variance_partitioning_stacked_values_", save_name,".jpg"),
+           width = 18, height = 16)
+    
+    
+    ## Add insert
+    top_contrib <- head(covariate_contrib |>  
+      dplyr::arrange(dplyr::desc(contribution)), 10) |> 
+      dplyr::mutate(
+        Covariate = dplyr::recode(
+          Covariate, 
+          # "SST (5 years)" = "SST", 
+          # "Salinity (5 years)" = "Salinity", 
+          # "Gravity" = "Gravity",
+          # "Chlorophyll (5 years)" = "Chlorophyll",
+          "Natural ressource rent" = "Ressource rent",
+          "Marine ecosystem dependency" = "Ecosystem dependency"
+          # "pH (5 years)" = "pH",
+          # "Fringing reef area (%)" = "Fringing reef area (%)"
+        )
+      )
+    
+    top_contrib_imp <- ggplot(top_contrib) +
+      geom_col(aes(x = reorder(Covariate, contribution),
+                   y = contribution, fill = category)) +
+      scale_fill_manual(values = c("envir" = "#FFA976",
+                                   "habitat" = "#FFCF7A",
+                                   "human" = "#9B7D9E")) +
+      theme_minimal() +
+      coord_flip() +
+      labs(y = "Mean importance of covariates in \n explaining variance (%)", x = "") +
+      theme(legend.position = "none") +
+      theme(axis.text.x = element_text(size = 16),
+            axis.text.y = element_text(size = 17),
+            axis.title =  element_text(size = 17, color = "grey30"),
+            panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5)) 
+    
+    top_contrib_imp
+    
+    fig1_with_inser <- fig1_stacked +
+      theme(plot.margin = margin(t = 1, l = 1, r = 2, unit = "cm") )+
+      annotation_custom(ggplotGrob(top_contrib_imp),
+                        xmin = 13,
+                        xmax = 23,
+                        ymin = 0.6,
+                        ymax = 1.1)
+
+    ggsave(filename =  paste0(path_file,"/Fig1_stacked_values_with_insert_", save_name,".jpg"),
+           width = 18, height = 16)
+    
+    ## Choose colors
+    # $human
+    # [1] "#452C52" "#593F64" "#6E5276" "#826588" "#97799A" "#AB8CAC" "#C09FBE" "#D5B3D1"
+    # 
+    # $habitat
+    # [1] "#FFA00A" "#FFA210" "#FFA517" "#FFA81E" "#FFAB25" "#FFAE2C" "#FFB132" "#FFB439" "#FFB740" "#FFBA47" "#FFBD4E"
+    # [12] "#FFBF54" "#FFC25B" "#FFC562" "#FFC869" "#FFCB70" "#FFCE76" "#FFD17D" "#FFD484" "#FFD78B" "#FFDA92" "#FFDD99"
+    # 
+    # $envir
+    # [1] "#FF7A33" "#FF823F" "#FF8B4C" "#FF9459" "#FF9D66" "#FFA672" "#FFAF7F" "#FFB88C" "#FFC199"
+    # 
+    # $random
+    # [1] "#F2F2F2" "#7F7F7F"
     
   } #END OF PLOT VARIANCE PARTITION
   
@@ -1230,7 +1452,7 @@ plot_hmsc_result <- function(metadata = metadata,
         width = 25, height = 25, units = "cm", res = 300)
       corrplot::corrplot(corr_1, method = "color", diag = T,
                          col=colorRampPalette(color_grad_soft)(200),
-                         tl.cex=.6, tl.col="black", tl.srt = 60,
+                         tl.cex=1, tl.col="black", tl.srt = 60,
                          order = "hclust",
                          #title=paste("random effect level:", model_fit_mcmc$rLNames[1]), 
                          mar=c(4,5,5,0))   
@@ -1269,11 +1491,12 @@ plot_hmsc_result <- function(metadata = metadata,
     ##### Support level  #####
     png(paste0(path_file,"/estimate_significance_", save_name,".png"),
         width = 30, height = 20, units = "cm", res = 300)
-    par(mar = c(15,10,2,2))
+    par(mar = c(15,15,0,0))
     # Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Mean", supportLevel = 0.5)
     Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Sign",
                    supportLevel = 0.95, colors = colorRampPalette(c("#2166AC", "white", "#A50026")),
-                   mar = c(0,0,0,0) )
+                   mar = c(0,0,0,0), mgp = c(0,2,0),
+                   cex = c(1,1,1) )
     dev.off()
     
     png(paste0(path_file,"/estimate_significance_mean_", save_name,".png"),
@@ -1307,33 +1530,39 @@ plot_hmsc_result <- function(metadata = metadata,
       #Filter estimates table
       df <- S_arranged |>
         dplyr::filter(covariate %in% all_drivers) |> 
-        dplyr::left_join(support_estimates)
-      
+        dplyr::left_join(support_estimates) |> 
+        dplyr::left_join(dplyr::rename(grp_NN_NP, response = "contribution")) |>
+        dplyr::mutate(response = gsub("_", " ", response),
+                      response = dplyr::case_when(
+                        response == "Iucn species richness" ~ "IUCN species richness",
+                        TRUE ~ response
+                      )) 
+        
       medians <- df  |> 
         dplyr::filter(covariate %in% c(all_drivers[1], paste0(all_drivers[1], "_Deg1"))) |> 
         dplyr::group_by(response)  |> 
-        dplyr::summarise(median_value = median(value)) |> 
-        dplyr::arrange(median_value)
+        dplyr::summarise(median_value = median(value),
+                         group = unique(group)) |>
+        dplyr::arrange(factor(group, levels = c("NS", "NN", "NC")), median_value)
       
       df <- df |> 
-        dplyr::left_join(dplyr::rename(grp_NN_NP, response = "contribution"))|> 
         dplyr::mutate(covariate = factor(covariate, levels = all_drivers)) |> 
-        dplyr::mutate(response = factor(response, levels = medians$response)) 
+        dplyr::mutate(response = factor(response, levels = medians$response))
       
       new_titles <- c(
         "protection_statusfull" = "Full protection",
-        "n_fishing_vessels" = "Fishing pressure",
-        "gravity" = "Gravity",
-        "gdp" = "GDP",
+        "Fishing_vessel_density" = "Fishing pressure",
+        "Gravity" = "Gravity",
+        "GDP" = "GDP",
         
         "protection_statusrestricted" = "Restricted MPA",
-        "median_5year_analysed_sst" = "SST_5years",
-        "median_5year_chl" = "Chlorophyll_5years",
-        "q95_5year_degree_heating_week" = "DHW_5years",
-        "marine_ecosystem_dependency" = "MED",
-        "neartt" = "Travel time",
-        "hdi" = "HDI",
-        "natural_ressource_rent" = "Ressource rent"
+        "SST_5_years" = "SST (5 years)",
+        "Chlorophyll_5_years" = "Chlorophyll (5 years)",
+        "DHW_quantile95_5_years" = "DHW (5 years)",
+        "Marine_ecosystem_dependency" = "MED",
+        "Travel_time" = "Travel time",
+        "HDI" = "HDI",
+        "Natural_ressource_rent" = "Ressource rent"
       )
       
       ridges_plot <- ggplot(df) +
@@ -1352,7 +1581,7 @@ plot_hmsc_result <- function(metadata = metadata,
           panel.spacing = unit(0.3, "lines"),
           strip.text.x = element_text(size = 16, hjust = 0.5, face = "bold"),
           axis.text.x = element_text(size = 13),
-          axis.text.y = element_text(size = 13)
+          axis.text.y = element_text(size = 13, vjust = -0.2)
           ) +
         labs(fill = "")+
         xlab(all_drivers) + ylab("Nature Contributions to People and Nature")+
@@ -1361,7 +1590,7 @@ plot_hmsc_result <- function(metadata = metadata,
              labeller = labeller(covariate = new_titles)
         )
       
-      # if(drivers == c("protection_statusfull", "n_fishing_vessels","gravity","gdp"))
+      # if(drivers == c("protection_statusfull", "Fishing_vessel_density","Gravity","GDP"))
       
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
                                paste(drivers_name, collapse = "-"), ".jpg"),
@@ -1418,14 +1647,14 @@ plot_hmsc_result <- function(metadata = metadata,
     # covariates <- unique(mean_estimate$covariate)
     # envir <- c(grep("median", covariates, value = T))
     # habitat <- c(grep("500m", covariates, value = T),
-    #              "depth", "algae", "coral", "Sand", "seagrass", "microalgal_mats",
-    #              "other_sessile_invert", "Rock", "coralline_algae", "coral_rubble")
+    #              "depth", "algae", "Coral_RLS", "Sand_RLS", "seagrass", "microalgal_mats",
+    #              "Other_sessile_invert_RLS", "Rock_RLS", "Coralline_algae_RLS", "Coral_rubble_RLS")
     # human <- setdiff(covariates, c(envir, habitat))
     # 
     # # Classification of contributions
     # cont_list <- unique(mean_estimate$response)
-    # NP <- c("available_biomass", "selenium", "zinc", "omega_3" , "calcium",  "iron",                       
-    #         "vitamin_A", "available_biomass_turnover", "NP_score")
+    # NP <- c("Available_biomass", "Selenium", "Zinc", "Omega_3" , "Calcium",  "Iron",                       
+    #         "Vitamin_A", "Available_biomass_turnover", "NP_score")
     # NN <- setdiff(cont_list, NP)
     # 
     # #Resume data
@@ -1481,7 +1710,7 @@ plot_hmsc_result <- function(metadata = metadata,
   if(plot_partial_graph){
     
   Gradient = Hmsc::constructGradient(model_fit_mcmc,
-                                     focalVariable = "median_5year_analysed_sst")
+                                     focalVariable = "SST_5_years")
   predY = predict(model_fit_mcmc,
                   XData = Gradient$XDataNew,
                   studyDesign = Gradient$studyDesignNew,
@@ -1492,12 +1721,16 @@ plot_hmsc_result <- function(metadata = metadata,
   #                    showData = TRUE, index = 13)
   
   png(paste0(path_file,"/Partial_plot_SST_", save_name,".jpg"),
-      width = 35, height = 25, units = "cm", res = 300)
-  par(mfrow = c(6, 4), mar = c(4, 4, 2, 2)) 
+      width = 35, height = 30, units = "cm", res = 300)
+  par(mfrow = c(6, 4), mar = c(4, 5, 3, 3), 
+      cex.main = 1.5,  
+      cex.lab = 1.5,  
+      cex.axis = 1.5) 
   for (i in 1:22) {
     Hmsc::plotGradient(model_fit_mcmc, Gradient, pred = predY, measure = "Y", 
                        showPosteriorSupport =F, xlabel="",
                        showData = TRUE, index = i)
+    
   } 
   dev.off()
   
@@ -1618,7 +1851,7 @@ plot_hmsc_result <- function(metadata = metadata,
       resamp= 30
       contributions <- colnames(residuals)[order(colnames(residuals))]
       
-      correlog_plot <- function(contrib = "calcium"){
+      correlog_plot <- function(contrib = "Calcium"){
         
         spatial_cor <- ncf::correlog(x= data$longitude, 
                                      y= data$latitude, 
@@ -1768,8 +2001,8 @@ make_crossval_prediction_hmsc <- function(path = here::here("outputs/models/hmsc
                                  concatenate_chains = F,
                                  conditional_prediction = T,
                                  mcmcStep_conditional = 1, #"should be set high enough to obtain appropriate conditional predictions."
-                                 marginal_responses = c("actino_richness",
-                                                        "functional_distinctiveness")
+                                 marginal_responses = c("Actinopterygian_richness",
+                                                        "Functional_distinctiveness")
                                  ){
   # PATHS
   save_init <- file.path(path, "cross_validation/init_multi")
@@ -1960,7 +2193,7 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
   
   source("R/evaluation_prediction_model.R")
   
-  path_file <- here::here("figures","models","hmsc", folder_name)    
+  path_file <- here::here("figures","3_models","hmsc", folder_name)    
   dir.exists(path_file)
   
   if(!dir.exists(path_file)) dir.create(path_file)
@@ -2049,10 +2282,12 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
   par(mfrow = c(1, 2))
   hist(predictive_power_summary$r_squared_marginal, xlim = c(0,1), 
        main=paste0("R_squared marginal Mean = ", 
-                   round(mean(predictive_power_summary$r_squared_marginal),2)))
+                   round(mean(predictive_power_summary$r_squared_marginal),2),
+                   "\n sd = ", round(sd(predictive_power_summary$r_squared_marginal),2)))
   hist(predictive_power_summary$r_squared_conditional, xlim = c(0,1), 
        main=paste0("R_squared conditional Mean = ", 
-                   round(mean(predictive_power_summary$r_squared_conditional),2)))
+                   round(mean(predictive_power_summary$r_squared_conditional),2),
+                   "\n sd = ", round(sd(predictive_power_summary$r_squared_conditional),2)))
   
   dev.off()
   
@@ -2076,9 +2311,9 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     dplyr::mutate(responses = factor(responses, levels = responses))
   
   ggplot(predictive_power_summary, aes(y = responses)) +
-    geom_point(aes(x = r_squared_marginal, color = "Marginal prediction"), size = 3) + 
-    geom_point(aes(x = r_squared_conditional, color = "Conditional prediction"), size = 3) + 
-    geom_point(aes(x = R2, color = "Explanatory power"), size = 3) + 
+    geom_point(aes(x = r_squared_marginal, color = "Marginal prediction"), size = 4) + 
+    geom_point(aes(x = r_squared_conditional, color = "Conditional prediction"), size = 4) + 
+    geom_point(aes(x = R2, color = "Explanatory power"), size = 4) + 
     
     geom_vline(xintercept = mean(predictive_power_summary$r_squared_marginal),
                linetype = "dashed", color = "skyblue") + 
@@ -2089,14 +2324,14 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     
     annotate("text", x = mean(predictive_power_summary$r_squared_marginal) + 0.02, y = -Inf, 
              label = round(mean(predictive_power_summary$r_squared_marginal), 2), 
-             vjust = -1.5, color = "skyblue", size = 4) +
+             vjust = -1.5, color = "skyblue", size = 6) +
     annotate("text", x = mean(predictive_power_summary$r_squared_conditional) - 0.02, y = -Inf, 
              label = round(mean(predictive_power_summary$r_squared_conditional), 2), 
-             vjust = -1.5, color = "orange", size = 4) +
+             vjust = -1.5, color = "orange", size = 6) +
     annotate("text", x = mean(predictive_power_summary$R2)+ 0.02, y = -Inf, 
              # label = paste0("Explanatory power: R² = ",round(mean(predictive_power_summary$R2), 2)), 
              label = round(mean(predictive_power_summary$R2), 2), 
-             vjust =-1.5, color = "grey50", size = 4) +
+             vjust =-1.5, color = "grey50", size = 6) +
     
     labs(x = "R_squared", y = "Responses", 
          title = "Explanatory and predictive power",
@@ -2104,7 +2339,12 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     scale_color_manual(values = c("Marginal prediction" = "skyblue",
                                   "Conditional prediction" = "orange",
                                   "Explanatory power" = "grey50")) +
-    theme_minimal()
+    theme_bw()+
+    theme(title = element_text(size = 17),
+          legend.text =  element_text(size = 13),
+      axis.text = element_text(size = 15),     
+      axis.title = element_text(size = 15),   
+      strip.text = element_text(size = 13))
   
   ggsave(filename = paste0(path_file, "/Joint_vs_Conditional_pred_power_", folder_name, ".jpg"),
          width = 15, height = 8)
@@ -2145,6 +2385,7 @@ run_hmsc_prediction <- function(path = path,
                                 metadata = NULL,
                                 is_counterfactual = TRUE
 ){
+  set.seed(06)
   ## Paths
   save_init <- file.path(path, "init_multi")
   save_out <- file.path(path, "out_multi")
@@ -2288,17 +2529,17 @@ plot_conterfactual_scenarios <- function(path = path,
 ){
   #Contributions group
   grp_NN_NP <- data.frame(
-    contribution = c("actino_richness","functional_distinctiveness",
-                      "iucn_species_richness" ,"mean_endemism",
-                      "evolutionary_distinctiveness","functional_entropy",
-                      "phylogenetic_entropy","herbivores_biomass",
-                      "invertivores_biomass",  "piscivores_biomass",
-                      "trophic_web_robustness", "mean_trophic_level",
-      
-                      "public_attention", "aesthetic",
-                      "available_biomass", "selenium",
-                      "zinc",   "omega_3", "calcium",
-                      "iron","vitamin_A", "available_biomass_turnover"),
+    contribution = c("Actinopterygian_richness","Functional_distinctiveness",
+                     "Iucn_species_richness" ,"Endemism",
+                     "Evolutionary_distinctiveness","Functional_entropy",
+                     "Phylogenetic_entropy","Herbivores_biomass",
+                     "Invertivores_biomass",  "Piscivores_biomass",
+                     "Trophic_web_robustness", "Mean_trophic_level",
+                     
+                     "Public_attention", "Aesthetic",
+                     "Available_biomass", "Selenium",
+                     "Zinc",   "Omega_3", "Calcium",
+                     "Iron","Vitamin_A", "Available_biomass_turnover"),
     group = c(rep("NN", 12), 
               rep("NC", 2),
               rep("NS", 8)))
@@ -2312,7 +2553,7 @@ plot_conterfactual_scenarios <- function(path = path,
   
   # Create folder
   folder_name <- gsub(".rds", "", model_name)
-  path_file <- here::here("figures","models","hmsc", "conterfactuals", folder_name)    
+  path_file <- here::here("figures","3_models","hmsc", "conterfactuals", folder_name)    
 
   if(!dir.exists(path_file)) dir.create(path_file)
   
@@ -2363,8 +2604,14 @@ plot_conterfactual_scenarios <- function(path = path,
                   /raw_original_prediction *100) 
   
   # distribution_plot(raw_change, longer = F, index_values = c("contribution","raw_change_percent"))
+  # distribution_plot(raw_change, longer = F, index_values = c("contribution","raw_change_values"))
   
-  
+  ## Look at biomass raw changes
+  raw_biom <- raw_change |> 
+    dplyr::filter(contribution == "Available_biomass")
+  summary(raw_biom$raw_change_values)*20/1000
+  # Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+  # 0.0118  24.6729  49.8934  81.6635 105.1920 759.5807 
       
   # #---- Plot conterfactual VS original predictions ---
   # plot_interaction(effective_change, var_facet_wrap = "contribution",
@@ -2383,6 +2630,7 @@ plot_conterfactual_scenarios <- function(path = path,
   ggsave( width = 15, height = 8, filename = file.path(
     path_file,paste0("Raw_changes_histogramms_", save_name, folder_name, ".jpg"))
         )
+  
   
   ###---- Plot distributions of contribution changes ---####
   distrib_boxplot <- function(data, x, y, fill, hline = 0, title = NULL,
@@ -2528,7 +2776,7 @@ plot_conterfactual_scenarios <- function(path = path,
   
   # #obs heterogeneity by country
   # data_1_contrib <- effective_change |>
-  #   dplyr::filter(contribution == "available_biomass") |>
+  #   dplyr::filter(contribution == "Available_biomass") |>
   #   dplyr::mutate(country = reorder(country, change, FUN = median))
   #
   # distrib_boxplot(data_1_contrib, x = "country", y = "change", fill = "country",
@@ -2537,7 +2785,9 @@ plot_conterfactual_scenarios <- function(path = path,
 
   
   # Original PCA
-  pca <- FactoMineR::PCA(preds, scale.unit = T, graph=F, ncp=15)
+  pca <- FactoMineR::PCA(preds, scale.unit = T, graph=F, ncp=15
+                         # , ind.sup = which(rownames(preds) %in% low_grav_sites)
+                         )
   
   # factoextra::fviz_screeplot(pca, ncp=15)
   
@@ -2552,7 +2802,9 @@ plot_conterfactual_scenarios <- function(path = path,
                                           alpha.var = 0.7,
                                           fill.ind = "grey",  
                                           col.var = "grey20",
-                                          repel = TRUE)
+                                          repel = TRUE)+
+    xlab(paste0("PC1 (",round(pca[["eig"]][1, "percentage of variance"], 1) , "%)"))+
+    ylab(paste0("PC2 (",round(pca[["eig"]][2, "percentage of variance"], 1) , "%)"))
   
   #label position
   data <- data.frame(obsnames=row.names(pca$ind$coord), pca$ind$coord)
@@ -2643,7 +2895,7 @@ plot_conterfactual_scenarios <- function(path = path,
     geom_point(data = barycenters_new, 
                aes(x = PC1, y = PC2, fill = country, shape = "Counterfactual conditions"), 
                size = 4, color = "black", alpha = 1) +
-    coord_cartesian(xlim= c(-7.8,7.1))+
+    coord_cartesian(xlim= c(-7.9,7.5))+
     labs(title = save_name, fill = "Country", shape = "Conditions")+#, y = "", x="") +
     scale_shape_manual(values = c("Current conditions" = 21, "Counterfactual conditions" = 24)) +
     guides(
@@ -2654,8 +2906,8 @@ plot_conterfactual_scenarios <- function(path = path,
     theme(legend.position = "bottom",
           axis.text = element_text(size = 0),
           axis.ticks = element_line(linewidth = 0),
-          axis.title.x = element_text(vjust = 127, hjust = 0, size = 12),
-          axis.title.y = element_text(vjust = -197, hjust = 0, angle = 90, size = 12),
+          axis.title.x = element_text(vjust = 124, hjust = 0, size = 12),
+          axis.title.y = element_text(vjust = -194, hjust = 0, angle = 90, size = 12),
           legend.text = element_text(size = 8),
           legend.title = element_text(size = 9, face = "bold", 
                                       margin = margin(r=.5, unit = "cm")),

@@ -33,82 +33,7 @@ load(file = here::here("data/derived_data/2_rls_actino_trop.Rdata"))
 ## Load functions
 source("R/check_scientific_names.R")
 
-# ##------------------- 1) Aesthetic and public attention at the species level -------------------####
-# 
-# ### AESTHETIC ###
-# 
-# # # Install missing librairies for python
-# # reticulate::py_install("pytz")
-# # reticulate::py_install("sympy")
-# # reticulate::py_install("Pillow")
-# # reticulate::py_install(c("torch", "torchvision"))
-# 
-# 
-# #run aesthetic for new species
-# # reticulate::source_python("R/inference_aesthetic_score_Langlois2022.py")
-# #IF IMPOSSIBLE TO RUN RETICULATE: open a terminal in the R/ folder, and run the
-# # python code via bash: > python3 04_inference.py
-# 
-# ## Observe new inference:
-# aesth_new <- read.csv("outputs/2g_aesthetic_inference_new_sp.csv") 
-# 
-# # Check inference with old scores of Langlois 2022
-# check <- aesth_new |> 
-#   dplyr::mutate(old = ifelse(grepl("Langlois22", image_name), 1, 0)) |> 
-#   dplyr::mutate(file_name = gsub(".png", "", image_name)) |> 
-#   dplyr::mutate(file_name = gsub("_Langlois22", "", file_name)) |> 
-#   dplyr::mutate(sp_name = gsub("^(.*?)_[A-Z]_[0-9]+$", "\\1", file_name)) |> 
-#   dplyr::left_join(aesth_2022)
-# 
-# plot(check$predicted_score~check$esthe_score)
-# abline(a=0, b=1)
-# cor.test(check$predicted_score,check$esthe_score)
-# # INFERED SCORES CONSISTENT FOR THE 55 PICURES IN COMMON -> WE CAN INFER NEW 
-# # SCORES FROM PICTURES AND ADD THEM TO THE FILE OF LANGLOIS ET AL. 2022
-# 
-# asthetic_inferred <- check |> 
-#   dplyr::filter(old == 0) |> 
-#   dplyr::select(file_name = image_name, sp_name, predicted_score) |> 
-#   dplyr::group_by(sp_name) |> 
-#   dplyr::mutate(esthe_score = max(predicted_score)) |> 
-#   dplyr::filter(esthe_score == predicted_score) |> 
-#   dplyr::select(-predicted_score)
-# 
-# ## Merge all scores
-# aesthetic_score <- aesth_2022 |> 
-#   dplyr::select(file_name, sp_name, esthe_score) |> 
-#   dplyr::bind_rows(asthetic_inferred)
-# 
-# 
-# ### PUBLIC ATTENTION ###
-# 
-# human_interest <- hum_int |>
-#   dplyr::select(public_attention = public,
-#                 academic_knowledge = acad,
-#                 sp_name = fb_sci_name)
-# 
-# ### CHECK SCIENTIFIC NAMES ###
-# 
-# cultural_sp_contrib <- dplyr::full_join(aesthetic_score, human_interest) |> 
-#   dplyr::mutate(sp_name = gsub("_", " ", sp_name)) 
-# 
-# cultural_sp_contrib <- code_sp_check(cultural_sp_contrib, original_name = 'sp_name',
-#                                      mc_cores = 15)|> 
-#   dplyr::select(-worms_id, -sp_name, -file_name, -check)
-# 
-# cultural_all_species <- inferred_species_traits |> 
-#   dplyr::select(-public_interest, -academic_knowledge ) |> 
-#   tibble::rownames_to_column("rls_species_name") |> 
-#   dplyr::left_join(cultural_sp_contrib) |> 
-#   dplyr::group_by(fishbase_name) |> 
-#   tidyr::fill(tidyr::everything(), .direction = 'updown') |> 
-#   dplyr::mutate(esthe_score = max(esthe_score)) |> 
-#   unique()
-# 
-# save(cultural_all_species, file = here::here("outputs","2g_cultural_all_species.Rdata"))
-#   
-
-##------------------- 2) Aesthetic scores (survey level) -------------------####
+##------------------- 1) Aesthetic scores (survey level) -------------------####
 
 #' The following code computes community aesthe values at the survey level. It 
 #' comes from Mclean et al. 2025 "Conserving the beauty of fish communities"
@@ -135,7 +60,7 @@ abund_matrix <- surveys_sp_abund
 ## Computing the aesthe_effect
 aesthe_species$aesthe_effect <- (log(aesthe_species$aesthetic) - 7.3468679)/7.937672
 
-# ----
+# ----'
 
 # COMPUTE AESTHETICS ----
 #aesthe_survey : predicted aesthe 
@@ -234,7 +159,7 @@ plot(survey_aesth$aesthe_survey_pres,survey_aesth$aesthe_survey_abund,
 
 write.csv(survey_aesth, here::here("outputs", "survey_aesth.csv"), row.names = FALSE)
 
-# ---- 
+# ---- '
 
 #Check outputs
 old_surveys_aesth <- read.csv(here::here("data/derived_data/survey_aesth_McLean2025.csv")) |> 

@@ -51,7 +51,7 @@ path = here::here("outputs/models/hmsc")
 
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-file_name <- gsub("output_", "", list_files[12]) #choose the wanted file
+file_name <- gsub("output_", "", list_files[5]) #choose the wanted file
 concatenate_chains = F
 
 ##----------------------------- Plot hmsc results ------------------------------
@@ -70,18 +70,18 @@ plot_hmsc_result(metadata = metadata_sites,
                  check_spatial_autocorrelation = F,
                  latent_factors = T,
                  drivers_to_plot =  list(
-                   c("protection_statusfull", "n_fishing_vessels","gravity","gdp"),
+                   c("protection_statusfull", "Fishing_vessel_density","Gravity","GDP"),
                    c("protection_statusfull", "protection_statusrestricted",
-                     "n_fishing_vessels"),
-                   # c("protection_statushigh","gravtot2", "n_fishing_vessels"),
+                     "Fishing_vessel_density"),
+                   # c("protection_statushigh","Gravity", "Fishing_vessel_density"),
                    # c("protection_statushigh", "protection_statusmedium",
-                   #   "protection_statuslow", "n_fishing_vessels"),
+                   #   "protection_statuslow", "Fishing_vessel_density"),
                    # 
                    c("protection_statusfull", "protection_statusrestricted",
-                     "marine_ecosystem_dependency", "natural_ressource_rent",
-                     "hdi","neartt"),
-                   c("median_5year_analysed_sst", "coral", "median_5year_chl",
-                     "q95_5year_degree_heating_week")
+                     "Marine_ecosystem_dependency", "Natural_ressource_rent",
+                     "HDI","Travel_time"),
+                   c("SST_5_years", "Coral_RLS", "Chlorophyll_5_years",
+                     "DHW_quantile95_5_years")
                  )
 )
 
@@ -94,16 +94,7 @@ make_crossval_prediction_hmsc(path = path,
                               concatenate_chains = concatenate_chains,
                               conditional_prediction = T,
                               mcmcStep_conditional = 100, 
-                              # marginal_responses = c("actino_richness",
-                              #                        "functional_distinctiveness",
-                              #                        "omega_3",
-                              #                        "aesthetic",
-                              #                        "public_interest",
-                              #                        "evolutionary_distinctiveness",
-                              #                        "mean_endemism",
-                              #                        "herbivores_biomass")
                               marginal_responses = colnames(observations_final)
-                              # marginal_responses = "available_biomass"
 )
 
 
