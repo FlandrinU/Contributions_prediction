@@ -1,6 +1,7 @@
 ################################################################################
 ##
-## 
+## This script gathers all the contributions studied in this project, 
+##  in one dataframe, at the survey and site scale
 ##
 ## 2h_merge_contributions.R
 ##
@@ -513,7 +514,7 @@ contributions_to_plot <- contributions_sites_date |>
 distribution_plot(contributions_to_plot, cols_plot = colnames(contributions_to_plot),
                   strip_txt_size = 16)
 
-ggsave(plot = last_plot(), width=15, height= 10,
+ggsave(plot = last_plot(), width=15, height= 12,
        filename = here::here("figures", "2_contributions_SITE_distribution_log_transformed.jpg"))
 
 # Count NAs:

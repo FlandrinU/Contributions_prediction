@@ -1,6 +1,7 @@
 ################################################################################
 ##
-##  
+##  This script gathers all information on species traits, from fishbase and 
+##   other published sources, needed to assess species contributions
 ##
 ## 1a_extract_species_contributions.R
 ##

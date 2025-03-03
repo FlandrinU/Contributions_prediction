@@ -7,10 +7,9 @@ Authors@R: c(
            family  = "Flandrin",
            role    = c("aut", "cre", "cph"),
            email   = "ulysse.flandrin@gmail.com",
-           comment = c(ORCID = "")))
+           comment = c(ORCID = "0009-0005-2371-9127")))
            
-Description: A paragraph providing a full description of the project (on 
-    several lines...)
+Description: This file report all packages necessary to run this R project. Please see README.md for more informations on the project.
 URL: 
 BugReports: 
 License: GPL (>= 2)
@@ -18,13 +17,45 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
 Imports:
-    data.table,
-    dplyr,
-    ggplot2,
-    here,
-    quarto,
-    renv,
-    sf,
-    tarchetypes,
-    targets,
-    visNetwork
+    ape  ,
+    brms  ,
+    car  ,
+    coda  ,
+    corrplot  ,
+    dplyr  ,
+    devtools  ,
+    DHARMa  ,
+    entropart  ,
+    factoextra  ,
+    fishtree  ,
+    funbiogeo  ,
+    GenSA  ,
+    ggmcmc  ,
+    ggplot2  ,
+    ggpubr  ,
+    ggsignif  ,
+    gtools  ,
+    here  ,
+    Hmsc  ,
+    igraph  ,
+    jsonify  ,
+    mFD  ,
+    missForest  ,
+    NetIndices  ,
+    parallel  ,
+    patchwork  ,
+    pbmcapply  ,
+    performance  ,
+    phytools  ,
+    PresenceAbsence  ,
+    readr  ,
+    reticulate  ,
+    rfishbase  ,
+    rnaturalearth  ,
+    rsample  ,
+    sf  ,
+    slam  ,
+    stringr  ,
+    tibble  ,
+    tidybayes  ,
+    tidyverse

@@ -1,6 +1,7 @@
 ################################################################################
 ##
-## 
+## This script assess different biodiversity-related contributions of fish 
+##  communities in RLS sampling
 ##
 ## 2b_biodiversity_indices.R
 ##

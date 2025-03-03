@@ -1,6 +1,7 @@
 ################################################################################
 ##
-##  
+##  This script run predictions of the missing data in species traits to complete 
+##   the species database
 ##
 ## 1c_infer_species_traits.R
 ##

@@ -1,6 +1,9 @@
 ###############################################################################"
 ##
-##
+##  This script uses the HMSC output of the full model to build counterfactual
+##   scenarios. By altering chosen covariates, it assesses the human footprint 
+##   and the conservation legacy on reef fish contributions. This script produces
+##   Fig. 3 and 4 of the paper flandrin et al.
 ##
 ## 3d_conterfactuals.R
 ##
@@ -30,18 +33,9 @@ source(here::here("R","evaluation_prediction_model.R"))
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
 X_data = covariates_final
 
-# ## Without Allen
-# load(here::here("data/derived_data/3_covariates_without_Allen_to_predict.Rdata"))
-# X_data_wo_allen = covariates_final_without_Allen
-
 ## Site scale
 load(here::here("data/derived_data/3_sites_covariates_to_predict.Rdata"))
 X_data_site = covariates_site_final
-
-
-# ## Only Australia
-# X_data_aust = covariates_final |> dplyr::filter(country == "Australia")
-# Y_data_aust =  observations_final[rownames(X_data_aust),]
 
 
 ##load metadata 
@@ -65,16 +59,16 @@ metadata_sites <- tibble::column_to_rownames(metadata_sites, "id")
 path = here::here("outputs/models/hmsc")
 
 
-
 ##----------------------------- Choose model ------------------------------
 
 ## List all files in the directory and choose the model
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-model_name <- gsub("output_", "", list_files[5]) #choose the wanted file
+
+model_name <-"FULL_model_SITE_SCALE_4_chains_1000_thin_200_samples.rds"
+# model_name <- gsub("output_", "", list_files[5]) #choose the wanted file
+
 concatenate_chains = F
-
-
 ##------------- New conditions in counterfactual scenarios ---------------------
 
 ### Initial conditions ###
@@ -148,10 +142,6 @@ X_conservation_legacy_all <- X_conservation_legacy_all |>
     TRUE ~ Fishing_vessel_density)) |> 
   tibble::column_to_rownames("id") |> 
   dplyr::select(-fishing_out)
-
-# X_conservation_legacy[new_conserv_legacy, "Fishing_vessel_density"] <- mean_fishing_out
-
-
 
 
 
@@ -337,17 +327,6 @@ sensitivity_HF <- plot_conterfactual_scenarios(path, model_name, concatenate_cha
 #Counterfactuals colors:
 Cl_color = "darkseagreen3"
 HF_color = "firebrick3"
-# 
-# Cl_color = "#7BC4C5"
-# HF_color = "#e3738b"
-
-# Cl_color = "#6BA9AA"
-# HF_color = "#E35973"
-# 
-# Cl_color = "#7BC4C5"
-# HF_color = "#E35973"
-
-# Cl_color = "cadetblue3"
 
 
 folder_name <- gsub(".rds", "", model_name)
@@ -721,34 +700,37 @@ mean_plot <- ggplot(mean_NN_NP)+
     axis.ticks.y = element_blank(),
     axis.title.x = element_text(size=22), 
     axis.text.x = element_text(size = 20),
-    legend.position = "none"
+    legend.position = "none",
+    plot.margin = unit(c(0,1,0,0), "cm")
   ) +
   labs(x = "Mean changes (%)")+
 
   #Add labels
   geom_text(aes(x = 0, y = "NN"), label = "Nature-for-Nature", color = "white", 
-            hjust = 1.83, vjust = 0.5, size = 7) + 
+            hjust = 1.65, vjust = 0.5, size = 8) + 
   geom_text(aes(x = 0, y = "NS"), label = "Nature-for-Society", color = "black", 
-            hjust = 1.75, vjust = 0.5, size = 7)+
+            hjust = 1.6, vjust = 0.5, size = 8)+
   geom_text(aes(x = 0, y = "NC"), label = "Nature-as-Culture", color = "black",
-            hjust = 1.8, vjust = 0.5, size = 7)+
+            hjust = 1.64, vjust = 0.5, size = 8)+
   geom_vline(xintercept = 0, linetype = "solid", color = "black", linewidth = 0.7)
 
 mean_plot
 
 
+mean_plot_with_title <-  mean_plot +
+  geom_text(aes(x = min(mean_NN_NP$mean), y = 3, 
+                label = "Human footprint"), 
+            color = HF_color, size = 7,
+            hjust = -0.4, vjust = -5.2, fontface = "bold") +
+  geom_text(aes(x = max(mean_NN_NP$mean) * 0.6, y =3, 
+                label = "Conservation\n legacy"),
+            color = Cl_color, size = 7, 
+            hjust = 0.45, vjust = -1.4, fontface = "bold") +
+  # make some space for the title
+  coord_cartesian(clip = "off") +
+  theme(plot.margin = margin(t = 2, r = 1, b = 0, l = 0, unit = "cm"))
 
-title <- ggplot() + theme_void() + 
-  theme(legend.position = "none") +
-  geom_text(aes(x = 0, y = 0.1, label = "Human footprint", color = "HF"), size = 6,
-            hjust = 0.5, fontface = "bold") +
-  geom_text(aes(x = 0, y = 0.1, label = "Conservation\n        legacy", color = "CL"),
-            size = 6,hjust = -.9, fontface = "bold") +
-  scale_color_manual(values = c(Cl_color, HF_color))
 
-library(patchwork)
-mean_plot_with_title <- title / mean_plot + plot_layout(heights = c(4,20))
-mean_plot_with_title
 ggsave(filename =  paste0(path_file,"/Mean_changes_in_NFF.jpg"),
        plot = mean_plot_with_title,  width = 7, height = 5)
 # ggsave(filename =  paste0(path_file,"/Mean_changes_in_NFF_sensitivity_HF_only_grav&mpafull.jpg"),
@@ -817,13 +799,13 @@ PCA_CL <- conservation_legacy[[1]]+
         axis.title.y = element_text(vjust = -143, hjust = 0, angle = 90, size = 12))
 
 legend <- ggpubr::get_legend(human_footprint[[1]] + 
-   theme(legend.text = element_text(size = 12),
-         legend.title = element_text(size = 13, face = "bold", 
+   theme(legend.text = element_text(size = 15),
+         legend.title = element_text(size = 16, face = "bold", 
                                      margin = margin(r=1, unit = "cm")),
-         legend.spacing.x = unit(1, "cm"),
-         legend.key.spacing.x = unit(.3, "cm") )+
+         legend.spacing.x = unit(2, "cm"),
+         legend.key.spacing.x = unit(.8, "cm") )+
    guides(
-     fill = guide_legend(nrow =2, override.aes = list(shape = 21), order = 2),  
+     fill = guide_legend(nrow =3, override.aes = list(shape = 21), order = 2),  
      shape = guide_legend(nrow = 2, override.aes = list(fill = NA), order = 1),
      color = "none"
    ))
@@ -941,7 +923,11 @@ changes_df <- hum_footprint |>
   )
   )
 
-
+summary_changes <- changes_df |> 
+  dplyr::group_by(contribution, counterfactual) |> 
+  dplyr::summarise(median = quantile(changes, 0.5),
+                quantile_5 = quantile(changes, 0.05),
+                quantile_95 = quantile(changes, 0.95))
 density_plot_fct <- 
   function(contribution_to_plot =  c("Iucn_species_richness","Actinopterygian_richness"),
            add_quantile = 0.5,
@@ -978,7 +964,7 @@ density_plot_fct <-
       #Add medians
       geom_point(data = data |> 
                    dplyr::group_by(name, counterfactual) |> 
-                   dplyr::summarise(median_value = median(changes, na.rm = TRUE), 
+                   dplyr::summarise(median_value = median(changes, na.rm = TRUE),
                                     .groups = 'drop'), 
                  aes(x = median_value, y = 0, fill = counterfactual), 
                  size = 6, shape = 21, color = "black") +

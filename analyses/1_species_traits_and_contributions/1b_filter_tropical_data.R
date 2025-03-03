@@ -1,6 +1,7 @@
 ################################################################################
 ##
-##  
+##  This script filters the species to assess community contributions 
+##   in tropical and subtropical reefs only
 ##
 ## 1b_filter_tropical_data.R
 ##

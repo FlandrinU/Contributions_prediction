@@ -18,14 +18,14 @@
 #'
 #' @param nSamples Number of samples in the markov chain
 #' @param thin Number of iterations between each sample
-#' @param nChains Number of independant chains
-#' @param verbose Frequence of messages diplayed
-#' @param transient Number of iteration before sample begining
-#' @param Y_data dataframe of responses
+#' @param nChains Number of independent chains
+#' @param verbose Frequence of messages displayed
+#' @param transient Number of iteration before sample beginning
+#' @param Y_data dataframe of response variables
 #' @param X_data dataframe of covariates
-#' @param response_distribution statistical distribution of responses ("normal", "poisson", or...)
+#' @param response_distribution statistical distribution of responses c("normal", "poisson", or...)
 #' @param random_factors list of random factors as character
-#' @param nb_neighbours number of neighbours taken in spatial model
+#' @param nb_neighbours number of neighbors taken in spatial model
 #' @param name file name saved
 #' @param run_python if FALSE, the function creates the model and init object but doesn't run the markov chains
 #'
@@ -391,6 +391,7 @@ fit_hmsc_crossvalidation <- function(k_fold = 5,
 #' @param localDir directory for models
 #' @param plot_convergence TRUE or FALSE, if you want to plot figures related to convergence of the model
 #' @param plot_explanatory_power TRUE or FALSE, if you want to plot figures related to explanatory power
+#' @param drivers_to_plot list of covariates you want to plot as ridges plot in posterior distributions
 #'
 #' @return save hmsc plots in figures/hmsc/file_name directory
 #' @export
@@ -1768,8 +1769,11 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::mutate(residuals = observation-prediction)
     
     
-    # #histograms of residuals
-    # distribution_plot(residuals, cols_plot = colnames(residuals))
+    #histograms of residuals
+    distribution_plot(residuals, cols_plot = colnames(residuals))
+    ggsave(filename = paste0(path_file,"/Residuals_histogramms_", 
+                             save_name,".jpg"),
+           width = 15, height = 8)
     
     #Predictions vs observations
     ggplot(compare_pred)+
@@ -2176,13 +2180,9 @@ make_crossval_prediction_hmsc <- function(path = here::here("outputs/models/hmsc
 #' 
 #'
 #' @param path file path to the model folder
-#' @param folder_name name of the folder ontaining crossvalidations
-#' @param conditional_prediction Boolean, if conditional prediction should be computed
-#' @param mcmcStep_conditional Number of additionnal Mcmc step in case of conditional prediction
-#' @param marginal_responses name of the responses predicted as marginal and used for conditional prediction
-#'
-#' @return a list of dataframe with observed, marginal predicted, and conditional predicted responses, for each crossvalidation
-#' @export
+#' @param folder_name name of the folder containing crossvalidations
+
+#' @return save hmsc plots in figures/3_models/hmsc/file_name directory
 #'
 #' @examples
 #' 
@@ -2339,6 +2339,7 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     scale_color_manual(values = c("Marginal prediction" = "skyblue",
                                   "Conditional prediction" = "orange",
                                   "Explanatory power" = "grey50")) +
+    xlim(c(0,1))+
     theme_bw()+
     theme(title = element_text(size = 17),
           legend.text =  element_text(size = 13),
@@ -2348,8 +2349,6 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
   
   ggsave(filename = paste0(path_file, "/Joint_vs_Conditional_pred_power_", folder_name, ".jpg"),
          width = 15, height = 8)
-  
-  ##### TO DO: test spatial autocorrmapping = ##### TO DO: test spatial autocorrelations of residuals ######
   
   
 } # END OF FUNCION plot_predictive_power
@@ -2505,9 +2504,24 @@ run_hmsc_prediction <- function(path = path,
 
 #' Plot conterfactual scenarios
 #'
-#' @param 
+#' @param path path to hmsc outputs
+#' @param model_name name of the model chose for the counterfactual
+#' @param concatenate_chains If chains have been computed separately (e.g. on cluster)
+#' @param X_new_data X dataframe, with altered data to run counterfactual
+#' @param metadata metadata of the X_data lines
+#' @param save_name folder name to save figures
+#' @param selected_countries list of countries to plot on PCA-contributions space
+#' @param plot_responders_on_map TRUE or FALSE, if plot world map with magnitude of change of the points
+#' @param set_ids list of rownames if you want to run counterfactual on a given list of sites.
+#' @param is_counterfactual Precise if it is a couterfactual (change the past) or a
+#'  scenario (change for the future). If TRUE, change = observed_value - new_value,
+#'  i.e. current value - the one you should have in the "past". If FALSE, 
+#'  change = new_value - observed_value, i.e. future value - current value.
+#' @param set_order_boxplot list of contributions if you want to order the boxplot of changes.
 #'
-#' @return save hmsc plots in figures/hmsc/file_name directory
+#'
+#
+#' @return save hmsc plots in figures/3_models/hmsc/counterfactual/file_name directory
 #' @export
 #'
 #' @examples

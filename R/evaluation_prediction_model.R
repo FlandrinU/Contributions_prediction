@@ -581,7 +581,7 @@ distribution_plot <- function(dataframe = covariates_final,
                             strip_text_size = strip_txt_size,
                             strip_text_face = strip_txt_size) +
     xlab(xlabel) + ylab(ylabel)+
-    facet_wrap(~index, scales = "free") +
+    facet_wrap(~index, scales = "free", ncol =4) +
     theme(legend.position="none",panel.spacing = unit(0.1, "lines"),
           axis.ticks.x=element_blank())
   

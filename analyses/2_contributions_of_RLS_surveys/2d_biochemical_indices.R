@@ -1,6 +1,7 @@
 ################################################################################
 ##
-## 
+## This script obtains N and P recycling flows per species and per communities 
+##  from RLS data and the rfishflux package
 ##
 ## 2d_biochemical_indices.R
 ##

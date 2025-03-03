@@ -1,6 +1,8 @@
 ################################################################################'
 ##
-##  
+##  This script uses the HMSC outputs to plot the convergence diagnosis, quality
+##   of predictions, and explanatory correlates of fish contributions, fitted on 
+##   HMSC framework. This script produces Fig. 1 and 2 of the paper flandrin et al.
 ##
 ## 3d_results_hmsc.R
 ##
@@ -51,7 +53,10 @@ path = here::here("outputs/models/hmsc")
 
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
-file_name <- gsub("output_", "", list_files[5]) #choose the wanted file
+
+file_name <-"FULL_model_SITE_SCALE_4_chains_1000_thin_200_samples.rds" ## FULL Model
+# file_name <- gsub("output_", "", list_files[10]) #choose the wanted file
+
 concatenate_chains = F
 
 ##----------------------------- Plot hmsc results ------------------------------
@@ -84,6 +89,8 @@ plot_hmsc_result(metadata = metadata_sites,
                      "DHW_quantile95_5_years")
                  )
 )
+
+
 
 
 ### Run prediction ###

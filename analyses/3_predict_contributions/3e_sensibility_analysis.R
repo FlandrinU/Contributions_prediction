@@ -1,6 +1,8 @@
 ################################################################################'
 ##
-##  
+##  This script uses different HMSC outputs tu run sensitivity analysis, by
+##   comparing the the covariate effect sizes on contributions of the full model
+##   and alternative models.
 ##
 ## 3e_sensibility_analysis.R
 ##

@@ -1,6 +1,7 @@
 ################################################################################
 ##
-## 
+## Give aesthetic scores of each RLS surveys, and public attention
+##  (cultural contributions)
 ##
 ## 2g_cultural_contributions.R
 ##

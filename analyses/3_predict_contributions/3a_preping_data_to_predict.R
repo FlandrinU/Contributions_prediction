@@ -1,6 +1,8 @@
 ################################################################################
 ##
-## 
+## This script uses the fish contribution dataframe and the RLS sites covariates 
+##  to to prepare a dataset of response and explanatory variables that can be 
+##  used by a mode. It also plots all contributions and covariates data.
 ##
 ## 3a_preping_data_to_predict.R
 ##

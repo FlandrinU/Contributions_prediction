@@ -1,6 +1,9 @@
 ################################################################################
 ##
-## 
+## This script uses the results of nutrient concentration of fishes from 
+## Maire et al. 2021 (file: `nutrients/outputs/nutrient_sp_data.RData`) to
+## assess the mean concentration of nutrients per community. In addition, it 
+## builds a list of fished families in the world to extract the fishery biomass.
 ##
 ## 2f_food_intake.R
 ##

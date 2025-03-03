@@ -1,6 +1,7 @@
 ################################################################################
 ##
-## 
+##  This script gathers biomass data at the survey scale, according to different 
+##   trophic groups, and compute functional and phylogenetic entropy.
 ##
 ## 2c_biomass_distribution.R
 ##

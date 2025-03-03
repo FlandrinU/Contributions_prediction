@@ -1,6 +1,7 @@
 ################################################################################
 ##
-##  
+##  This script contains all functions needed to run and assess the prediction of 
+##   missing data using random forest procedures.
 ##
 ## MissForest_functions.R
 ##
