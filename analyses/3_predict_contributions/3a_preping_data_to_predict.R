@@ -139,7 +139,8 @@ colnames(mpa_csv_rls)
 mpa_csv_rls[mpa_csv_rls == ""] <- NA
 
 mpa_csv_rls <- mpa_csv_rls |> 
-  dplyr::mutate(protection_to_date = ifelse(year_of_protection < year |
+  dplyr::mutate(year_of_protection = as.numeric(year_of_protection),
+                protection_to_date = ifelse(year_of_protection < year |
                                               is.na(year_of_protection), 
                                             level_fishing_protection, 0),
                 age_of_MPA = year - year_of_protection )
@@ -147,6 +148,30 @@ mpa_csv_rls <- mpa_csv_rls |>
 
 table(mpa_csv_rls$level_fishing_protection)
 table(mpa_csv_rls$protection_to_date)
+
+## Count sites with MPA placement during surveys
+mpa_check <- mpa_csv_rls |> 
+  dplyr::select(site_code, year, rls_mpa, year_of_protection) |> 
+  unique() |> 
+  dplyr::mutate(year_of_protection = as.numeric(year_of_protection),
+                before_mpa = ifelse(year_of_protection > year, 1, 0),
+                after_mpa = ifelse(year_of_protection < year, 1, 0)) |> 
+  dplyr::group_by(site_code) |> 
+  dplyr::mutate(before_mpa_site = max(before_mpa),
+                after_mpa_site = max(after_mpa),
+                n_before_mpa = sum(before_mpa),
+                n_after_mpa =  sum(after_mpa)) |> 
+  dplyr::filter(after_mpa_site == 1 & before_mpa_site == 1)
+
+
+table(mpa_check |> 
+        dplyr::select(site_code, rls_mpa) |> 
+        unique() |> 
+        dplyr::pull(rls_mpa))
+length(unique(mpa_check$site_code))
+summary(mpa_check$n_before_mpa)
+summary(mpa_check$n_after_mpa)
+
 
 
 ## Recode Protection status:
@@ -175,18 +200,21 @@ mpa <- mpa_csv_rls |>
       # High protection: no-take, high/medium enforcement, >10 km2, >10 years
       protection_to_date == 5 & 
         compliance %in% c("High", "Medium") & 
-        zone_marine_area_km >= 10 & 
-        age_of_MPA >= 10 ~ "high",
+        # zone_marine_area_km >= 100 &
+          age_of_MPA >= 10 
+        ~ "full_large_old",
       
       # Medium protection: no-take, high/medium enforcement, but either <10 km2 or <10 years
       protection_to_date == 5 & 
         compliance %in% c("High", "Medium") & 
-        (zone_marine_area_km < 10 | age_of_MPA < 10 | is.na(zone_marine_area_km) |
-           is.na(age_of_MPA)) ~ "medium",
+        (#zone_marine_area_km < 100 |
+            age_of_MPA < 10 |
+             is.na(zone_marine_area_km) |
+           is.na(age_of_MPA)) ~ "full_others",
       
       # Low protection: no-take with low enforcement and other MPAs
       protection_to_date == 5 & ( compliance == "Low" | is.na(compliance)) |
-        (protection_to_date >= 1 & protection_to_date <= 4) ~ "low",
+        (protection_to_date >= 1 & protection_to_date <= 4) ~ "restricted",
       
       # Out : no MPAs
       protection_to_date == 0 ~ "out",
@@ -528,7 +556,7 @@ covariates_final <- covariates |>
   dplyr::mutate(protection_status = factor(protection_status, 
                                        levels = c("out", "restricted", "full")),
                 protection_status_detailed =factor(protection_status_detailed, 
-                                           levels = c("out", "low", "medium", "high")) ) |> 
+                                           levels = c("out", "restricted", "full_others", "full_large_old")) ) |> 
   # tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
   dplyr::filter(survey_id %in% rownames(observations)) |> 
   tibble::column_to_rownames("survey_id") |>
@@ -539,8 +567,9 @@ covariates_final <- covariates |>
                           realm,
                           ecoregion), scale)) |> #SCALE ALL COVARIATES
   dplyr::mutate(across(-c(site_code, protection_status, protection_status_detailed,
-                          country, realm, ecoregion), as.numeric)) |> 
-  dplyr::select(-protection_status_detailed)
+                          country, realm, ecoregion), as.numeric))
+# |> 
+#   dplyr::select(-protection_status_detailed)
 
 
 
@@ -680,9 +709,9 @@ cov_to_select2
 covariates_site <- all_covariates_benthos_inferred |> 
   dplyr::select(all_of(c(metadata_to_select, "survey_date",cov_to_select2))) |> 
   #Agregate at the site scale
-  dplyr::select(-survey_id, -protection_status_detailed) |> 
+  dplyr::select(-survey_id) |>  #, -protection_status_detailed) |> 
   dplyr::group_by(site_code, latitude, longitude, country, ecoregion, realm, 
-                  survey_date, year, protection_status) |> 
+                  survey_date, year, protection_status, protection_status_detailed) |> 
   dplyr::summarise(across(.cols = everything(),
                           .fns = ~mean(., na.rm = TRUE), .names = "{.col}")) |> 
   dplyr::mutate(across(.cols = all_of(cov_to_select2),
@@ -718,8 +747,9 @@ covariates_site_final <- covariates_site |>
   #                                             "High" = 3)) |>  
   
   #Change the order of levels of MPAs for the GLM
-  dplyr::mutate(#protection_status_detailed = factor(protection_status_detailed, 
-                #                           levels = c("out", "low", "medium", "high")),
+  dplyr::mutate(protection_status_detailed = factor(protection_status_detailed, 
+                                                    levels = c("out", "restricted", 
+                                                               "full_others", "full_large_old")),
                 protection_status =factor(protection_status, 
                                            levels = c("out", "restricted", "full")) ) |> 
   # tidyr::drop_na() |> #30% of loss notably due to the Allen Atlas
@@ -727,11 +757,11 @@ covariates_site_final <- covariates_site |>
   tibble::column_to_rownames("id") |>
   dplyr::mutate(across(-c(longitude, latitude,
                           site_code,
-                          protection_status, #protection_status_detailed,
+                          protection_status, protection_status_detailed,
                           country,
                           realm,
                           ecoregion), scale)) |> #SCALE ALL COVARIATES
-  dplyr::mutate(across(-c(site_code, protection_status, #protection_status_detailed,
+  dplyr::mutate(across(-c(site_code, protection_status, protection_status_detailed,
                           country, realm, ecoregion), as.numeric))
 
 
@@ -995,13 +1025,17 @@ ggsave(here::here("figures", "3_contribution_vs_covariate",
 
 ##-------------plot Covariates vs protection -------------
 hum_cov <- covariates_site_final |> 
-  dplyr::select(protection_status, Fishing_vessel_density, Gravity, Travel_time) |> 
+  dplyr::select(protection_status, Fishing_vessel_density, Gravity, Travel_time, 
+                Coral_RLS, SST_5_years, Chlorophyll_5_years, HDI, depth,
+                Terrestrial_reef_flat) |> 
   tidyr::pivot_longer(-protection_status, names_to = "human_cov", values_to = "value")
   
 ggplot(hum_cov)+
   # geom_violin(aes(x=human_cov, y = value, fill = protection_status))+
-  geom_boxplot(aes(x=human_cov, y = value, fill = protection_status))+
-  hrbrthemes::theme_ipsum()
+  geom_boxplot(aes( y = value, fill = protection_status),outliers = T)+
+  hrbrthemes::theme_ipsum()+
+  facet_wrap(~human_cov, scale="free")
+
 ggsave(here::here("figures", "3_contribution_vs_covariate", 
                   "Human_covariates_VS_protection_status.jpg"),
        plot = last_plot(), width=8, height = 7 )

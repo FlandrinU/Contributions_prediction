@@ -28,6 +28,9 @@ source(here::here("R/HMSC_function.R"))
 source(here::here("R","evaluation_prediction_model.R"))
 
 
+color_grad = c("#A50026", "#D73027", "#F46D43", "#FDAE61","#FEE090", "#D8DAEB",
+               "#B2ABD2", "#8073AC", "#6D469C", "#603692", "#542788",
+               "#473C8B")
 ##------------------------------- load data ------------------------------------
 ## Survey scale, all covariates
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
@@ -35,8 +38,12 @@ X_data = covariates_final
 
 ## Site scale
 load(here::here("data/derived_data/3_sites_covariates_to_predict.Rdata"))
-X_data_site = covariates_site_final
+X_data_site = covariates_site_final[,-which(colnames(covariates_site_final) == 
+                                              "protection_status_detailed")]
 
+# X_data_site = covariates_site_final[, -which(colnames(covariates_site_final) == 
+#                                                "protection_status")] |> 
+#   dplyr::rename(protection_status = protection_status_detailed)
 
 ##load metadata 
 load(file = here::here("data", "raw_data", "environmental_covariates",
@@ -66,7 +73,7 @@ list_files <- list.files(file.path(path, "out_multi"))
 list_files
 
 model_name <-"FULL_model_SITE_SCALE_4_chains_1000_thin_200_samples.rds"
-# model_name <- gsub("output_", "", list_files[5]) #choose the wanted file
+# model_name <- gsub("output_", "", list_files[22]) #choose the wanted file
 
 concatenate_chains = F
 ##------------- New conditions in counterfactual scenarios ---------------------
@@ -74,7 +81,58 @@ concatenate_chains = F
 ### Initial conditions ###
 X <- X_data_site
 metadata = metadata_sites
+
+## Survey scale
 # X <- X_data
+
+## Test without Australia
+# X <- covariates_site_final |>
+#   dplyr::filter(country != "Australia") |>
+#   dplyr::select(-protection_status_detailed,
+#                 -Patch_reefs)
+# 
+# # Test only countries with all MPA conditions
+# selected_countries <- X_data_site |>
+#   dplyr::group_by(country, protection_status) |>
+#   dplyr::summarise(n_sample = dplyr::n()) |>
+#   dplyr::group_by(country) |>
+#   dplyr::mutate(n_conditions = length(unique(protection_status)),
+#                 both_conditions = sum(c("out", "full") %in% unique(protection_status))) |>
+#   dplyr::filter(n_conditions > 1) |>
+#   dplyr::filter(both_conditions == 2) |>
+#   dplyr::pull(country)
+# 
+# X <- X_data_site |>
+#   dplyr::filter(country %in% selected_countries)
+
+
+## Test without undersampled countries and oversampled ecoregion
+# selected_countries <- X_data_site |> 
+#   dplyr::group_by(country, protection_status) |> 
+#   dplyr::summarise(n_sample = dplyr::n()) |> 
+#   dplyr::group_by(country) |> 
+#   dplyr::mutate(n_conditions = length(unique(protection_status)),
+#                 both_conditions = sum(c("out", "full") %in% unique(protection_status))) |> 
+#   dplyr::filter(n_conditions > 1) |> 
+#   dplyr::filter(both_conditions == 2) |> 
+#   dplyr::pull(country)
+# 
+# oversampled_ecoregion <- X_data_site |>
+#   dplyr::group_by(ecoregion, protection_status) |>
+#   dplyr::summarise(n_sample = dplyr::n()) |>
+#   dplyr::group_by(ecoregion) |>
+#   dplyr::mutate(n_tot_ecoregion = sum(n_sample),
+#                 n_conditions = length(unique(protection_status)),
+#                 both_conditions = sum(c("out", "full") %in% unique(protection_status))) |> 
+#   dplyr::ungroup() |> 
+#   dplyr::distinct(ecoregion, .keep_all = TRUE) |>
+#   dplyr::slice_max(order_by = n_tot_ecoregion, n = 3)|> 
+#   dplyr::pull(ecoregion)
+# 
+# X <- X_data_site |> 
+#   dplyr::filter(country %in% selected_countries,
+#                 !ecoregion %in% oversampled_ecoregion)
+
 
 ## Identify "pristine" sites
 low_grav_sites <- rownames(X[ X$Gravity == min(X$Gravity), ])
@@ -91,6 +149,7 @@ new_pristine <- rownames(X_pristine_conditions |> dplyr::filter(protection_statu
 # new_pristine <- rownames(X_pristine_conditions |> dplyr::filter(protection_status == "full"))
 
 X_pristine_conditions[new_pristine, "protection_status"] <- as.factor("full")
+# X_pristine_conditions[new_pristine, "protection_status"] <- as.factor("full_large_old")
 X_pristine_conditions[new_pristine, "Fishing_vessel_density"] <- min(X_pristine_conditions$Fishing_vessel_density)
 X_pristine_conditions[new_pristine, "Gravity"] <- min(X_pristine_conditions$Gravity)
 X_pristine_conditions[new_pristine, "Travel_time"] <- min(X_pristine_conditions$Travel_time)
@@ -113,6 +172,7 @@ mean_country_out <- rbind(mean_country_out, missing_rows)
 X_conservation_legacy_full <- X
 new_conserv_legacy_full_mpa <- rownames(X_conservation_legacy_full |> 
                                           dplyr::filter(protection_status == "full"))
+                                          # dplyr::filter(protection_status == "full_large_old"))
 
 X_conservation_legacy_full[new_conserv_legacy_full_mpa, "protection_status"] <- as.factor("out")
 
@@ -142,6 +202,132 @@ X_conservation_legacy_all <- X_conservation_legacy_all |>
     TRUE ~ Fishing_vessel_density)) |> 
   tibble::column_to_rownames("id") |> 
   dplyr::select(-fishing_out)
+
+
+
+
+#### Check position of counterfactuals in covariates space ####
+
+X_train <- X_data_site |> 
+  dplyr::select(-site_code, -country, -ecoregion, -realm,
+                -longitude, -latitude, -year)
+
+res_famd <- FactoMineR::FAMD(X_train, graph = FALSE)
+
+
+ind_plot <- factoextra::fviz_famd_ind(res_famd, geom = "point",  
+                                      labelsize = 4,  repel = TRUE,
+                                      shape.ind = 19, alpha.ind = 0.4,
+                                      size.ind = 4,
+                                      habillage = as.factor(X_train$protection_status))  +
+  labs(col = "Protection status")+
+  scale_color_manual(values = c(
+    "out" = "#999999",
+    "restricted" = "#E69F00",
+    "full" = "#56B4E9" )) +
+  theme_bw()+ theme(legend.position = "bottom")
+
+ind_plot
+
+
+# factoextra::fviz_famd_var(res_famd,
+#                           col.var = "black",
+#                           repel = TRUE,
+#                           geom = c("arrow", "text"))
+
+var_plot <- factoextra::fviz_famd_var(res_famd, "quanti.var", repel = TRUE,
+                                      col.var = "cos2", 
+                                      select.var = list(cos2 = 0.15))+
+  theme(legend.position = "none") + labs(x="", y="")
+
+var_plot
+
+factoextra::fviz_famd_var(res_famd, "quali.var", col.var = "contrib")
+
+
+
+# Points coordinates
+ind_df <- factoextra::get_famd_ind(res_famd)$coord
+ind_df <- as.data.frame(ind_df)
+ind_df <- cbind(ind_df , X_data_site)  
+eig <- res_famd$eig
+xlabel <- paste0("Dim 1 (", round(eig[1,2], 1), "%)")
+ylabel <- paste0("Dim 2 (", round(eig[2,2], 1), "%)")
+
+# CL points
+X_new_CL <- X_conservation_legacy_full[new_conserv_legacy_full_mpa, ] |> 
+  dplyr::select(-site_code, -country, -ecoregion, -realm,
+                -longitude, -latitude, -year)
+
+proj_new_CL <- predict(res_famd, newdata = X_new_CL)
+new_coords_CL <- as.data.frame(proj_new_CL$coord)
+
+
+# HF points
+X_new_HF <- X_pristine_conditions[new_pristine, ] |> 
+  dplyr::select(-site_code, -country, -ecoregion, -realm,
+                -longitude, -latitude, -year)
+
+proj_new_HF <- predict(res_famd, newdata = X_new_HF)
+new_coords_HF <- as.data.frame(proj_new_HF$coord)
+
+
+# ggplot(ind_df, aes(x = Dim.1, y = Dim.2, color = year)) +
+#   geom_point(alpha = 0.5, size = 3) +
+#   scale_color_gradientn(colors = rev(color_grad)) +
+#   # scale_color_manual(values = color_grad[c(3,8,11)]) +
+#   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.3)+
+#   geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.3)+
+#   theme_bw() +
+#   labs(x = xlabel, y = ylabel)
+
+
+
+## Plot new points
+CL_points <- ggplot(ind_df, aes(x = Dim.1, y = Dim.2)) +
+  geom_point(aes(fill = "Training conditions"),alpha = 0.3, size = 4, 
+             color = "grey60", shape = 21) +
+  geom_point(data = new_coords_CL, 
+             aes(x = `Dim 1`, y = `Dim 2`, fill = "Counterfactual conditions"),
+             alpha = 0.7, size = 2, color = "forestgreen", 
+             shape = 21) +
+  scale_fill_manual(values = c( "Training conditions" = "grey70",
+                                "Counterfactual conditions" = "darkseagreen3")) +
+  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.3)+
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.3)+
+  labs(title = "Conservation legacy",x = "", y = "", fill = "") +
+  theme_bw() + theme(legend.position = "bottom",
+                     plot.title = element_text(colour = "darkseagreen", 
+                                               face = "bold", size = 13,
+                                               margin=margin(t = 20, b = -15),
+                                               hjust = 0.01))
+
+
+HF_points <- ggplot(ind_df, aes(x = Dim.1, y = Dim.2)) +
+  geom_point(aes(fill = "Training conditions"),alpha = 0.3, size = 4, 
+             color = "grey60", shape = 21) +
+  geom_point(data = new_coords_HF,
+             aes(x = `Dim 1`, y = `Dim 2`, fill = "Counterfactual conditions"),
+             alpha = 0.5, size = 2, color = "darkred", shape = 21) +
+  scale_fill_manual(values = c( "Training conditions" = "grey70",
+                                "Counterfactual conditions" = "firebrick3")) +
+  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.3)+
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.3)+
+  labs(title = "Human footprint",x = "", y = "", fill = "") +
+  theme_bw() + theme(legend.position = "bottom",
+                     plot.title = element_text(colour = "firebrick3", 
+                                               face = "bold", size = 13,
+                                               margin=margin(t = 20, b = -15),
+                                               hjust = 0.01))
+
+
+(ind_plot + var_plot + plot_layout(widths = c(1.3, 1)) ) / (CL_points + HF_points) +
+  plot_layout(heights = c(1.3, 1))
+
+ggsave(filename =  paste0(here::here("figures","3_models","hmsc", "conterfactuals"), 
+                          "/dimensionnality_check_of_counterfactuals.jpg"),
+       plot = last_plot(),  width = 11, height = 9)
+
 
 
 
@@ -204,6 +390,7 @@ threshold_nb_sites = 20
 selected_countries <- metadata |> 
   dplyr::count(country) |> 
   dplyr::filter(n > threshold_nb_sites) |> 
+  # dplyr::filter(!country == "Australia") |> # Sensibility test without Australia
   dplyr::pull(country)
 
 
@@ -219,7 +406,7 @@ human_footprint <-
                                is_counterfactual = TRUE)
 
 
-# (2) CONSERVATION LEGACY 
+# (2) CONSERVATION LEGACY
 order <- human_footprint[[3]]  |> 
   dplyr::mutate(contribution = reorder(contribution, raw_change_percent,
                                        FUN = median, decreasing = T )) 
@@ -486,8 +673,9 @@ change_percent <- conserv_legacy |>
  
 
 ## Broke  X-axis
-x_break = -42
+x_break = -42 # x_break = -70
 xticks <- c(signif(min(change_percent$median),2),-40,-20, 0, 15)
+# xticks <- c(signif(min(change_percent$median),2),-60, -40,-20, 0, 20,40)
 
 # Transform the data
 trans_x <- function(x) {
@@ -565,7 +753,7 @@ existing_x_labels <- paste0(xticks, "%")
 
 lolliplot_prop_column <- lolliplot +
   geom_tile(data = change_prop, aes(x = x_text_pos, y = contribution, fill = mitigation), 
-            color = "black", width = 6, height = 1, alpha = 0.5) +  
+            color = "black", width = 6, height = 1, alpha = 0.5) +  # width = 13
     geom_text(data = change_prop, aes(x = x_text_pos, y = contribution, 
                                     label = paste0(round(mitigation, 0), " %")), 
             color = "black", size = 3) + 
@@ -764,13 +952,13 @@ plot_merged_prop <- lolliplot_prop_column +
   theme(plot.margin =unit(c(0,0,1.3,0), 'cm'))+
   theme(legend.position = "none")+
   annotation_custom(ggplotGrob(inser),
-                    xmin = -50,
+                    xmin = -50, #-80
                     xmax = -10,
                     ymin = 1,
                     ymax = 11)+
   annotation_custom(ggplotGrob(title_column),
                     xmin = 13,
-                    xmax = 27,
+                    xmax = 27, #77
                     ymin = -2.5,
                     ymax = 0)
 plot_merged_prop
@@ -971,7 +1159,7 @@ density_plot_fct <-
       
       geom_text(data = data |> 
                   dplyr::group_by(name, counterfactual) |>
-                  dplyr::summarise(median_value = median(changes, na.rm = TRUE),
+                  dplyr::summarise(median_value = mean(changes, na.rm = TRUE),
                                    sd = sd(changes, na.rm = TRUE),
                                    .groups = 'drop')|>
                   dplyr::mutate(x_text = dplyr::case_when(

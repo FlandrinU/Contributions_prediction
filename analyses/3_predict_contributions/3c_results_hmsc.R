@@ -16,9 +16,9 @@
 rm(list=ls())
 
 ##-----------------------------Loading packages---------------------------------
-pkgs <- c("here", "Hmsc", "coda", "ggmcmc", "jsonify", "sf")
-nip <- pkgs[!(pkgs %in% installed.packages())]
-nip <- lapply(nip, install.packages, dependencies = TRUE)
+# pkgs <- c("here", "Hmsc", "coda", "ggmcmc", "jsonify", "sf")
+# nip <- pkgs[!(pkgs %in% installed.packages())]
+# nip <- lapply(nip, install.packages, dependencies = TRUE)
 # ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 
@@ -78,15 +78,19 @@ plot_hmsc_result(metadata = metadata_sites,
                    c("protection_statusfull", "Fishing_vessel_density","Gravity","GDP"),
                    c("protection_statusfull", "protection_statusrestricted",
                      "Fishing_vessel_density"),
-                   # c("protection_statushigh","Gravity", "Fishing_vessel_density"),
-                   # c("protection_statushigh", "protection_statusmedium",
-                   #   "protection_statuslow", "Fishing_vessel_density"),
-                   # 
                    c("protection_statusfull", "protection_statusrestricted",
                      "Marine_ecosystem_dependency", "Natural_ressource_rent",
                      "HDI","Travel_time"),
                    c("SST_5_years", "Coral_RLS", "Chlorophyll_5_years",
                      "DHW_quantile95_5_years")
+                   
+                   # c("protection_statusfull_large_old", "Fishing_vessel_density","Gravity","GDP"),
+                   # c("protection_statusfull_large_old","protection_statusfull_others", 
+                   #   "protection_statusrestricted", "Fishing_vessel_density"),
+                   # c("protection_statusfull_large_old","protection_statusfull_others",
+                   #   "protection_statusrestricted",
+                   #   "Marine_ecosystem_dependency", "Natural_ressource_rent",
+                   #   "HDI","Travel_time")
                  )
 )
 

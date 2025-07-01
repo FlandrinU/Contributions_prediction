@@ -852,7 +852,10 @@ plot_hmsc_result <- function(metadata = metadata,
         cols = - Covariate,
         names_to = "Response",
         values_to = "Value"
-      )
+      ) |> 
+      dplyr::mutate(Covariate = dplyr::case_when(
+        Covariate == "Random: sample_unit" ~ "Random: sampled_reef",
+        T ~ Covariate ))
     
     #classify covariates
     human <- c("GDP", "Gravity", "protection_status", "Natural_ressource_rent",
@@ -1020,7 +1023,11 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::filter(!Response %in% c("","Mean contribution")) |> 
       dplyr::filter(category == "random") |> 
       dplyr::group_by(Covariate, color) |> 
-      dplyr::summarise(mean_imp = mean(Value)) 
+      dplyr::summarise(mean_imp = mean(Value)) |> 
+      dplyr::mutate(Covariate = dplyr::case_when(
+        Covariate == "Random: sample_unit" ~ "Random: sampled_reef",
+        T ~ Covariate
+      ))
     
     plot_categ <- ggplot(VP_aggregated) +
       geom_col(aes(x = reorder(category, prop_variance),
@@ -1131,8 +1138,7 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::mutate(Response = gsub("_", " ", Response),
                     Response = dplyr::case_when(
                       Response == "Iucn species richness" ~ "IUCN species richness",
-                      TRUE ~ Response
-                    ))
+                      TRUE ~ Response))
     
     
     ### Plot Figure 1 ####
@@ -1266,7 +1272,7 @@ plot_hmsc_result <- function(metadata = metadata,
                   panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
                   panel.background = element_rect(fill = "white", color = NA))),
                         xmin = 3.5,
-                        xmax = 21.3,
+                        xmax = 21.3, # 15, # for PCA model
                         ymin = 0.01,
                         ymax = 0.06)
     mean_contrib_plot_with_inser
@@ -1291,25 +1297,26 @@ plot_hmsc_result <- function(metadata = metadata,
                      category = factor(
                        category, 
                        levels = c("human", "habitat",  "envir",
-                                  "Random: sample_unit","Random: country" ) ) )
+                                  "Random: sampled_reef","Random: country" ) ) )
     
     fig1_stacked <- ggplot(VP_stacked)+
       aes(x = reorder(Response,-R2), y = Value, fill = category) +
       geom_bar(stat = "identity", position = "stack",
                color = "black", linewidth = 0.2) +
       scale_fill_manual(values = c("Random: country" =  "#7F7F7F",
-                                   "Random: sample_unit" =  "#F2F2F2",
+                                   "Random: sampled_reef" =  "#F2F2F2",
                                    "envir" = "#FF9459",
                                    "habitat" = "#FFCF7A",
                                    "human" =  "#9B7D9E"),
                         labels = c("Random: country" =  "Random: country level",
-                                   "Random: sample_unit" =  "Random: reef level",
+                                   "Random: sampled_reef" =  "Random: reef level",
                                    "envir" = "Environment", 
                                    "habitat" = "Habitat", 
                                    "human" = "Human")) +
       labs(title = "", x = "", y = "Proportion of variance explained", fill ="Covariates:") +
       theme_classic(base_size = 13,
                     base_line_size = 0.2) +
+      ylim(c(0,1))+
       guides(fill = guide_legend(override.aes = list(size = 10)))+
       theme(
         axis.text.x = element_text(size=19, angle = 50, hjust = 1, vjust = 1),
@@ -1524,7 +1531,7 @@ plot_hmsc_result <- function(metadata = metadata,
     ##### ridges plot  #####
     for(drivers in drivers_to_plot){
       
-      #drivers = drivers_to_plot[[1]]
+      #drivers = drivers_to_plot[[3]]
       drivers_name <- drivers
       all_drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
       
@@ -1552,6 +1559,8 @@ plot_hmsc_result <- function(metadata = metadata,
       
       new_titles <- c(
         "protection_statusfull" = "Full protection",
+        "protection_statusfull_large_old" = "MPA full & large & old",
+        "protection_statusfull_others" = "Others full MPA",
         "Fishing_vessel_density" = "Fishing pressure",
         "Gravity" = "Gravity",
         "GDP" = "GDP",
@@ -1575,23 +1584,24 @@ plot_hmsc_result <- function(metadata = metadata,
                                      "NC" = "Nature-as-Culture"))+
         geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5)+
         scale_alpha_manual(values = c("0" = 0.25, "1" = 0.7), guide = "none") +
-        hrbrthemes::theme_ipsum( axis_title_size = 0 ) +
+        hrbrthemes::theme_ipsum( axis_title_size = 14 ) +
         theme(
           legend.position="bottom",
           legend.text = element_text(size = 15, margin = margin(r = 20)),
           panel.spacing = unit(0.3, "lines"),
           strip.text.x = element_text(size = 16, hjust = 0.5, face = "bold"),
           axis.text.x = element_text(size = 13),
-          axis.text.y = element_text(size = 13, vjust = -0.2)
+          axis.text.y = element_text(size = 13, vjust = -0.2),
+          axis.title.y = element_text(face = "bold", hjust = .5, vjust = 5),
+          axis.title.x = element_text(face = "bold", hjust = .99, vjust =-2)
           ) +
-        labs(fill = "")+
-        xlab(all_drivers) + ylab("Nature Contributions to People and Nature")+
+        labs(fill = "", y = "Nature contributions", x = "Effect sizes")+
+        # xlab(all_drivers) + ylab("Nature Contributions to People and Nature")+
         facet_wrap(~covariate, ncol = length(df$covariate),
                    scales = "free_x",
              labeller = labeller(covariate = new_titles)
         )
-      
-      # if(drivers == c("protection_statusfull", "Fishing_vessel_density","Gravity","GDP"))
+      # ridges_plot
       
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
                                paste(drivers_name, collapse = "-"), ".jpg"),
@@ -1826,7 +1836,8 @@ plot_hmsc_result <- function(metadata = metadata,
       moranI_df <- as.data.frame(t(as.data.frame(moranI))) |> 
         dplyr::rename(moran_index = V1) |> 
         tibble::rownames_to_column("response")
-      
+      save(moranI_df, 
+           file = paste0(path_file,"/Residuals_spatial_correlation_Moran_indices.Rdata"))
       
       residual_coord <- compare_pred |> 
         dplyr::left_join(
@@ -2282,11 +2293,11 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
   par(mfrow = c(1, 2))
   hist(predictive_power_summary$r_squared_marginal, xlim = c(0,1), 
        main=paste0("R_squared marginal Mean = ", 
-                   round(mean(predictive_power_summary$r_squared_marginal),2),
+                   round(mean(predictive_power_summary$r_squared_marginal),3),
                    "\n sd = ", round(sd(predictive_power_summary$r_squared_marginal),2)))
   hist(predictive_power_summary$r_squared_conditional, xlim = c(0,1), 
        main=paste0("R_squared conditional Mean = ", 
-                   round(mean(predictive_power_summary$r_squared_conditional),2),
+                   round(mean(predictive_power_summary$r_squared_conditional),3),
                    "\n sd = ", round(sd(predictive_power_summary$r_squared_conditional),2)))
   
   dev.off()
@@ -2457,7 +2468,8 @@ run_hmsc_prediction <- function(path = path,
     
     ## Identify new conditions
     X_new_data <- X_new_data[, colnames(X_train)]
-    rows_with_changes <- names(which(rowSums(X_new_data != X_train)>0))
+    # rows_with_changes <- names(which(rowSums(X_new_data != X_train)>0))
+    rows_with_changes <- which(rowSums(X_new_data != X_train)>0)
     cat("Conditions have been changed in", length(rows_with_changes), "locations \n")
     
     ## Run new predictions

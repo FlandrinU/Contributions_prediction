@@ -62,5 +62,5 @@ source(here::here('analyses', '3_predict_contributions', '3c_results_hmsc.R'))
 
 ## Run and plot counterfactual scenarios (Fig. 3 and Fig. 4)
 source(here::here('analyses', '3_predict_contributions', '3d_conterfactuals.R'))
-source(here::here('analyses', '3_predict_contributions', '3e_sensibility_analysis.R'))
+source(here::here('analyses', '3_predict_contributions', '3e_sensitivity_analysis.R'))
 

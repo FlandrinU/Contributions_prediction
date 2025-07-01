@@ -11,6 +11,7 @@
 ## Ulysse Flandrin
 ##
 ################################################################################
+
 ##---------------------------- cleaning memory ---------------------------------
 rm(list=ls())
 
@@ -28,7 +29,8 @@ source("R/HMSC_function.R")
 load(here::here("data/derived_data/3_sites_contributions_to_predict.Rdata"))
 load(here::here("data/derived_data/3_sites_covariates_to_predict.Rdata"))
 Y_data_site =  observations_site_final
-X_data_site = covariates_site_final[rownames(Y_data_site),]
+X_data_site = covariates_site_final[rownames(Y_data_site),
+                -which(colnames(covariates_site_final) == "protection_status_detailed")]
 
 
 ##----------------------------- time frame ------------------------------
@@ -82,21 +84,35 @@ fit_hmsc_crossvalidation(k_fold = 5,
 load(here::here("data/derived_data/3_all_contributions_to_predict.Rdata"))
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
 Y_data =  observations_final
-X_data = covariates_final[rownames(Y_data),]
+X_data = covariates_final[rownames(Y_data),
+                          -which(colnames(covariates_final) == "protection_status_detailed")]
 
 
 ## Without Allen
 load(here::here("data/derived_data/3_contributions_without_Allen_to_predict.Rdata"))
 load(here::here("data/derived_data/3_covariates_without_Allen_to_predict.Rdata"))
 Y_data_wo_allen =  observations_final_without_Allen
-X_data_wo_allen = covariates_final_without_Allen[rownames(Y_data_wo_allen),]
+X_data_wo_allen = covariates_final_without_Allen[rownames(Y_data_wo_allen),
+                       -which(colnames(covariates_final_without_Allen) ==
+                                "protection_status_detailed")]
 
 ## Only/Without Australia
-X_data_aust = covariates_site_final |> dplyr::filter(country == "Australia")
+X_data_aust = covariates_site_final |> 
+  dplyr::filter(country == "Australia") |> 
+  dplyr::select(-protection_status_detailed,
+                -Natural_ressource_rent, -Marine_ecosystem_dependency,
+                -HDI) # No variability inside Australia
 Y_data_aust =  observations_site_final[rownames(X_data_aust),]
+summary(X_data_aust)
 
-X_data_no_aust = covariates_site_final |> dplyr::filter(country != "Australia")
+
+X_data_no_aust = covariates_site_final |> 
+  dplyr::filter(country != "Australia") |> 
+  dplyr::select(-protection_status_detailed,
+                -Patch_reefs)
 Y_data_no_aust =  observations_site_final[rownames(X_data_no_aust),]
+
+summary(X_data_no_aust)
 
 ## Covariates before benthic composition inference
 load(file = here::here("data", "derived_data", 
@@ -262,3 +278,207 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
 
 
 
+
+
+#### WITHOUT AUSTRALIA - MODEL SITES ####
+name = "Sensitivity_without_Australia_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_no_aust,
+              X_data = X_data_no_aust,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+
+
+##--------------------------- Sensitivity analyses - REVIEW NEE -----------------------------
+
+#### ONLY COUNTRY IN RANDOM ####
+name = "Sensitivity_only_country_in_RL_SITE_SCALE"
+random_factors = c("country")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+
+#### ONLY ECOREGION IN RANDOM ####
+name = "Sensitivity_only_ecoregion_in_RL_SITE_SCALE"
+random_factors = c("ecoregion")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+#### ECOREGION AND SAMPLE UNIT IN RANDOM ####
+name = "Sensitivity_ecoregion&SU_in_RL_SITE_SCALE"
+random_factors = c("sample_unit","ecoregion")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+#### NO RANDOM EFFECTS ####
+name = "Sensitivity_NO_random_factors_SITE_SCALE"
+random_factors = c()
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+#### DETAILS MPA - FULL MODEL SITES ####
+Y_data_site =  observations_site_final
+X_data_site = covariates_site_final[rownames(Y_data_site),
+        -which(colnames(covariates_site_final) == "protection_status")] |> 
+  dplyr::rename(protection_status = protection_status_detailed)
+
+
+name = "Sensitivity_MPA_features_detailed_10y_test2_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+
+#### MODEL SITES WITHOUT UNDERSAMPLED COUNTRIES ####
+# name = "Sensitivity_countries_with_full_and_out_samples_model_SITE_SCALE"
+# random_factors = c("sample_unit", "country")
+# 
+# selected_countries <- X_data_site |> 
+#   dplyr::group_by(country, protection_status) |> 
+#   dplyr::summarise(n_sample = dplyr::n()) |> 
+#   dplyr::group_by(country) |> 
+#   dplyr::mutate(n_conditions = length(unique(protection_status)),
+#                 both_conditions = sum(c("out", "full") %in% unique(protection_status))) |> 
+#   dplyr::filter(n_conditions > 1) |> 
+#   dplyr::filter(both_conditions == 2) |> 
+#   dplyr::pull(country)
+# 
+# # selected_countries <- X_data_site |> 
+# #   dplyr::filter(country == "Australia") |> 
+# #   dplyr::group_by(ecoregion, protection_status) |> 
+# #   dplyr::summarise(n_sample = dplyr::n()) |> 
+# #   dplyr::group_by(ecoregion) |> 
+# #   dplyr::mutate(n_conditions = length(unique(protection_status)),
+# #                 both_conditions = sum(c("out", "full") %in% unique(protection_status))) |> 
+# #   dplyr::filter(n_conditions > 1) |> 
+# #   dplyr::filter(both_conditions == 2)
+# 
+# X_data_site_subset <- X_data_site |> 
+#   dplyr::filter(country %in% selected_countries)
+# 
+# Y_data_site_subset <- Y_data_site[rownames(X_data_site_subset),]
+# 
+# #Fit full model
+# hmsc_function(nSamples, thin, nChains, verbose, transient,
+#               Y_data = Y_data_site_subset,
+#               X_data = X_data_site_subset,
+#               response_distribution, quadratic_effects,random_factors,
+#               nb_neighbours, set_shrink, test_null_model, name,
+#               run_python = T, save_path)
+
+#### MODEL SITES WITHOUT UNDERSAMPLED COUNTRIES AND OVERSAMPLED ECOREGION ####
+name = "Sensitivity_without_undersampled_countries_and_oversampled_ecoregion_samples_model_SITE_SCALE"
+random_factors = c("sample_unit", "country")
+
+# Identify undersampled countries
+selected_countries <- X_data_site |> 
+  dplyr::group_by(country, protection_status) |> 
+  dplyr::summarise(n_sample = dplyr::n()) |> 
+  dplyr::group_by(country) |> 
+  dplyr::mutate(n_conditions = length(unique(protection_status)),
+                both_conditions = sum(c("out", "full") %in% unique(protection_status))) |> 
+  dplyr::filter(n_conditions > 1) |> 
+  dplyr::filter(both_conditions == 2) |> 
+  dplyr::pull(country)
+
+# Identify oversampled ecoregion
+oversampled_ecoregion <- X_data_site |>
+  dplyr::group_by(ecoregion, protection_status) |>
+  dplyr::summarise(n_sample = dplyr::n()) |>
+  dplyr::group_by(ecoregion) |>
+  dplyr::mutate(n_tot_ecoregion = sum(n_sample),
+                n_conditions = length(unique(protection_status)),
+                both_conditions = sum(c("out", "full") %in% unique(protection_status))) |> 
+  dplyr::ungroup() |> 
+  dplyr::distinct(ecoregion, .keep_all = TRUE) |>
+  dplyr::slice_max(order_by = n_tot_ecoregion, n = 3)|> 
+  dplyr::pull(ecoregion)
+
+
+X_data_site_subset <- X_data_site |> 
+  dplyr::filter(country %in% selected_countries, #this remove 28 countries, and 444 samples
+                !ecoregion %in% oversampled_ecoregion) #by removing the 3 most sampled ecoregion: remove 1194 samples
+
+Y_data_site_subset <- Y_data_site[rownames(X_data_site_subset),]
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site_subset,
+              X_data = X_data_site_subset,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)

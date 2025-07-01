@@ -60,7 +60,7 @@ In `analyses/2_contributions_of_RLS_surveys` folder, the scripts `2a_` to `2h_` 
 
 #### 3) Modelling the contributions
 
-In `analyses/3_predict_contributions` folder, the scripts `3a_` to `3e_` use covariates to model the reef fish contributions at the site scale, using the Bayesian framework 'HMSC', to investigate the drivers of community contributions. `3d_` runs countercatual scenarios to deepen our understanding of the human footprint on ecosystems, and explore the potential of conservation efforts. `3d_` and `3e` reproduce all figures presented in the paper Flandrin et al. associated to this project.
+In `analyses/3_predict_contributions` folder, the scripts `3a_` to `3e_` use covariates to model the reef fish contributions at the site scale, using the Bayesian framework 'HMSC', to investigate the drivers of community contributions. `3d_` runs counterfactual scenarios to deepen our understanding of the human footprint on ecosystems, and explore the potential of conservation efforts. `3d_` and `3e` reproduce all figures presented in the paper Flandrin et al. associated to this project.
 
 
 
