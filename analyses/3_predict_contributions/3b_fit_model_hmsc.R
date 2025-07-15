@@ -22,7 +22,7 @@ rm(list=ls())
 # ip   <- unlist(lapply(pkgs, require, character.only = TRUE, quietly = TRUE))
 
 source("R/HMSC_function.R")
-
+set.seed(06)
 ##------------------------------- load data ------------------------------------
 
 ## Site scale
@@ -100,7 +100,7 @@ X_data_wo_allen = covariates_final_without_Allen[rownames(Y_data_wo_allen),
 X_data_aust = covariates_site_final |> 
   dplyr::filter(country == "Australia") |> 
   dplyr::select(-protection_status_detailed,
-                -Natural_ressource_rent, -Marine_ecosystem_dependency,
+                -Natural_resource_rent, -Marine_ecosystem_dependency,
                 -HDI) # No variability inside Australia
 Y_data_aust =  observations_site_final[rownames(X_data_aust),]
 summary(X_data_aust)
@@ -221,7 +221,8 @@ fit_hmsc_crossvalidation(k_fold = 5,
 name = "Habitat_cov_in_PCA_dimensions_model_SITE_SCALE"
 random_factors = c("sample_unit", "country")
 
-X_data_site_pca <- covariates_site_PCA_hab
+X_data_site_pca <- covariates_site_PCA_hab[rownames(Y_data_site),
+                     -which(colnames(covariates_site_final) == "protection_status_detailed")]
 
 #Fit full model
 hmsc_function(nSamples, thin, nChains, verbose, transient,
@@ -391,7 +392,7 @@ X_data_site = covariates_site_final[rownames(Y_data_site),
   dplyr::rename(protection_status = protection_status_detailed)
 
 
-name = "Sensitivity_MPA_features_detailed_10y_test2_SITE_SCALE"
+name = "Sensitivity_MPA_features_detailed_10y_SITE_SCALE"
 random_factors = c("sample_unit", "country")
 
 #Fit full model

@@ -76,10 +76,10 @@ plot_hmsc_result(metadata = metadata_sites,
                  latent_factors = T,
                  drivers_to_plot =  list(
                    c("protection_statusfull", "Fishing_vessel_density","Gravity","GDP"),
+                   # c("protection_statusfull", "protection_statusrestricted",
+                   #   "Fishing_vessel_density"),
                    c("protection_statusfull", "protection_statusrestricted",
-                     "Fishing_vessel_density"),
-                   c("protection_statusfull", "protection_statusrestricted",
-                     "Marine_ecosystem_dependency", "Natural_ressource_rent",
+                     "Marine_ecosystem_dependency", "Natural_resource_rent",
                      "HDI","Travel_time"),
                    c("SST_5_years", "Coral_RLS", "Chlorophyll_5_years",
                      "DHW_quantile95_5_years")
@@ -89,7 +89,7 @@ plot_hmsc_result(metadata = metadata_sites,
                    #   "protection_statusrestricted", "Fishing_vessel_density"),
                    # c("protection_statusfull_large_old","protection_statusfull_others",
                    #   "protection_statusrestricted",
-                   #   "Marine_ecosystem_dependency", "Natural_ressource_rent",
+                   #   "Marine_ecosystem_dependency", "Natural_resource_rent",
                    #   "HDI","Travel_time")
                  )
 )

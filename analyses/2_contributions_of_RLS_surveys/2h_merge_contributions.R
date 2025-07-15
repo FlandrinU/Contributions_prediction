@@ -528,3 +528,23 @@ sites_no_na <- metadata_sites[no_NA$species,]
 survey_na <- metadata |> 
   dplyr::filter(!site_code %in% sites_no_na$site_code)
 nrow(survey_na) #211
+
+
+###------------------- Correlations between contributions -------------------####
+## Corr-matrix for all Contributions (log transformed)
+M <- cor(dplyr::select(contributions_sites_date, 
+                       -NN_score, -NP_score, -N_recycling, -P_recycling) |> 
+           tidyr::drop_na()) #Many loss due to recycling
+
+# M <- cor(dplyr::select(contributions_surveys_log,-total_biomass, -any_of(var_metadata),
+#                        -N_recycling, -P_recycling) |> 
+#            tidyr::drop_na()) 
+
+png(filename = here::here("figures","2h_corr_matrix_contributions_site_scale.png"), 
+    width= 35, height = 25, units = "cm", res = 300)
+print({
+  corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
+  corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
+                     diag = FALSE, tl.pos = 'n', cl.pos = 'n', number.digits = 1)
+})
+dev.off() 

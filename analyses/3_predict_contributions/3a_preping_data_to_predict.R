@@ -90,7 +90,7 @@ new_names_cov <- c(
     "Marine_ecosystem_dependency" = "marine_ecosystem_dependency",
     "Fishing_vessel_density"      = "n_fishing_vessels",
     "Gravity"                     = "gravity",
-    "Natural_ressource_rent"      = "natural_ressource_rent",
+    "Natural_resource_rent"      = "natural_ressource_rent",
     "HDI"                         = "hdi",
     "Travel_time"                 = "neartt"
   )
@@ -149,9 +149,11 @@ mpa_csv_rls <- mpa_csv_rls |>
 table(mpa_csv_rls$level_fishing_protection)
 table(mpa_csv_rls$protection_to_date)
 
-## Count sites with MPA placement during surveys
+
+## Count sites with MPA establishment during surveys
 mpa_check <- mpa_csv_rls |> 
-  dplyr::select(site_code, year, rls_mpa, year_of_protection) |> 
+  dplyr::select(site_code, year, rls_mpa, protected_seas_id, year_of_protection) |> 
+  dplyr::mutate(id_mpa = paste0(rls_mpa, protected_seas_id)) |> 
   unique() |> 
   dplyr::mutate(year_of_protection = as.numeric(year_of_protection),
                 before_mpa = ifelse(year_of_protection > year, 1, 0),
@@ -165,9 +167,13 @@ mpa_check <- mpa_csv_rls |>
 
 
 table(mpa_check |> 
-        dplyr::select(site_code, rls_mpa) |> 
+        dplyr::select(site_code, id_mpa) |> 
         unique() |> 
-        dplyr::pull(rls_mpa))
+        dplyr::pull(id_mpa))
+
+table(mpa_check |> dplyr::select(site_code, rls_mpa) |> 
+        unique() |> dplyr::pull(rls_mpa))
+
 length(unique(mpa_check$site_code))
 summary(mpa_check$n_before_mpa)
 summary(mpa_check$n_after_mpa)
@@ -227,6 +233,14 @@ mpa <- mpa_csv_rls |>
 ## Check sample design
 table(mpa$protection_status)
 table(mpa$protection_status_detailed)
+
+## Number of full MPAs in the total dataset
+full_mpa_nb <- mpa |>  dplyr::filter(protection_status == "full") |> 
+  dplyr::select(site_code, rls_mpa, protected_seas_id) |> 
+  unique() |> 
+  dplyr::mutate(id_mpa = paste0(rls_mpa, protected_seas_id)) |> 
+  dplyr::pull(id_mpa) |>  unique() 
+
 
 ## Update MPA data on covariates
 new_mpa <- mpa |> dplyr::select(survey_id, protection_status, protection_status_detailed)

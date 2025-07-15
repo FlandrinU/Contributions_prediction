@@ -31,6 +31,7 @@ source(here::here("R","evaluation_prediction_model.R"))
 color_grad = c("#A50026", "#D73027", "#F46D43", "#FDAE61","#FEE090", "#D8DAEB",
                "#B2ABD2", "#8073AC", "#6D469C", "#603692", "#542788",
                "#473C8B")
+set.seed(06)
 ##------------------------------- load data ------------------------------------
 ## Survey scale, all covariates
 load(here::here("data/derived_data/3_all_covariates_to_predict.Rdata"))
@@ -73,7 +74,7 @@ list_files <- list.files(file.path(path, "out_multi"))
 list_files
 
 model_name <-"FULL_model_SITE_SCALE_4_chains_1000_thin_200_samples.rds"
-# model_name <- gsub("output_", "", list_files[22]) #choose the wanted file
+# model_name <- gsub("output_", "", list_files[11]) #choose the wanted file
 
 concatenate_chains = F
 ##------------- New conditions in counterfactual scenarios ---------------------
@@ -167,6 +168,11 @@ missing_rows <- data.frame(
   fishing_out = mean_fishing_out)
 mean_country_out <- rbind(mean_country_out, missing_rows)
 
+# mean_ecoregion_out_Australia <- X[new_pristine, ] |>
+#   dplyr::filter(country == "Australia") |>
+#   dplyr::group_by(ecoregion) |>
+#   dplyr::summarise(fishing_out_aust = mean(Fishing_vessel_density))
+
 
 ## Convervation legacy of full MPA only
 X_conservation_legacy_full <- X
@@ -179,6 +185,11 @@ X_conservation_legacy_full[new_conserv_legacy_full_mpa, "protection_status"] <- 
 X_conservation_legacy_full <- X_conservation_legacy_full |> 
   tibble::rownames_to_column("id") |> 
   dplyr::left_join(mean_country_out) |> 
+  # dplyr::left_join(mean_ecoregion_out_Australia) |> 
+  # dplyr::mutate(fishing_out = dplyr::case_when(
+  #   is.na(fishing_out_aust) ~ fishing_out,
+  #   TRUE ~ fishing_out_aust)) |> 
+  # dplyr::select(-fishing_out_aust) |> 
   dplyr::mutate(Fishing_vessel_density = dplyr::case_when(
     id %in% new_conserv_legacy_full_mpa ~ fishing_out,
     TRUE ~ Fishing_vessel_density)) |> 
@@ -235,10 +246,12 @@ ind_plot
 #                           repel = TRUE,
 #                           geom = c("arrow", "text"))
 
-var_plot <- factoextra::fviz_famd_var(res_famd, "quanti.var", repel = TRUE,
+var_plot <- factoextra::fviz_famd_var(res_famd, "quanti.var", 
+                                      repel = TRUE,
                                       col.var = "cos2", 
-                                      select.var = list(cos2 = 0.15))+
-  theme(legend.position = "none") + labs(x="", y="")
+                                      select.var = list(cos2 = 0.20),
+                                      labelsize = 3)+
+  theme(legend.position = "none") 
 
 var_plot
 
@@ -321,64 +334,67 @@ HF_points <- ggplot(ind_df, aes(x = Dim.1, y = Dim.2)) +
                                                hjust = 0.01))
 
 
-(ind_plot + var_plot + plot_layout(widths = c(1.3, 1)) ) / (CL_points + HF_points) +
-  plot_layout(heights = c(1.3, 1))
+(ind_plot + var_plot + plot_layout(widths = c(1.2, 1)) ) / (CL_points + HF_points) +
+  plot_layout(heights = c(1.4, 1)) & 
+  plot_annotation(tag_levels = "A") & 
+  theme(plot.tag = element_text(face = "bold"))
 
-ggsave(filename =  paste0(here::here("figures","3_models","hmsc", "conterfactuals"), 
+ggsave(filename =  paste0(here::here("figures","3_models","hmsc", "conterfactuals/"),
+                          gsub(".rds", "", model_name),
                           "/dimensionnality_check_of_counterfactuals.jpg"),
        plot = last_plot(),  width = 11, height = 9)
 
 
 
 
-#### Explore other changes ####
-
-#(3) Change MPA only: from "out" to "full protection"
-X_new_mpa <- X
-new_mpa <- rownames(X_new_mpa |> dplyr::filter(protection_status == "out"))
-X_new_mpa[new_mpa, "protection_status"] <- as.factor("full")
-
-#(4) Change fishing pressure only: set the number of fishing vessel to the minimum known.
-X_no_vessels <- X
-new_vessels <- rownames(
-  X_no_vessels[X_no_vessels$Fishing_vessel_density != min(X_no_vessels$Fishing_vessel_density),]
-)
-X_no_vessels[new_vessels, "Fishing_vessel_density"] <- min(X_no_vessels$Fishing_vessel_density)
-
-#(5) Conservation potential: unprotected sites are placed in reserves, without fishing pressure.
-X_new_mpa_no_vessels <- X
-new_mpa_no_vessels <- unique(c(new_mpa, new_vessels))
-X_new_mpa_no_vessels[new_mpa_no_vessels, "protection_status"] <- as.factor("full")
-X_new_mpa_no_vessels[new_mpa_no_vessels, "Fishing_vessel_density"] <- 
-  min(X_new_mpa_no_vessels$Fishing_vessel_density)
-
-#(6) Low Gravity
-X_low_Gravity <- X
-new_low_Gravity <- rownames(
-  X_low_Gravity[X_low_Gravity$Gravity != min(X_low_Gravity$Gravity) ,])
-X_low_Gravity[new_low_Gravity, "Gravity"] <- min(X_low_Gravity$Gravity)
-
-#(7) No human population
-X_no_human <- X_low_Gravity
-new_no_human <-  unique(rownames(X_no_human[X_no_human$Travel_time != max(X_no_human$Travel_time),]),
-                   new_low_Gravity)
-X_no_human[new_no_human, "Travel_time"] <- max(X_no_human$Travel_time)
-
-
-#(8) Change MPA only: from "out" to medium protection ("restricted")
-X_new_medium_mpa <- X
-new_medium_mpa <- rownames(X_new_medium_mpa |> dplyr::filter(protection_status == "out"))
-X_new_medium_mpa[new_medium_mpa, "protection_status"] <- as.factor("restricted")
-
-
-#(9) No gravity and Full protection
-X_no_grav_protected <- X_low_Gravity
-new_no_grav_protected <-  unique(rownames(X_no_grav_protected |> 
-                                            dplyr::filter(protection_status == "out"))) #,
-                        # new_low_Gravity)
-X_no_grav_protected[new_no_grav_protected,  "protection_status"] <- as.factor("full")
-
-
+# #### Explore other changes ####
+# 
+# #(3) Change MPA only: from "out" to "full protection"
+# X_new_mpa <- X
+# new_mpa <- rownames(X_new_mpa |> dplyr::filter(protection_status == "out"))
+# X_new_mpa[new_mpa, "protection_status"] <- as.factor("full")
+# 
+# #(4) Change fishing pressure only: set the number of fishing vessel to the minimum known.
+# X_no_vessels <- X
+# new_vessels <- rownames(
+#   X_no_vessels[X_no_vessels$Fishing_vessel_density != min(X_no_vessels$Fishing_vessel_density),]
+# )
+# X_no_vessels[new_vessels, "Fishing_vessel_density"] <- min(X_no_vessels$Fishing_vessel_density)
+# 
+# #(5) Conservation potential: unprotected sites are placed in reserves, without fishing pressure.
+# X_new_mpa_no_vessels <- X
+# new_mpa_no_vessels <- unique(c(new_mpa, new_vessels))
+# X_new_mpa_no_vessels[new_mpa_no_vessels, "protection_status"] <- as.factor("full")
+# X_new_mpa_no_vessels[new_mpa_no_vessels, "Fishing_vessel_density"] <- 
+#   min(X_new_mpa_no_vessels$Fishing_vessel_density)
+# 
+# #(6) Low Gravity
+# X_low_Gravity <- X
+# new_low_Gravity <- rownames(
+#   X_low_Gravity[X_low_Gravity$Gravity != min(X_low_Gravity$Gravity) ,])
+# X_low_Gravity[new_low_Gravity, "Gravity"] <- min(X_low_Gravity$Gravity)
+# 
+# #(7) No human population
+# X_no_human <- X_low_Gravity
+# new_no_human <-  unique(rownames(X_no_human[X_no_human$Travel_time != max(X_no_human$Travel_time),]),
+#                    new_low_Gravity)
+# X_no_human[new_no_human, "Travel_time"] <- max(X_no_human$Travel_time)
+# 
+# 
+# #(8) Change MPA only: from "out" to medium protection ("restricted")
+# X_new_medium_mpa <- X
+# new_medium_mpa <- rownames(X_new_medium_mpa |> dplyr::filter(protection_status == "out"))
+# X_new_medium_mpa[new_medium_mpa, "protection_status"] <- as.factor("restricted")
+# 
+# 
+# #(9) No gravity and Full protection
+# X_no_grav_protected <- X_low_Gravity
+# new_no_grav_protected <-  unique(rownames(X_no_grav_protected |> 
+#                                             dplyr::filter(protection_status == "out"))) #,
+#                         # new_low_Gravity)
+# X_no_grav_protected[new_no_grav_protected,  "protection_status"] <- as.factor("full")
+# 
+# 
 ##----------------------------- Plot changes -----------------------------------
 # set_ids = new_mpa #look only at currently unprotected sites
 # set_ids = new_mpa_no_vessels
@@ -444,72 +460,72 @@ save(conterfactuals, file = paste0(here::here("figures","3_models","hmsc", "cont
                                    "/counterfactuals_to_plot.Rdata"))
 
 
-#### Plot other changes ####
-
-#(3) Change effectiveness only: from "out" to "full protection"
-plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                             X_new_data = X_new_mpa,
-                             metadata,
-                             save_name = "full_protection_potential_gains_of_out_sites",
-                             selected_countries,
-                             plot_responders_on_map = T,
-                             is_counterfactual = F)
-
-#(4) Change fishing pressure only: set the number of fishing vessel to the minimum known.
-plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                             X_new_data = X_no_vessels,
-                             metadata,
-                             save_name = "fishing_pressure_footprint",
-                             selected_countries,
-                             is_counterfactual = TRUE)
-
-#(5) Conservation potential: unprotected sites are placed in reserves, without fishing pressure.
-plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                             X_new_data = X_new_mpa_no_vessels,
-                             metadata,
-                             save_name = "Conservation_potential_gains-no-vessels-full-MPA",
-                             selected_countries,
-                             plot_responders_on_map = T,
-                             is_counterfactual = F)
-
-#(6) Change human "pollution": minimal Gravity 
-plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                             X_new_data = X_low_Gravity,
-                             metadata,
-                             save_name = "Gravity_footprint",
-                             selected_countries,
-                             is_counterfactual = TRUE,
-                             set_ids = new_mpa)
-
-#(7) Change human pressure: minimal Gravity and maximal Travel_time (travel time to the nearest market)
-plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                             X_new_data = X_no_human,
-                             metadata,
-                             save_name = "Population_footprint-Gravity&Travel_time",
-                             selected_countries,
-                             is_counterfactual = TRUE,
-                             set_ids = new_mpa)
-
-
-
-#(8) Change effectiveness only: from "out" to "restricted protection"
-plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                             X_new_data = X_new_medium_mpa,
-                             metadata,
-                             save_name = "restricted_MPA_potential_gains",
-                             selected_countries,
-                             is_counterfactual = F)
-
-
-#(9) Change human pressure: minimal Gravity and full protection
-sensitivity_HF <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
-                             X_new_data = X_no_grav_protected,
-                             metadata,
-                             save_name = "Sensitivity_analysis_HF_low_Gravity&full_protection",
-                             selected_countries,
-                             is_counterfactual = T,
-                             set_ids = new_mpa)
-
+# #### Plot other changes ####
+# 
+# #(3) Change effectiveness only: from "out" to "full protection"
+# plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_new_mpa,
+#                              metadata,
+#                              save_name = "full_protection_potential_gains_of_out_sites",
+#                              selected_countries,
+#                              plot_responders_on_map = T,
+#                              is_counterfactual = F)
+# 
+# #(4) Change fishing pressure only: set the number of fishing vessel to the minimum known.
+# plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_no_vessels,
+#                              metadata,
+#                              save_name = "fishing_pressure_footprint",
+#                              selected_countries,
+#                              is_counterfactual = TRUE)
+# 
+# #(5) Conservation potential: unprotected sites are placed in reserves, without fishing pressure.
+# plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_new_mpa_no_vessels,
+#                              metadata,
+#                              save_name = "Conservation_potential_gains-no-vessels-full-MPA",
+#                              selected_countries,
+#                              plot_responders_on_map = T,
+#                              is_counterfactual = F)
+# 
+# #(6) Change human "pollution": minimal Gravity 
+# plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_low_Gravity,
+#                              metadata,
+#                              save_name = "Gravity_footprint",
+#                              selected_countries,
+#                              is_counterfactual = TRUE,
+#                              set_ids = new_mpa)
+# 
+# #(7) Change human pressure: minimal Gravity and maximal Travel_time (travel time to the nearest market)
+# plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_no_human,
+#                              metadata,
+#                              save_name = "Population_footprint-Gravity&Travel_time",
+#                              selected_countries,
+#                              is_counterfactual = TRUE,
+#                              set_ids = new_mpa)
+# 
+# 
+# 
+# #(8) Change effectiveness only: from "out" to "restricted protection"
+# plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_new_medium_mpa,
+#                              metadata,
+#                              save_name = "restricted_MPA_potential_gains",
+#                              selected_countries,
+#                              is_counterfactual = F)
+# 
+# 
+# #(9) Change human pressure: minimal Gravity and full protection
+# sensitivity_HF <- plot_conterfactual_scenarios(path, model_name, concatenate_chains,
+#                              X_new_data = X_no_grav_protected,
+#                              metadata,
+#                              save_name = "Sensitivity_analysis_HF_low_Gravity&full_protection",
+#                              selected_countries,
+#                              is_counterfactual = T,
+#                              set_ids = new_mpa)
+# 
 ##----------------------------- Plot Loliplot -----------------------------------
 #Counterfactuals colors:
 Cl_color = "darkseagreen3"
@@ -585,7 +601,7 @@ test_zero <- all_changes |>
   dplyr::mutate(
     wilcox_results = purrr::map(wilcox_test, broom::tidy))  |> 
   tidyr::unnest(wilcox_results) |> 
-  dplyr::mutate(different_from_zero = ifelse(p.value < 0.05, "yes", "no")) |> 
+  dplyr::mutate(different_from_zero = ifelse(p.value < (0.05/22), "yes", "no")) |> 
   dplyr::select(contribution, counterfactual, different_from_zero)|> 
   # Arrange names
   dplyr::mutate(contribution = gsub("_", " ", contribution),
@@ -604,7 +620,7 @@ test_between_couterfactuals <- all_changes |>
   dplyr::mutate(
     wilcox_results = purrr::map(wilcox_test, broom::tidy)) |> 
   tidyr::unnest(wilcox_results) |> 
-  dplyr::mutate(footprint_different_from_gain = ifelse(p.value < 0.05, "yes", "no")) |> 
+  dplyr::mutate(footprint_different_from_gain = ifelse(p.value < (0.05/22), "yes", "no")) |> 
   dplyr::select(contribution, footprint_different_from_gain)|> 
   # Arrange names
   dplyr::mutate(contribution = gsub("_", " ", contribution),
@@ -1159,7 +1175,7 @@ density_plot_fct <-
       
       geom_text(data = data |> 
                   dplyr::group_by(name, counterfactual) |>
-                  dplyr::summarise(median_value = mean(changes, na.rm = TRUE),
+                  dplyr::summarise(median_value = median(changes, na.rm = TRUE),
                                    sd = sd(changes, na.rm = TRUE),
                                    .groups = 'drop')|>
                   dplyr::mutate(x_text = dplyr::case_when(

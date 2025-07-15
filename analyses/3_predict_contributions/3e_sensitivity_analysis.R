@@ -266,8 +266,8 @@ density_plot_fct <-
           values = c("Uniform distribution" = "grey",
                      "observed_IN_OUT" = "chartreuse3",
                      "counterfactual" = "#0077B6"),
-          labels = c("Observed conservation legacy \n (in/out design)" , 
-                     "Model-based conservation legacy \n (counterfactuals)",
+          labels = c("Model-based conservation legacy \n (counterfactuals)",
+                     "Observed conservation legacy \n (in/out design)" , 
                      "Uniform distribution"),
           name = "Changes:") 
     }
@@ -541,8 +541,8 @@ ggsave(filename = here::here("figures", "3_species_traits",
 ##------------------------- Subset IN/OUT design - Use full model ----------------------------
 
 ## Matching conditions
-time_buffer = 60 #days
-spatial_buffer = 50 #km
+time_buffer = 60 #1825 #days
+spatial_buffer = 50 #2 #km
 protection = c("full")#, "restricted")
 long_min = -180
 long_max = 180
@@ -798,7 +798,22 @@ observed_conservation_legacy <- in_mpa_preds |>
 #   dplyr::group_by(match, contribution)|> 
 #   dplyr::mutate(dplyr::across(where(is.numeric), mean, na.rm = TRUE)) |> 
 #   unique()
+
+dipersion_observed_conservation_legacy <- observed_conservation_legacy |> 
+  dplyr::mutate(
+    raw_change = ifelse(contribution %in% c("Available_biomass", "Herbivores_biomass",
+                                            "Invertivores_biomass", "Piscivores_biomass"),
+                        raw_change*20/1000, raw_change)) |> 
+  dplyr::group_by(match, contribution) |> 
+  dplyr::summarise(sd_raw_change = sd(raw_change),
+                   n_match_out = dplyr::n()) |> 
+  dplyr::group_by(contribution) |> 
+  dplyr::summarise(mean_sd_change = median(sd_raw_change, na.rm = T),
+                   median_n_match_out =  median(n_match_out, na.rm = T),
+                   max_n_match_out =  max(n_match_out, na.rm = T)) |> 
+  dplyr::arrange(-mean_sd_change)
   
+head(dipersion_observed_conservation_legacy)
 
 # ## Mean per MPA -> QUITE THE SAME
 # averaged_observed_conservation_legacy <- in_mpa_preds |> 
@@ -823,19 +838,6 @@ observed_conservation_legacy <- in_mpa_preds |>
 #   )
 
 
-# plot_boxplot(observed_conservation_legacy, val = "raw_change_percent", prop_outliers = 0.015 )
-# 
-# 
-# ggsave(filename = paste0(path_file,
-#                          "/Observed_conservation_legacy_IN_OUT_design_", 
-#                          parameters,".jpg"),
-#        width = 10, height = 8)
-# 
-# plot_boxplot(observed_conservation_legacy, val = "scaled_change", prop_outliers = 0.015 )
-# 
-
-
-
 
 unique(observed_conservation_legacy$contribution)
 
@@ -849,6 +851,7 @@ density_plot_fct(changes_df = observed_conservation_legacy ,
                  y_text = 0.07,
                  x_label = "Biomass changes (kg/ha)",
                  add_random_distri = T)
+
 
 
 #### 3') Effect sizes log ratio responses ----
@@ -1407,10 +1410,10 @@ density_plot_fct <-
       
       scale_fill_manual(
         values = c(HF_color,Cl_color), #, all_full_mpa_color),
-        labels = c("HF" = "Others full MPA", "CL" = "Full MPA > 10 years"),
+        labels = c("HF" = "Full MPA < 10 years", "CL" = "Full MPA ≥ 10 years"),
                    # "all_full_mpa" = "All full MPA"),
         limits = c("HF", "CL"),#, "all_full_mpa"),
-        name = "Contribution changes in counterfactuals:") +
+        name = "Conservation legacy for contributions in:") +
       scale_color_manual( values = c(#colorspace::darken(all_full_mpa_color, 0.5),
                                      colorspace::darken(Cl_color, 0.2), 
                                      colorspace::darken(HF_color, 0.4)) ) +

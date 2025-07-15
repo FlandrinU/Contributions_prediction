@@ -79,7 +79,7 @@ hmsc_function <- function(nSamples,
                                           # -HDI,
                                           # -Marine_ecosystem_dependency
                                           # -ngo,
-                                          # -Natural_ressource_rent
+                                          # -Natural_resource_rent
   ))
   
   linear_effects <- fixed_effects[!fixed_effects %in% quadratic_effects]
@@ -490,7 +490,7 @@ plot_hmsc_result <- function(metadata = metadata,
     "Marine ecosystem dependency"          = "Marine_ecosystem_dependency",
     "Fishing vessel density"               = "Fishing_vessel_density",
     "Gravity"                              = "Gravity",
-    "Natural ressource rent"               = "Natural_ressource_rent",
+    "Natural resource rent"               = "Natural_resource_rent",
     "HDI"                                  = "HDI",
     "Travel time"                          = "Travel_time",
     "Protection status"                    = "protection_status"
@@ -858,7 +858,7 @@ plot_hmsc_result <- function(metadata = metadata,
         T ~ Covariate ))
     
     #classify covariates
-    human <- c("GDP", "Gravity", "protection_status", "Natural_ressource_rent",
+    human <- c("GDP", "Gravity", "protection_status", "Natural_resource_rent",
                # "protection_status2",
                "Travel_time","Fishing_vessel_density", "HDI", "Marine_ecosystem_dependency")
     
@@ -1345,7 +1345,7 @@ plot_hmsc_result <- function(metadata = metadata,
           # "Salinity (5 years)" = "Salinity", 
           # "Gravity" = "Gravity",
           # "Chlorophyll (5 years)" = "Chlorophyll",
-          "Natural ressource rent" = "Ressource rent",
+          "Natural resource rent" = "Resource rent",
           "Marine ecosystem dependency" = "Ecosystem dependency"
           # "pH (5 years)" = "pH",
           # "Fringing reef area (%)" = "Fringing reef area (%)"
@@ -1504,7 +1504,9 @@ plot_hmsc_result <- function(metadata = metadata,
     Hmsc::plotBeta(model_fit_mcmc, post = postBeta, param = "Sign",
                    supportLevel = 0.95, colors = colorRampPalette(c("#2166AC", "white", "#A50026")),
                    mar = c(0,0,0,0), mgp = c(0,2,0),
-                   cex = c(1,1,1) )
+                   cex = c(0.8,0.8,1))
+    mtext("Covariates", side = 1, line = 13, adj = 0.35, cex = 1.3)
+    mtext("Contributions", side = 2, line = 13, cex = 1.3)  
     dev.off()
     
     png(paste0(path_file,"/estimate_significance_mean_", save_name,".png"),
@@ -1531,7 +1533,7 @@ plot_hmsc_result <- function(metadata = metadata,
     ##### ridges plot  #####
     for(drivers in drivers_to_plot){
       
-      #drivers = drivers_to_plot[[3]]
+      #drivers = drivers_to_plot[[2]]
       drivers_name <- drivers
       all_drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
       
@@ -1561,7 +1563,7 @@ plot_hmsc_result <- function(metadata = metadata,
         "protection_statusfull" = "Full protection",
         "protection_statusfull_large_old" = "MPA full & large & old",
         "protection_statusfull_others" = "Others full MPA",
-        "Fishing_vessel_density" = "Fishing pressure",
+        "Fishing_vessel_density" = "Industrial fishing",
         "Gravity" = "Gravity",
         "GDP" = "GDP",
         
@@ -1572,7 +1574,7 @@ plot_hmsc_result <- function(metadata = metadata,
         "Marine_ecosystem_dependency" = "MED",
         "Travel_time" = "Travel time",
         "HDI" = "HDI",
-        "Natural_ressource_rent" = "Ressource rent"
+        "Natural_resource_rent" = "Resource rent"
       )
       
       ridges_plot <- ggplot(df) +
@@ -1601,7 +1603,7 @@ plot_hmsc_result <- function(metadata = metadata,
                    scales = "free_x",
              labeller = labeller(covariate = new_titles)
         )
-      # ridges_plot
+      ridges_plot
       
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
                                paste(drivers_name, collapse = "-"), ".jpg"),
@@ -2553,6 +2555,8 @@ plot_conterfactual_scenarios <- function(path = path,
                                          is_counterfactual = TRUE,
                                          set_order_boxplot = NULL
 ){
+  set.seed(06)
+  
   #Contributions group
   grp_NN_NP <- data.frame(
     contribution = c("Actinopterygian_richness","Functional_distinctiveness",
