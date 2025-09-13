@@ -28,7 +28,7 @@ report/
 data_rfishbase.RData
 data/raw_data/phylogeny/
 data/raw_data/World_EEZ_v12_20231025/
-
+data/raw_data/ProtectedSeas_Navigator_20241212_shp
 
 #png files of species for new aesthetic scores
 data/raw_data/aesthetic_deep_model_Langlois_2022/png/

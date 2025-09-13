@@ -30,7 +30,14 @@ load(here::here("data/derived_data/3_sites_contributions_to_predict.Rdata"))
 load(here::here("data/derived_data/3_sites_covariates_to_predict.Rdata"))
 Y_data_site =  observations_site_final
 X_data_site = covariates_site_final[rownames(Y_data_site),
-                -which(colnames(covariates_site_final) == "protection_status_detailed")]
+                -which(colnames(covariates_site_final) %in% 
+                         c("protection_status_detailed",
+                           # "hdi",
+                           # "pH_5_years",
+                           "Fishing_vessel_density"
+                           # "Boat_density"
+                           ))] |> 
+  dplyr::rename(vessel_density = "Boat_density")
 
 
 ##----------------------------- time frame ------------------------------
@@ -101,7 +108,8 @@ X_data_aust = covariates_site_final |>
   dplyr::filter(country == "Australia") |> 
   dplyr::select(-protection_status_detailed,
                 -Natural_resource_rent, -Marine_ecosystem_dependency,
-                -HDI) # No variability inside Australia
+                # -HDI
+                ) # No variability inside Australia
 Y_data_aust =  observations_site_final[rownames(X_data_aust),]
 summary(X_data_aust)
 
@@ -222,7 +230,11 @@ name = "Habitat_cov_in_PCA_dimensions_model_SITE_SCALE"
 random_factors = c("sample_unit", "country")
 
 X_data_site_pca <- covariates_site_PCA_hab[rownames(Y_data_site),
-                     -which(colnames(covariates_site_final) == "protection_status_detailed")]
+                     -which(colnames(covariates_site_PCA_hab) %in% c("protection_status_detailed",
+                                                                     "Fishing_vessel_density"))]|> 
+  dplyr::rename(vessel_density = "Boat_density")
+
+
 
 #Fit full model
 hmsc_function(nSamples, thin, nChains, verbose, transient,
@@ -231,6 +243,15 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
               response_distribution, quadratic_effects,random_factors,
               nb_neighbours, set_shrink, test_null_model, name,
               run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site_pca,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
 
 
 
@@ -297,6 +318,28 @@ hmsc_function(nSamples, thin, nChains, verbose, transient,
 
 ##--------------------------- Sensitivity analyses - REVIEW NEE -----------------------------
 
+#### NO RANDOM EFFECTS ####
+name = "Sensitivity_NO_random_factors_SITE_SCALE"
+random_factors = c()
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
 #### ONLY COUNTRY IN RANDOM ####
 name = "Sensitivity_only_country_in_RL_SITE_SCALE"
 random_factors = c("country")
@@ -317,6 +360,52 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          response_distribution, quadratic_effects,random_factors,
                          nb_neighbours, set_shrink, test_null_model, name,
                          run_python = T, save_path)
+
+
+
+#### COUNTRY AND SITE IN RANDOM ####
+name = "Sensitivity_site&country_in_RL_SITE_SCALE"
+random_factors = c("site","country")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+#### COUNTRY AND SITE AND SAMPLE UNIT IN RANDOM ####
+name = "Sensitivity_SU&site&country_in_RL_SITE_SCALE"
+random_factors = c("sample_unit","site","country")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
 
 
 
@@ -342,6 +431,31 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          run_python = T, save_path)
 
 
+
+#### ECOREGION AND SITE IN RANDOM ####
+name = "Sensitivity_ecoregion&site_in_RL_SITE_SCALE"
+random_factors = c("site","ecoregion")
+
+#Fit full model
+hmsc_function(nSamples, thin, nChains, verbose, transient,
+              Y_data = Y_data_site,
+              X_data = X_data_site,
+              response_distribution, quadratic_effects,random_factors,
+              nb_neighbours, set_shrink, test_null_model, name,
+              run_python = T, save_path)
+
+#Fit crossvalidation
+fit_hmsc_crossvalidation(k_fold = 5, 
+                         nSamples, thin, nChains, verbose, transient,
+                         Y_data = Y_data_site,
+                         X_data = X_data_site,
+                         response_distribution, quadratic_effects,random_factors,
+                         nb_neighbours, set_shrink, test_null_model, name,
+                         run_python = T, save_path)
+
+
+
+
 #### ECOREGION AND SAMPLE UNIT IN RANDOM ####
 name = "Sensitivity_ecoregion&SU_in_RL_SITE_SCALE"
 random_factors = c("sample_unit","ecoregion")
@@ -364,26 +478,6 @@ fit_hmsc_crossvalidation(k_fold = 5,
                          run_python = T, save_path)
 
 
-#### NO RANDOM EFFECTS ####
-name = "Sensitivity_NO_random_factors_SITE_SCALE"
-random_factors = c()
-
-#Fit full model
-hmsc_function(nSamples, thin, nChains, verbose, transient,
-              Y_data = Y_data_site,
-              X_data = X_data_site,
-              response_distribution, quadratic_effects,random_factors,
-              nb_neighbours, set_shrink, test_null_model, name,
-              run_python = T, save_path)
-
-#Fit crossvalidation
-fit_hmsc_crossvalidation(k_fold = 5, 
-                         nSamples, thin, nChains, verbose, transient,
-                         Y_data = Y_data_site,
-                         X_data = X_data_site,
-                         response_distribution, quadratic_effects,random_factors,
-                         nb_neighbours, set_shrink, test_null_model, name,
-                         run_python = T, save_path)
 
 #### DETAILS MPA - FULL MODEL SITES ####
 Y_data_site =  observations_site_final

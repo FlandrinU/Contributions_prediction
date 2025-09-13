@@ -54,8 +54,11 @@ path = here::here("outputs/models/hmsc")
 list_files <- list.files(file.path(path, "out_multi")) 
 list_files
 
-file_name <-"FULL_model_SITE_SCALE_4_chains_1000_thin_200_samples.rds" ## FULL Model
-# file_name <- gsub("output_", "", list_files[10]) #choose the wanted file
+
+file_name <-"FULL_model_SITE_SCALE_with_pH_and_HDI_4_chains_1000_thin_200_samples.rds" ## FULL Model
+
+# file_name <- gsub("output_", "", list_files[2]) #choose the wanted file
+
 
 concatenate_chains = F
 
@@ -75,18 +78,16 @@ plot_hmsc_result(metadata = metadata_sites,
                  check_spatial_autocorrelation = F,
                  latent_factors = T,
                  drivers_to_plot =  list(
-                   c("protection_statusfull", "Fishing_vessel_density","Gravity","GDP"),
-                   # c("protection_statusfull", "protection_statusrestricted",
-                   #   "Fishing_vessel_density"),
+                   c("protection_statusfull", "vessel_density","Gravity","GDP"),
                    c("protection_statusfull", "protection_statusrestricted",
                      "Marine_ecosystem_dependency", "Natural_resource_rent",
                      "HDI","Travel_time"),
                    c("SST_5_years", "Coral_RLS", "Chlorophyll_5_years",
                      "DHW_quantile95_5_years")
                    
-                   # c("protection_statusfull_large_old", "Fishing_vessel_density","Gravity","GDP"),
+                   # c("protection_statusfull_large_old", "vessel_density","Gravity","GDP"),
                    # c("protection_statusfull_large_old","protection_statusfull_others", 
-                   #   "protection_statusrestricted", "Fishing_vessel_density"),
+                   #   "protection_statusrestricted", "vessel_density"),
                    # c("protection_statusfull_large_old","protection_statusfull_others",
                    #   "protection_statusrestricted",
                    #   "Marine_ecosystem_dependency", "Natural_resource_rent",

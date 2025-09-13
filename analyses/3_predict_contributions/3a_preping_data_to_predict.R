@@ -18,7 +18,7 @@ rm(list=ls())
 ##-----------------Loading packages-------------------
 # Sys.unsetenv("GITHUB_PAT")
 # remotes::install_github("FRBCesab/funbiogeo")
-# pkgs <- c("here", "dplyr", "funbiogeo", "performance", "rsample", "car")
+# pkgs <- c("here", "dplyr", "funbiogeo", "performance", "rsample", "car", "sf")
 # nip <- pkgs[!(pkgs %in% installed.packages())]
 # nip <- lapply(nip, install.packages, dependencies = TRUE)
 
@@ -52,7 +52,7 @@ new_names_cov <- c(
     # Environmental variables (SST, DHW, etc.)
     "SST_5_years"                 = "median_5year_analysed_sst",
     "DHW_5_years"                 = "median_5year_degree_heating_week",
-    # "Salinity_5_years"            = "median_5year_so_glor",
+    "Salinity_5_years"            = "median_5year_so_glor",
     "DHW_1_year"                  = "median_1year_degree_heating_week",
     "DHW_7_days"                  = "median_7days_degree_heating_week",
     "Chlorophyll_7_days"          = "median_7days_chl",
@@ -89,6 +89,7 @@ new_names_cov <- c(
     "GDP"                         = "gdp",
     "Marine_ecosystem_dependency" = "marine_ecosystem_dependency",
     "Fishing_vessel_density"      = "n_fishing_vessels",
+    "Boat_density"                = "boat_per_scene_2020_2024",
     "Gravity"                     = "gravity",
     "Natural_resource_rent"      = "natural_ressource_rent",
     "HDI"                         = "hdi",
@@ -119,6 +120,53 @@ new_names_contrib <-
     "Available_biomass"            = "available_biomass",
     "Omega_3"                      = "omega_3" ,
     "Vitamin_A"                    = "vitamin_A" )  
+
+#----------------- Boat density - Sentinel 2 ---------------------
+# GPS_sites_RLS <- all_covariates_benthos_inferred |> 
+#   dplyr::select(country, site_code, latitude, longitude) |> 
+#   unique()
+# 
+# write.csv(GPS_sites_RLS, file = here::here("data/derived_data/GPS_sites_RLS.csv"))
+
+# -> extract all boats detected in a raius of 10km around each RLS site (vessel_detection files in Global Fishing Watch)
+# -> Remove infrastructure detections
+# -> count number of satelite footprints of the site (detection_footprint files)
+# -> count the mean number of vessels in the 10km radius per year (corrected by the number of satelite footprint)
+
+sentinel2_data <- sf::st_read(here::here("data/raw_data/environmental_covariates/GPS_RLS.geojson"))
+
+summary(sentinel2_data)
+
+boat_data <- as.data.frame(sentinel2_data) |> 
+  dplyr::select(-geometry, -field_1) |> 
+  dplyr::mutate(boat_per_scene_2020 = nb_boat_2020/nb_scene_intersections_2020,
+                boat_per_scene_2021 = nb_boat_2021/nb_scene_intersections_2021,
+                boat_per_scene_2022 = nb_boat_2022/nb_scene_intersections_2022,
+                boat_per_scene_2023 = nb_boat_2023/nb_scene_intersections_2023,
+                boat_per_scene_2024 = nb_boat_2024/nb_scene_intersections_2024,
+                boat_per_scene_2020_2024 = rowMeans(
+                  dplyr::across(boat_per_scene_2020:boat_per_scene_2024),
+                  na.rm = TRUE))|> 
+  dplyr::mutate(log_boat_density = log10(boat_per_scene_2020_2024+1))
+
+hist(boat_data$boat_per_scene_2020_2024)
+hist(boat_data$log_boat_density)
+length(unique(boat_data$site_code)) # some mistakes in coordinates -> average per site
+
+boat_data <- boat_data |> 
+  dplyr::group_by(site_code) |> 
+  dplyr::summarise(boat_per_scene_2020_2024 = mean(boat_per_scene_2020_2024, 
+                                                        na.rm = T))
+
+
+#MERGE DATA WITH ALL COVARIATES
+all_covariates_benthos_inferred <- all_covariates_benthos_inferred |> 
+  dplyr::left_join(boat_data)
+
+
+plot(log10(all_covariates_benthos_inferred$boat_per_scene_2020_2024)~
+       log10(all_covariates_benthos_inferred$n_fishing_vessels))
+
 
 #----------------- Extract MPA data ---------------------
 colnames(mpa_csv)
@@ -233,6 +281,7 @@ mpa <- mpa_csv_rls |>
 ## Check sample design
 table(mpa$protection_status)
 table(mpa$protection_status_detailed)
+save(mpa, file = here::here("data/derived_data/3_mpa_protected_seas_recoded.Rdata"))
 
 ## Number of full MPAs in the total dataset
 full_mpa_nb <- mpa |>  dplyr::filter(protection_status == "full") |> 
@@ -415,7 +464,8 @@ cov_to_select <- c(#Environment
                      "control_of_corruption", "gdp", "gravity", "hdi", 
                      "marine_ecosystem_dependency", 
                      "natural_ressource_rent", "neartt", "ngo",
-                     "no_violence", "voice", "n_fishing_vessels"
+                     "no_violence", "voice", "n_fishing_vessels",
+                     "boat_per_scene_2020_2024"
   )
 
 cov_to_select
@@ -431,8 +481,8 @@ dev.off()
 
 # Covariates network -> THRESHOLD r = 0.7 of correlation.
 pairwise_corr <- cor_matrix[upper.tri(cor_matrix)]
-high_correlation_indices <- which((cor_matrix > 0.7 & cor_matrix < 1) |
-                                    cor_matrix < -0.7 , arr.ind = TRUE)
+high_correlation_indices <- which((cor_matrix > 0.65 & cor_matrix < 1) |
+                                    cor_matrix < -0.65 , arr.ind = TRUE)
 correlated_pairs <- cbind(rownames(cor_matrix)[high_correlation_indices[, "row"]],
                           colnames(cor_matrix)[high_correlation_indices[, "col"]])
 network_graph <- igraph::graph_from_edgelist(correlated_pairs, directed = FALSE)
@@ -455,7 +505,9 @@ cov_to_select2 <-
                            "median_5year_o2",
                            "median_7days_so_glor",
                            "median_5year_so_glor", # low ecological meaning
+                           
                            # "median_5year_ph", #correlated with sst, low ecological meaning
+                           
                            "q05_5year_nppv",
                            "q05_5year_chl",
                            "q95_5year_chl",
@@ -483,7 +535,7 @@ cov_to_select2 <-
                            "no_violence", #correlated to hdi
                            "control_of_corruption",
                            "voice",
-                           # "hdi",  #country level covariates
+                           # "hdi",  # correlated with MED
                            # "marine_ecosystem_dependency",  #country level covariates
                            "ngo" #country level covariates
                            # "natural_ressource_rent" #country level covariates
@@ -494,7 +546,10 @@ selection2 <- as.data.frame(data_to_filter) |>
   dplyr::select(all_of(cov_to_select2))
 
 to_plot <- selection2 |> 
-  dplyr::rename(all_of(new_names_cov))
+  dplyr::rename(any_of(new_names_cov))
+c <- cor(to_plot)
+
+  
 png("figures/3_models/covariates/Selected_covariates_correlation.png",
     width = 35, height = 25, units = "cm", res = 300)
 corrplot::corrplot(cor(to_plot), order = 'AOE', tl.pos = 'tp', tl.srt = 60, 
@@ -502,9 +557,10 @@ corrplot::corrplot(cor(to_plot), order = 'AOE', tl.pos = 'tp', tl.srt = 60,
                    col = rev(corrplot::COL2('RdBu', 200)))
 corrplot::corrplot(cor(to_plot), add = TRUE, type = 'upper', method = 'number',
                    order = 'AOE', insig = 'p-value', diag = FALSE, tl.pos = 'n', 
-                   cl.pos = 'n', number.digits = 1, number.cex = 0.7, 
+                   cl.pos = 'n', number.digits = 2, number.cex = 0.5, 
                    col = rev(corrplot::COL2('RdBu', 200)))
 dev.off()
+
 
 pca <- FactoMineR::PCA(selection2, scale = T, graph=F, ncp=30)
 factoextra::fviz_pca_var(pca, col.var = "contrib",repel = TRUE)
@@ -514,14 +570,14 @@ cov_selected <- all_covariates_benthos_inferred |>
   dplyr::select(all_of(c("survey_id",cov_to_select2))) |> 
   tibble::column_to_rownames("survey_id") 
 
-model <- lm(observations[rownames(cov_selected), "available_biomass"] ~ ., data = cov_selected)
+model <- lm(as.matrix(cov_selected)[,1] ~ ., data = cov_selected)
 
 vif_values <- car::vif(model)
-print(vif_values[order(vif_values)]) #No covariates with VIF > 5.
+print(vif_values[order(vif_values)]) #No covariates with VIF > 2.5.
 
 ### DISTRIBUTION OF COVARIATES
 distribution_plot(selection2, longer = T,  cols_plot = cov_to_select2 )
-ggsave( width=15, height= 10,
+ggsave( width=15, height= 15,
         filename = here::here("figures/3_models/covariates", "3_raw_covariates_distribution.jpg"))
 
 cov_to_log_transformed <- 
@@ -531,7 +587,8 @@ cov_to_log_transformed <-
     "median_1year_degree_heating_week", "median_5year_chl",
     "median_5year_degree_heating_week", "median_7days_chl",
     "median_7days_degree_heating_week", "median_7days_degree_heating_week",
-    "Microalgal_Mats_500m", "n_fishing_vessels", 
+    "Microalgal_Mats_500m", 
+    "n_fishing_vessels", "boat_per_scene_2020_2024",
     "neartt", "Patch_Reefs_500m", "Plateau_500m" ,
     "Reef_Crest_500m","Reef_Slope_500m",  
     "Rock_500m", "Rubble_500m", "Sand_500m", "Seagrass_500m",
@@ -605,10 +662,10 @@ ggsave(plot = last_plot(), width=15, height= 10,
 #### RENAME COVARIATES AND CONTRIBUTIONS ####
 
 covariates_final <- covariates_final |> 
-  dplyr::rename(all_of(new_names_cov))
+  dplyr::rename(any_of(new_names_cov))
 
 observations <- observations |> 
-  dplyr::rename(all_of(new_names_contrib))
+  dplyr::rename(any_of(new_names_contrib))
 
 
 
@@ -791,10 +848,10 @@ distribution_plot(covariates_site_final, longer = T, cols_plot = cov_to_select2 
 #### RENAME COVARIATES AND CONTRIBUTIONS ####
 
 covariates_site_final <- covariates_site_final |> 
-  dplyr::rename(all_of(new_names_cov))
+  dplyr::rename(any_of(new_names_cov))
 
 observations_site <- observations_site |> 
-  dplyr::rename(all_of(new_names_contrib))
+  dplyr::rename(any_of(new_names_contrib))
 
 contributions_transformation <- contributions_transformation |> 
   dplyr::mutate(contribution = dplyr::recode(contribution,
@@ -960,7 +1017,7 @@ ggsave(plot = last_plot(), width = 14, height = 7,
        
 
 ##-------------plot Covariates on map-------------
-covariate <- colnames(dplyr::select(covariates_site_final, depth:Fishing_vessel_density))
+covariate <- colnames(dplyr::select(covariates_site_final, depth:Boat_density))
 
 # save world maps
 parallel::mclapply(covariate, function(cov){
@@ -1017,6 +1074,7 @@ obs_vs_cov("Gravity", "`Evolutionary_distinctiveness`")
 obs_vs_cov("Fishing_vessel_density", "`Vitamin_A`")
 obs_vs_cov("Fishing_vessel_density", "Selenium")
 obs_vs_cov("Fishing_vessel_density", "`Trophic_web_robustness`")
+obs_vs_cov("Boat_density", "`Available_biomass`")
 
 obs_vs_cov("GDP", "Calcium")
 
@@ -1039,7 +1097,7 @@ ggsave(here::here("figures", "3_contribution_vs_covariate",
 
 ##-------------plot Covariates vs protection -------------
 hum_cov <- covariates_site_final |> 
-  dplyr::select(protection_status, Fishing_vessel_density, Gravity, Travel_time, 
+  dplyr::select(protection_status, Fishing_vessel_density, Boat_density, Gravity, Travel_time, 
                 Coral_RLS, SST_5_years, Chlorophyll_5_years, HDI, depth,
                 Terrestrial_reef_flat) |> 
   tidyr::pivot_longer(-protection_status, names_to = "human_cov", values_to = "value")
@@ -1157,3 +1215,4 @@ save(covariates_site_without_NA_in_PQ,
                        "3_sites_without_NA_in_PQ_covariates_to_predict.Rdata"))
 save(observations_site_without_NA_in_PQ,
      file = here::here("data", "derived_data","3_sites_without_NA_in_PQ_contributions_to_predict.Rdata"))
+

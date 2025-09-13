@@ -416,7 +416,7 @@ plot_hmsc_result <- function(metadata = metadata,
                              check_spatial_autocorrelation = F,
                              latent_factors = T,
                              drivers_to_plot =  list(
-                               c("Fishing_vessel_density", "Gravity", "GDP", "Travel_time"))
+                               c("vessel_density", "Gravity", "GDP", "Travel_time"))
                             ){
   
   color_grad = rev(c("#A50026", "#D73027", "#FDAE61", "#FEE090","white",
@@ -488,7 +488,7 @@ plot_hmsc_result <- function(metadata = metadata,
     # Socioeconomic variables
     "GDP"                                  = "GDP",
     "Marine ecosystem dependency"          = "Marine_ecosystem_dependency",
-    "Fishing vessel density"               = "Fishing_vessel_density",
+    "Vessel density"                       = "vessel_density",
     "Gravity"                              = "Gravity",
     "Natural resource rent"               = "Natural_resource_rent",
     "HDI"                                  = "HDI",
@@ -718,7 +718,8 @@ plot_hmsc_result <- function(metadata = metadata,
     preds <- Hmsc::computePredictedValues(model_fit_mcmc)
     MF <- Hmsc::evaluateModelFit(hM=model_fit_mcmc, predY=preds)
     
-    MF_table <- as.data.frame(MF)
+    MF_table <- as.data.frame(MF) |> 
+      dplyr::mutate(Widely_AIC = AIC)
     MF_table$responses <- model_fit_mcmc[["spNames"]]
     save(MF_table, file = paste0(path_file,"/explanatory_power_data.Rdata"))
     
@@ -860,7 +861,8 @@ plot_hmsc_result <- function(metadata = metadata,
     #classify covariates
     human <- c("GDP", "Gravity", "protection_status", "Natural_resource_rent",
                # "protection_status2",
-               "Travel_time","Fishing_vessel_density", "HDI", "Marine_ecosystem_dependency")
+               "Travel_time","vessel_density", "HDI", "Marine_ecosystem_dependency",
+               "Fishing_vessel_density")
     
     habitat <- c("depth",
                  "Coral_RLS", "Sand_RLS",
@@ -1015,6 +1017,9 @@ plot_hmsc_result <- function(metadata = metadata,
                                  VP_long_absolute$labels == cov] <- mid
       }
     }
+    save(VP_long_absolute,
+         file = paste0(path_file,"/variance_partitionning_absolute_proportions.Rdata"))
+    
     
     ##### Plot VP #####
   
@@ -1033,7 +1038,7 @@ plot_hmsc_result <- function(metadata = metadata,
       geom_col(aes(x = reorder(category, prop_variance),
                    y = prop_variance, fill = category),
                color = "grey20") +
-      
+
       #Add precision on the random bar
       annotate("rect", 
                xmin = which(levels(reorder(VP_aggregated$category,
@@ -1082,10 +1087,20 @@ plot_hmsc_result <- function(metadata = metadata,
       theme(legend.position = "none") +
       theme(axis.text.x = element_text(size = 13),
             axis.text.y = element_text(size = 13)) 
-    plot_categ
+
+    
+    plot_categ_with_numbers <- plot_categ+
+      geom_text(
+        aes(x = reorder(category, prop_variance),
+            y = prop_variance,
+            label = round(prop_variance, 3)),
+        hjust = -0.2, vjust = 1.5  ,
+        size = 5,
+        color = "black"
+      ) 
     ggsave(filename = paste0(path_file,"/variance_explained_per_category_",
                              save_name,".jpg"),
-           plot = plot_categ, width = 15, height = 10)
+           plot = plot_categ_with_numbers, width = 15, height = 10)
     
     
     
@@ -1169,7 +1184,7 @@ plot_hmsc_result <- function(metadata = metadata,
                 aes(y = mid_y, label = Symbol), size = 6, color = "white")
     
     ggsave(filename =  paste0(path_file,"/variance_partitioning_absolute_values_", save_name,".jpg"),
-           width = 19, height = 17)
+           width = 19, height = 17, plot = VP_plot_absolute)
     
     # #Custom mean bar
     # geom_rect(aes(xmin = length(unique(Response))-1 - 0.5, # Hide gap bar
@@ -1230,6 +1245,7 @@ plot_hmsc_result <- function(metadata = metadata,
       dplyr::summarise(sd = sd(Value),
                        contribution = mean(Value)) |> 
       dplyr::filter(!grepl("Random",Covariate))
+    save(covariate_contrib, file = paste0(path_file,"/covariates_importance.Rdata"))
     
     mean_contrib_plot <- ggplot(covariate_contrib) +
       geom_col(aes(x = reorder(Covariate, contribution),
@@ -1271,10 +1287,10 @@ plot_hmsc_result <- function(metadata = metadata,
                   axis.title =  element_text(size = 15),
                   panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
                   panel.background = element_rect(fill = "white", color = NA))),
-                        xmin = 3.5,
-                        xmax = 21.3, # 15, # for PCA model
-                        ymin = 0.01,
-                        ymax = 0.06)
+                        xmin = 3.5,# 2 for PCA model
+                        xmax = 21.3, # 15 for PCA model
+                        ymin = 0.007,  #0.0065 for PCA model
+                        ymax = 0.063)  #0.063 for PCA model
     mean_contrib_plot_with_inser
     
     ggsave(filename =  paste0(path_file,"/mean_contributions_of_covariate_with_insert_",
@@ -1360,7 +1376,7 @@ plot_hmsc_result <- function(metadata = metadata,
                                    "human" = "#9B7D9E")) +
       theme_minimal() +
       coord_flip() +
-      labs(y = "Mean importance of covariates in \n explaining variance (%)", x = "") +
+      labs(y = "Mean proportion in the\n variance explained", x = "") +
       theme(legend.position = "none") +
       theme(axis.text.x = element_text(size = 16),
             axis.text.y = element_text(size = 17),
@@ -1372,7 +1388,7 @@ plot_hmsc_result <- function(metadata = metadata,
     fig1_with_inser <- fig1_stacked +
       theme(plot.margin = margin(t = 1, l = 1, r = 2, unit = "cm") )+
       annotation_custom(ggplotGrob(top_contrib_imp),
-                        xmin = 13,
+                        xmin = 12,
                         xmax = 23,
                         ymin = 0.6,
                         ymax = 1.1)
@@ -1531,9 +1547,11 @@ plot_hmsc_result <- function(metadata = metadata,
     
     
     ##### ridges plot  #####
-    for(drivers in drivers_to_plot){
-      
+    effect_size_list <- list()
+    for(i in 1:length(drivers_to_plot)){
       #drivers = drivers_to_plot[[2]]
+      drivers = drivers_to_plot[[i]]
+      
       drivers_name <- drivers
       all_drivers <- c(drivers, paste0(drivers, "_Deg1"),  paste0(drivers, "_Deg2"))
       
@@ -1559,11 +1577,15 @@ plot_hmsc_result <- function(metadata = metadata,
         dplyr::mutate(covariate = factor(covariate, levels = all_drivers)) |> 
         dplyr::mutate(response = factor(response, levels = medians$response))
       
+      #save effect sizes
+      effect_size_list[[i]] <- df
+      
+      
       new_titles <- c(
         "protection_statusfull" = "Full protection",
         "protection_statusfull_large_old" = "MPA full & large & old",
         "protection_statusfull_others" = "Others full MPA",
-        "Fishing_vessel_density" = "Industrial fishing",
+        "vessel_density" = "Vessel density",
         "Gravity" = "Gravity",
         "GDP" = "GDP",
         
@@ -1611,6 +1633,7 @@ plot_hmsc_result <- function(metadata = metadata,
       
     }
     
+    save(effect_size_list, file = paste0(path_file,"/effect_sizes_data.Rdata"))
     
     ##### Estimates Heatmap  #####
     # S_df <- S |> 
@@ -1771,6 +1794,8 @@ plot_hmsc_result <- function(metadata = metadata,
     PredY_mean <- as.data.frame(Reduce("+", predY) / length(predY))
     
     residuals <- Y_data - PredY_mean
+    save(residuals, file = paste0(path_file,"/Residuals_full_model_table.Rdata"))
+    
     rownames(PredY_mean) <- rownames(Y_data)
       
     compare_pred <- PredY_mean |> 
@@ -2249,6 +2274,7 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     dplyr::summarise(r_squared_marginal = summary(lm(marginal_prediction ~ observed))[["r.squared"]],
                      r_squared_conditional = summary(lm(conditional_prediction ~ observed))[["r.squared"]]) |> 
     dplyr::left_join(MF_table)
+  save(predictive_power_summary, file = file.path(path_file, "predictive_power_summary.Rdata"))    
   
   
   ### Predictive power ###
@@ -2266,7 +2292,7 @@ plot_predictive_power <- function(path = here::here("outputs/models/hmsc"),
     facet_wrap(~responses, scales = "free") +
     theme(legend.position="none", panel.spacing = unit(0.1, "lines"))
   
-  ggsave(filename = paste0(path_file, "/Joint_predictions_", folder_name, ".jpg"),
+  ggsave(filename = paste0(path_file, "/Marginal_predictions_", folder_name, ".jpg"),
          width = 15, height = 8)
   
   

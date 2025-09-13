@@ -543,8 +543,10 @@ M <- cor(dplyr::select(contributions_sites_date,
 png(filename = here::here("figures","2h_corr_matrix_contributions_site_scale.png"), 
     width= 35, height = 25, units = "cm", res = 300)
 print({
-  corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60, cl.pos = 'r')
+  corrplot::corrplot(M, order = 'AOE', type = 'lower', tl.pos = 'tp', tl.srt = 60,
+                     cl.pos = 'r',col = rev(corrplot::COL2('RdBu', 200)))
   corrplot::corrplot(M, add = TRUE, type = 'upper', method = 'number', order = 'AOE', insig = 'p-value',
-                     diag = FALSE, tl.pos = 'n', cl.pos = 'n', number.digits = 1)
+                     diag = FALSE, tl.pos = 'n', cl.pos = 'n', number.digits = 1,
+                     col = rev(corrplot::COL2('RdBu', 200)))
 })
 dev.off() 

@@ -1077,6 +1077,95 @@ ggsave(filename = paste0(path_file,
 
 
 ##------------------------- MPA features sensitivity ----------------------------
+
+#### 1) Residuals against MPA features ####
+#Residuals
+save_name = "FULL_model_SITE_SCALE_with_pH_and_HDI_4_chains_1000_thin_200_samples"
+path_file <- here::here("figures","3_models","hmsc", save_name)
+load(file = paste0(path_file,"/Residuals_full_model_table.Rdata"))
+
+#MPA features
+load(file = here::here("data/derived_data/3_mpa_protected_seas_recoded.Rdata"))
+mpa_features <- mpa |> 
+  dplyr::mutate(id = paste0(site_code, "_", survey_date)) |> 
+  dplyr::filter(protection_status == "full",
+                id %in% rownames(residuals)) |> 
+  dplyr::select(id, age = age_of_MPA, size = zone_marine_area_km, latitude, longitude) |> 
+  unique() |> 
+  na.omit()
+
+
+residuals_mpa <- residuals[mpa_features$id,]
+
+library(vegan)
+rda_res <- rda(residuals_mpa ~ age + size, data = mpa_features)
+anova(rda_res, by="term", permutations=999)
+
+rda_res_int <- rda(residuals_mpa ~ age * size, data = mpa_features)
+anova(rda_res_int, by="term", permutations=999)
+
+
+
+residuals_mpa_features <- residuals_mpa |> 
+  tibble::rownames_to_column("id") |> 
+  tidyr::pivot_longer(-id, names_to = "contribution", values_to = "residuals") |> 
+  dplyr::left_join(mpa_features) |> 
+  dplyr::mutate(size = log(size))
+  
+  
+
+hist(residuals_mpa_features$age)
+
+plot_interaction(residuals_mpa_features,
+                 var_facet_wrap = "contribution", 
+                 X_values = "age", Y_values = "residuals",
+                 xlabel = "Age of MPA during the survey",
+                 ylabel = "Model residuals",
+                 strip_txt_size = 12,
+                 axis_title_size =13)+
+  geom_smooth(method = "lm", aes(x= X, y = Y), color = "grey50", se = T, linewidth = 0.5)+
+  ggpubr::stat_cor(aes(x = X, y = Y), 
+    method = "pearson", label.x.npc = "left", label.y.npc = "top",  
+    size = 3.5)
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/MPA_features_residuals_VS_Age.jpg"),
+       height = 9, width = 12)
+
+
+hist(residuals_mpa_features$size)
+
+plot_interaction(residuals_mpa_features,
+                 var_facet_wrap = "contribution", 
+                 X_values = "size", Y_values = "residuals",
+                 xlabel = "Size of MPA",
+                 ylabel = "Model residuals",
+                 strip_txt_size = 12,
+                 axis_title_size =13)+
+  geom_smooth(method = "lm", aes(x= X, y = Y), color = "grey50", se = T, linewidth = 0.5)+
+  ggpubr::stat_cor(aes(x = X, y = Y), 
+                   method = "pearson", label.x.npc = "left", label.y.npc = "top",  
+                   size = 3.5)
+ggsave(filename = here::here("figures/3_sensibility_analysis/MPA_features_residuals_VS_Size.jpg"),
+       height = 9, width = 12)
+
+
+## dutilleul correction
+library(SpatialPack)
+
+# Exemple pour une contribution
+x <- mpa_features$age
+y <- residuals_mpa[,"Vitamin_A"] #Actinopterygian_richness
+coordinates_of_sites <- mpa_features[,c("longitude", "latitude")]
+
+# Correction de Dutilleul
+res <- modified.ttest(x, y, coords = coordinates_of_sites)  
+res
+res$t.value #-> statistique t
+res$p.value #-> p-value corrigée
+res$cor #-> correlation
+
+#### 2) Counterfactuals MPA features ####
+
 library(ggplot2)
 library(patchwork)
 
@@ -1721,3 +1810,808 @@ ggplot(moranI_df, aes(y = response)) +
 ggsave(filename = paste0(here::here("figures/3_sensibility_analysis"), 
                          "/Spatial_autocorrelation_in_residuals_according_models.jpg"),
        width = 15, height = 8)
+
+##------------------------- Models performance and choices ----------------------------
+
+### 1) Choose models to compare ####
+list_models <- c(
+  "No random levels"= "Sensitivity_NO_random_factors_SITE_SCALE_with_pH_and_HDI_2_chains_1000_thin_200_samples",
+  # "No random levels"= "Sensitivity_NO_random_factors_SITE_SCALE_2_chains_1000_thin_200_samples",
+  # "(1|country)"= "Sensitivity_only_country_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",
+  "(1|country)"= "Sensitivity_only_country_in_RL_SITE_SCALE_with_pH_and_HDI_2_chains_1000_thin_200_samples",
+  "(1|site/country)"="Sensitivity_site&country_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",                                                    
+   # "(1|sample_unit/country)"="FULL_model_SITE_SCALE_4_chains_1000_thin_200_samples",
+  "(1|sample_unit/country)"="FULL_model_SITE_SCALE_with_pH_and_HDI_2_chains_1000_thin_200_samples",
+  "(1|sample_unit/site/country)"="Sensitivity_SU&site&country_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",                                                 
+  
+  "(1|ecoregion)"= "Sensitivity_only_ecoregion_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",                                                  
+  "(1|site/ecoregion)"="Sensitivity_ecoregion&site_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",                                                 
+  "(1|sample_unit/ecoregion)"="Sensitivity_ecoregion&SU_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",
+  
+  
+  "Full model with pH and HDI"= "FULL_model_SITE_SCALE_with_pH_and_HDI_2_chains_1000_thin_200_samples",
+  "Full model without pH and HDI"= "FULL_model_SITE_SCALE_WITHOUT_pH_HDI_4_chains_1000_thin_200_samples",
+  "Full model with PCA habitat"= "Habitat_cov_in_PCA_dimensions_model_SITE_SCALE_2_chains_1000_thin_200_samples",
+  
+  "Null model" = "Null_model_SITE_SCALE_site_country_in_rL_2_chains_1000_thin_200_samples"
+)
+
+models_full_stats <- data.frame()
+
+models_sumary <- data.frame()
+
+for(i in 1:length(list_models)){
+  # i=11
+  md=list_models[i]
+  
+  cat(md, "\n")
+  folder_name <- gsub("output_", "", gsub(".rds", "", md))
+  path_file <- here::here("figures","3_models","hmsc", folder_name)    
+  
+  if(file.exists(file.path(path_file, "predictive_power_summary.Rdata"))){
+    load(file = file.path(path_file, "predictive_power_summary.Rdata"))
+  }else{
+    load(file = file.path(path_file, "explanatory_power_data.Rdata"))
+    predictive_power_summary <- MF_table |> 
+      dplyr::mutate(r_squared_marginal = NA,
+                    r_squared_conditional = NA)
+    }
+  
+  
+  full_stats <- predictive_power_summary |> 
+    dplyr::mutate(model = names(md))
+  
+  #model performance
+  summary <- predictive_power_summary |> 
+    dplyr::summarise(
+      dplyr::across(where(is.numeric),
+                    list(mean = ~mean(.x, na.rm = TRUE),
+                         sd   = ~sd(.x, na.rm = TRUE)))) |> 
+    round(digits = 2)
+  
+  # Fixed effects
+  load(paste0(path_file,"/variance_partitionning_absolute_proportions.Rdata"))
+  imp_abs_cov <- VP_long_absolute |> 
+    dplyr::filter(!Response %in% c("Mean contribution", "")) |> 
+    dplyr::filter(!grepl("Random", Covariate)) |> 
+    dplyr::group_by(Response) |> 
+    dplyr::summarize(var_explained = sum(Value))
+  imp_mean = round(mean(imp_abs_cov$var_explained), 2)
+  imp_sd = round(sd(imp_abs_cov$var_explained),2)
+    
+  
+  # Sum up
+  stats <- data.frame(
+    model = names(md),
+    explanatory_R2  = paste0(summary$R2_mean, " (s.d. = ", summary$R2_sd, ")"),
+    Init_var_explained_by_fixed_effects = paste0(imp_mean, " (s.d. = ", imp_sd, ")"),
+    predictive_R2 = paste0(summary$r_squared_marginal_mean, " (s.d. = ", summary$r_squared_marginal_sd, ")"),
+    RMSE           = paste0(summary$RMSE_mean, " (s.d. = ", summary$RMSE_sd, ")"),
+    Widely_AIC     = summary$Widely_AIC_mean
+  )
+  
+  # cat(stats, "\n")
+  
+  models_sumary <- rbind(models_sumary, stats)
+  models_full_stats <- rbind(models_full_stats, full_stats)
+  
+}
+
+models_sumary
+
+write.csv(models_sumary, row.names = F,
+          file = here::here("figures/3_sensibility_analysis/models_performance/models_perf.csv"))
+
+
+### 2) Models R2 ####
+models_pred_power <- models_full_stats |> 
+  dplyr::filter(model %in% c("No random levels",
+                             "(1|country)",
+                             "(1|sample_unit/country)",
+                             # "(1|site/country)",
+                             # "(1|site/ecoregion)",
+                             # "(1|sample_unit/site/country)",
+                             "(1|ecoregion)",
+                             "(1|sample_unit/ecoregion)"
+                             ))
+
+
+## predictive power
+responses_order <- models_pred_power |>
+  dplyr::group_by(responses) |>
+  dplyr::summarise(mean_r2 = mean(r_squared_marginal, na.rm = TRUE)) |>
+  dplyr::arrange(mean_r2) |>
+  dplyr::pull(responses)
+
+models_pred_power <- models_pred_power |>
+  dplyr::mutate(responses = factor(responses, levels = responses_order))
+
+model_means <- models_pred_power |>
+  dplyr::group_by(model) |>
+  dplyr::summarise(mean_r2 = mean(r_squared_marginal, na.rm = TRUE))|>
+  dplyr::mutate(vjust_offset = seq(-1, -4, length.out = dplyr::n()))
+
+
+ggplot(models_pred_power, aes(y = responses, color = model)) +
+  geom_point(aes(x = r_squared_marginal), size = 4) +
+  geom_vline( data = model_means,
+    aes(xintercept = mean_r2, color = model),
+    linetype = "dashed", size = 1) +
+  geom_text(data = model_means,
+            aes(x = mean_r2, y = 0, label = round(mean_r2, 2), 
+                color = model, vjust = vjust_offset), size = 5, inherit.aes = FALSE) +
+  
+  labs(x = "R² marginal", y = "Contributions", title = "Predictive power",
+       color = "Model structure" ) +
+  xlim(c(0, 1)) + theme_bw() +
+  theme(title = element_text(size = 17),
+        legend.text = element_text(size = 13),
+        axis.text = element_text(size = 15),     
+        axis.title = element_text(size = 15),   
+        strip.text = element_text(size = 13))
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/Predictive_power_per_model_with_pH_HDI.jpg"),
+       height = 8, width = 12)
+
+
+
+
+## Explanatory power
+responses_order <- models_pred_power |>
+  dplyr::filter(model ==  "(1|sample_unit/country)") |>
+  dplyr::arrange(R2) |>
+  dplyr::pull(responses)
+
+models_pred_power <- models_pred_power |>
+  dplyr::mutate(responses = factor(responses, levels = responses_order))
+
+model_means <- models_pred_power |>
+  dplyr::group_by(model) |>
+  dplyr::summarise(mean_r2 = mean(R2, na.rm = TRUE))|>
+  dplyr::mutate(vjust_offset = seq(-1, -4, length.out = dplyr::n()))
+
+
+ggplot(models_pred_power, aes(y = responses, color = model)) +
+  geom_point(aes(x = R2), size = 4) +
+  geom_vline( data = model_means,
+              aes(xintercept = mean_r2, color = model),
+              linetype = "dashed", size = 1) +
+  geom_text(data = model_means,
+            aes(x = mean_r2, y = 0, label = round(mean_r2, 2), 
+                color = model, vjust = vjust_offset), size = 5, inherit.aes = FALSE) +
+  
+  labs(x = "R²", y = "Contributions", title = "Explanatory power",
+       color = "Model structure" ) +
+  xlim(c(0, 1)) + theme_bw() +
+  theme(title = element_text(size = 17),
+        legend.text = element_text(size = 13),
+        axis.text = element_text(size = 15),     
+        axis.title = element_text(size = 15),   
+        strip.text = element_text(size = 13))
+
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/Explanatory_power_per_model_with_pH_HDI.jpg"),
+       height = 8, width = 12)
+
+
+
+
+
+
+
+### 3) Covariates importance ####
+
+list_models_cov <- list_models[which(names(list_models) %in%
+                                       c("No random levels",
+                                         "(1|country)",
+                                         "(1|sample_unit/country)"
+                                         # "(1|site/country)",
+                                         # "(1|site/ecoregion)",
+                                         # "(1|sample_unit/site/country)",
+                                         # "(1|ecoregion)",
+                                         # "(1|sample_unit/ecoregion)"
+                                       ))]
+
+
+list_models_cov
+
+cov_importance <- data.frame()
+
+for(i in 1:length(list_models_cov)){
+  # i=1
+  md=list_models_cov[i]
+  folder_name <- gsub("output_", "", gsub(".rds", "", md))
+  path_file <- here::here("figures","3_models","hmsc", folder_name)    
+  
+  load(paste0(path_file,"/covariates_importance.Rdata"))
+  
+  covariate_contrib <- covariate_contrib |> 
+    dplyr::mutate(model = names(md))
+  
+  cov_importance <- rbind(cov_importance, covariate_contrib)
+}
+
+cov_to_plot <- cov_importance |> 
+  dplyr::group_by(Covariate) |> 
+  dplyr::summarise(mean_contrib = mean(contribution)) |> 
+  dplyr::top_n(20, mean_contrib) |>
+  dplyr::pull(Covariate)
+
+to_plot <- cov_importance |> 
+  dplyr::filter(Covariate %in% cov_to_plot) |> 
+  dplyr::mutate(model = forcats::fct_relevel(model,
+                                             "(1|sample_unit/country)",
+                                             "(1|country)",
+                                             "No random levels"
+                                    ))
+
+cov_order <- to_plot |> 
+  dplyr::filter(model == "(1|sample_unit/country)") |> 
+  dplyr::arrange(contribution) |> 
+  dplyr::pull(Covariate) |> 
+  as.character()
+to_plot <- to_plot |> 
+  dplyr::mutate(Covariate = forcats::fct_relevel(Covariate, cov_order))
+
+ggplot(to_plot,
+       aes(x = contribution,
+           y = Covariate,
+           fill = model)) +
+  geom_bar(stat = "identity",
+           position = position_dodge2(width = 0.8, padding = 0.1, preserve = "single")) +
+  # scale_fill_manual(values = c( "#FFA976","#FFCF7A", "#9B7D9E")) + #"#CBCBCB",
+  theme_minimal() +
+  labs(x = "Proportion in the variance explained", y = "") +
+  theme(
+    legend.position = "right",
+    axis.text.x = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    axis.title = element_text(size = 17),
+    legend.title = element_text(size = 20, hjust = 0),
+    legend.text = element_text(size = 17)
+  )
+
+# ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/cov_importance_per_model.jpg"),
+#        height = 10, width = 10)
+
+
+
+ggplot(to_plot,
+       aes(x = contribution,
+           y = Covariate,
+           fill = category)) +
+  geom_bar(stat = "identity",
+           position = position_dodge2(width = 0.8, padding = 0.1, preserve = "single")) +
+  scale_fill_manual(values = c("random" =  "#CBCBCB",
+                               "envir" = "#FFA976",
+                               "habitat" = "#FFCF7A",
+                               "human" = "#9B7D9E")) +
+  theme_bw() +
+  labs(x = "Proportion in the variance explained", y = "") +
+  facet_wrap(~model, scale = "free_x", ncol = 4)+
+  theme(
+    legend.position = "right",
+    axis.text.x = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    axis.title = element_text(size = 17),
+    legend.title = element_text(size = 20, hjust = 0),
+    legend.text = element_text(size = 17),
+    strip.text = element_text(size = 17)
+  )
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/cov_importance_per_model_with_pH_HDI.jpg"),
+       height = 10, width = 15)
+
+
+
+
+### 4) Effect sizes ####
+
+new_titles <- c(
+  "protection_statusfull" = "Full protection",
+  "vessel_density" = "Vessel density",
+  "Gravity" = "Gravity",
+  "GDP" = "GDP")
+
+
+
+list_models_cov <- list_models[which(names(list_models) %in%
+                                       c("No random levels",
+                                         "(1|country)",
+                                         "(1|sample_unit/country)"
+                                         # ,
+                                         #  "(1|site/country)",
+                                         # "(1|site/ecoregion)",
+                                         # "(1|sample_unit/site/country)",
+                                         #  "(1|ecoregion)",
+                                         #  "(1|sample_unit/ecoregion)"
+                                       ))]
+list_models_cov
+
+effect_sizes_models <- data.frame()
+
+for(i in 1:length(list_models_cov)){
+  # i=1
+  cov_list = 1
+  
+  md=list_models_cov[i]
+  folder_name <- gsub("output_", "", gsub(".rds", "", md))
+  path_file <- here::here("figures","3_models","hmsc", folder_name)    
+  
+  load(paste0(path_file,"/effect_sizes_data.Rdata"))
+  
+  effect_sizes <- effect_size_list[[cov_list]]
+  
+  effect_sizes <- effect_sizes |> 
+    dplyr::mutate(model = names(md))
+  
+  effect_sizes_models <- rbind(effect_sizes_models, effect_sizes)
+}
+
+
+order <- effect_sizes_models |>
+  dplyr::filter(model == "(1|sample_unit/country)" & covariate == "protection_statusfull") |>
+  dplyr::group_by(group, response) |>
+  dplyr::summarize(median_value = median(value)) |>
+  dplyr::arrange(factor(group, levels = c( "NS", "NN","NC")), median_value) |>
+  dplyr::pull(response) |>
+  as.character()
+
+to_plot <- effect_sizes_models |>
+  dplyr::mutate(response = forcats::fct_relevel(response, order))
+
+
+ggplot(to_plot) +
+  aes(y = response, x = value,  fill = model) +
+  ggridges::geom_density_ridges(aes(alpha = support), linewidth = 0.3)+#alpha=0.5, bandwidth = 0.005) +
+  # scale_fill_manual(values = c( "darkgoldenrod2", "forestgreen", "dodgerblue3"))+
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5)+
+  scale_alpha_manual(values = c("0" = 0.15, "1" = 0.6), guide = "none") +
+  hrbrthemes::theme_ipsum( axis_title_size = 14 ) +
+  theme(
+    legend.position="bottom",
+    legend.text = element_text(size = 15, margin = margin(r = 20)),
+    panel.spacing = unit(0.3, "lines"),
+    strip.text.x = element_text(size = 16, hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(size = 13),
+    axis.text.y = element_text(size = 13, vjust = -0.2),
+    axis.title.y = element_text(face = "bold", hjust = .5, vjust = 5),
+    axis.title.x = element_text(face = "bold", hjust = .99, vjust =-2)
+  ) +
+  labs(fill = "", y = "Nature contributions", x = "Effect sizes")+
+  facet_wrap(~covariate, ncol = length(effect_sizes_models$covariate),
+             scales = "free_x",
+             labeller = labeller(covariate = new_titles)
+  )
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/effect_sizes_per_model_with_pH_HDI.jpg"),
+       height = 7, width = 9)
+
+
+
+
+
+
+
+### 5) with/without pH/HDI ####
+
+list_models_cov <- list_models[which(names(list_models) %in%
+                                       c("Full model with pH and HDI",
+                                         "Full model without pH and HDI"
+                                       ))]
+
+cov_importance <- data.frame()
+
+for(i in 1:length(list_models_cov)){
+  # i=1
+  md=list_models_cov[i]
+  folder_name <- gsub("output_", "", gsub(".rds", "", md))
+  path_file <- here::here("figures","3_models","hmsc", folder_name)    
+  
+  load(paste0(path_file,"/covariates_importance.Rdata"))
+  
+  covariate_contrib <- covariate_contrib |> 
+    dplyr::mutate(model = names(md))
+  
+  cov_importance <- rbind(cov_importance, covariate_contrib)
+}
+
+cov_to_plot <- cov_importance |> 
+  dplyr::group_by(Covariate) |> 
+  dplyr::summarise(mean_contrib = mean(contribution)) |> 
+  dplyr::top_n(20, mean_contrib) |>
+  dplyr::pull(Covariate)
+
+to_plot <- cov_importance |> 
+  dplyr::filter(Covariate %in% cov_to_plot)
+
+cov_order <- to_plot |> 
+  dplyr::filter(model == "Full model with pH and HDI") |> 
+  dplyr::arrange(contribution) |> 
+  dplyr::pull(Covariate) |> 
+  as.character()
+to_plot <- to_plot |> 
+  dplyr::mutate(Covariate = forcats::fct_relevel(Covariate, cov_order))
+
+ggplot(to_plot,
+       aes(x = contribution,
+           y = Covariate,
+           fill = category)) +
+  geom_bar(stat = "identity",
+           position = position_dodge2(width = 0.8, padding = 0.1, preserve = "single")) +
+  scale_fill_manual(values = c("random" =  "#CBCBCB",
+                               "envir" = "#FFA976",
+                               "habitat" = "#FFCF7A",
+                               "human" = "#9B7D9E")) +
+  theme_bw() +
+  labs(x = "Proportion in the variance explained", y = "") +
+  facet_wrap(~model, scale = "free_x", ncol = 4)+
+  theme(
+    legend.position = "right",
+    axis.text.x = element_text(size = 15),
+    axis.text.y = element_text(size = 15),
+    axis.title = element_text(size = 17),
+    legend.title = element_text(size = 20, hjust = 0),
+    legend.text = element_text(size = 17),
+    strip.text = element_text(size = 17)
+  )
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/cov_importance_with_and_without_pH_HDI.jpg"),
+       height = 10, width = 13)
+
+
+
+
+
+
+new_titles <- c(
+  "protection_statusfull" = "Full protection",
+  "vessel_density" = "Vessel density",
+  "Gravity" = "Gravity",
+  "GDP" = "GDP")
+
+effect_sizes_models <- data.frame()
+
+for(i in 1:length(list_models_cov)){
+  # i=1
+  cov_list = 1
+  
+  md=list_models_cov[i]
+  folder_name <- gsub("output_", "", gsub(".rds", "", md))
+  path_file <- here::here("figures","3_models","hmsc", folder_name)    
+  
+  load(paste0(path_file,"/effect_sizes_data.Rdata"))
+  
+  effect_sizes <- effect_size_list[[cov_list]]
+  
+  effect_sizes <- effect_sizes |> 
+    dplyr::mutate(model = names(md))
+  
+  effect_sizes_models <- rbind(effect_sizes_models, effect_sizes)
+}
+
+
+order <- effect_sizes_models |>
+  dplyr::filter(model == "(1|sample_unit/country)" & covariate == "protection_statusfull") |>
+  dplyr::group_by(group, response) |>
+  dplyr::summarize(median_value = median(value)) |>
+  dplyr::arrange(factor(group, levels = c( "NS", "NN","NC")), median_value) |>
+  dplyr::pull(response) |>
+  as.character()
+
+to_plot <- effect_sizes_models |>
+  dplyr::mutate(response = forcats::fct_relevel(response, order))
+
+
+ggplot(to_plot) +
+  aes(y = response, x = value,  fill = model) +
+  ggridges::geom_density_ridges(aes(alpha = support), linewidth = 0.3)+#alpha=0.5, bandwidth = 0.005) +
+  # scale_fill_manual(values = c( "darkgoldenrod2", "forestgreen", "dodgerblue3"))+
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5)+
+  scale_alpha_manual(values = c("0" = 0.15, "1" = 0.6), guide = "none") +
+  hrbrthemes::theme_ipsum( axis_title_size = 14 ) +
+  theme(
+    legend.position="bottom",
+    legend.text = element_text(size = 15, margin = margin(r = 20)),
+    panel.spacing = unit(0.3, "lines"),
+    strip.text.x = element_text(size = 16, hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(size = 13),
+    axis.text.y = element_text(size = 13, vjust = -0.2),
+    axis.title.y = element_text(face = "bold", hjust = .5, vjust = 5),
+    axis.title.x = element_text(face = "bold", hjust = .99, vjust =-2)
+  ) +
+  labs(fill = "", y = "Nature contributions", x = "Effect sizes")+
+  facet_wrap(~covariate, ncol = length(effect_sizes_models$covariate),
+             scales = "free_x",
+             labeller = labeller(covariate = new_titles)
+  )
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/effect_sizes_with_and_without_pH_HDI.jpg"),
+       height = 7, width = 9)
+
+
+
+
+
+
+
+### 6) Model with PCA dimensions ####
+
+list_models_cov <- list_models[which(names(list_models) %in%
+                                       c("Full model with pH and HDI",
+                                         "Full model with PCA habitat"
+                                       ))]
+
+
+new_titles <- c(
+  "protection_statusfull" = "Full protection",
+  "vessel_density" = "Vessel density",
+  "Gravity" = "Gravity",
+  "GDP" = "GDP")
+
+effect_sizes_models <- data.frame()
+
+for(i in 1:length(list_models_cov)){
+  # i=1
+  cov_list = 1
+  
+  md=list_models_cov[i]
+  folder_name <- gsub("output_", "", gsub(".rds", "", md))
+  path_file <- here::here("figures","3_models","hmsc", folder_name)    
+  
+  load(paste0(path_file,"/effect_sizes_data.Rdata"))
+  
+  effect_sizes <- effect_size_list[[cov_list]]
+  
+  effect_sizes <- effect_sizes |> 
+    dplyr::mutate(model = names(md))
+  
+  effect_sizes_models <- rbind(effect_sizes_models, effect_sizes)
+}
+
+
+order <- effect_sizes_models |>
+  dplyr::filter(model == "(1|sample_unit/country)" & covariate == "protection_statusfull") |>
+  dplyr::group_by(group, response) |>
+  dplyr::summarize(median_value = median(value)) |>
+  dplyr::arrange(factor(group, levels = c( "NS", "NN","NC")), median_value) |>
+  dplyr::pull(response) |>
+  as.character()
+
+to_plot <- effect_sizes_models |>
+  dplyr::mutate(response = forcats::fct_relevel(response, order))
+
+
+ggplot(to_plot) +
+  aes(y = response, x = value,  fill = model) +
+  ggridges::geom_density_ridges(aes(alpha = support), linewidth = 0.3)+#alpha=0.5, bandwidth = 0.005) +
+  # scale_fill_manual(values = c( "darkgoldenrod2", "forestgreen", "dodgerblue3"))+
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5)+
+  scale_alpha_manual(values = c("0" = 0.15, "1" = 0.6), guide = "none") +
+  hrbrthemes::theme_ipsum( axis_title_size = 14 ) +
+  theme(
+    legend.position="bottom",
+    legend.text = element_text(size = 15, margin = margin(r = 20)),
+    panel.spacing = unit(0.3, "lines"),
+    strip.text.x = element_text(size = 16, hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(size = 13),
+    axis.text.y = element_text(size = 13, vjust = -0.2),
+    axis.title.y = element_text(face = "bold", hjust = .5, vjust = 5),
+    axis.title.x = element_text(face = "bold", hjust = .99, vjust =-2)
+  ) +
+  labs(fill = "", y = "Nature contributions", x = "Effect sizes")+
+  facet_wrap(~covariate, ncol = length(effect_sizes_models$covariate),
+             scales = "free_x",
+             labeller = labeller(covariate = new_titles)
+  )
+
+ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/effect_sizes_Full_model_and_PCA_model.jpg"),
+       height = 7, width = 9)
+
+##------------------------- Spillover effect potential ----------------------------
+# RLS sites used
+load(here::here("data/derived_data/3_sites_covariates_to_predict.Rdata"))
+
+# MPA data
+load(file = here::here("data/derived_data/3_mpa_protected_seas_recoded.Rdata"))
+mpa <- mpa |> 
+  dplyr::mutate(sample_id = paste0(site_code, "_", survey_date))
+
+mpa_PS <- read.csv(here::here("data/raw_data/ProtectedSeas_Navigator_data_20241212.csv"))
+
+# MPA shapefile
+shape <- sf::read_sf(here::here("data/raw_data/ProtectedSeas_Navigator_20241212_shp/ProtectedSeas_Navigator_20241212_shp.shp"))
+
+# MPA data
+shape_data <- shape |> 
+  dplyr::select(site_id = SITE_ID, geometry) |> 
+  dplyr::left_join(
+    dplyr::select(mpa_PS, site_id, removal_of_marine_life_is_prohibited, year_est)
+    ) |> 
+  dplyr::left_join(
+    dplyr::select(mpa, site_id = protected_seas_id, year_of_protection, protection_status,
+                  sample_id)
+  )
+  
+
+#### Closest distance to FULL MPAs
+# full_mpa <- mpa_PS |>
+#   dplyr::filter(removal_of_marine_life_is_prohibited == 5) |>  # only MPA with full protection
+#   dplyr::left_join(dplyr::rename(mpa, site_id = protected_seas_id))|>
+#   dplyr::filter(protection_status == "full" | is.na(protection_status)) # If data from RLS, only high compliance
+
+shape_full_mpa <- shape_data |>
+  dplyr::filter(removal_of_marine_life_is_prohibited == 5) |>  # only MPA with full protection
+  dplyr::filter(protection_status == "full" | is.na(protection_status))
+
+shape_valid <- sf::st_make_valid(shape_full_mpa)
+
+bbox_filter <- sf::st_as_sfc(
+  sf::st_bbox(c(
+    xmin = -180, xmax = 180,
+    ymin = -30,  ymax = 30
+  ), crs = 4326)
+)
+
+sel <- sf::st_intersects(shape_valid, bbox_filter, sparse = TRUE)
+shape_filtered <- shape_valid[lengths(sel) > 0, ]
+
+
+#RLS sites outside MPA
+site_out <- covariates_site_final  |> 
+  dplyr::select(-c(protection_status_detailed:Boat_density)) |> 
+  tibble::rownames_to_column("sample_id") |> 
+  dplyr::filter(protection_status == "out") |> 
+  dplyr::mutate(year = stringr::word(stringr::word(sample_id,2 , sep = "_"),1, sep="-")) |> 
+  dplyr::left_join(
+    dplyr::select(mpa, sample_id, year_of_protection)
+  )
+
+#Intersect points and MPAs
+sites_sf <- sf::st_as_sf(site_out,
+                         coords = c("longitude", "latitude"),
+                         crs = 4326)
+
+
+
+####### Filtrer par date ####"
+library(sf)
+library(dplyr)
+library(purrr)
+
+# Pour chaque site, trouver la feature la plus proche
+
+nn_with_time <- parallel::mclapply(split(sites_sf, sites_sf$sample_id), function(site_row) {
+  site_geom <- st_geometry(site_row)
+  site_year <- site_row$year
+  
+  candidates <- shape_filtered %>%
+    filter(is.na(year_of_protection) | year_of_protection <= site_year)
+  
+  if (nrow(candidates) == 0) {
+    return(site_row %>% mutate(nearest_feature = NA, dist_km = NA))
+  }
+  
+  dists <- st_distance(site_geom, st_geometry(candidates))
+  i <- which.min(dists)
+  
+  site_row %>%
+    mutate(
+      nearest_feature = candidates$site_id[i],
+      dist_km = as.numeric(dists[i]) / 1000
+    )
+}, mc.cores = 15) |> dplyr::bind_rows()
+
+######
+
+# nn <- sf::st_nearest_feature(sites_sf, shape_filtered)
+# 
+# distances <- sf::st_distance(sites_sf, shape_filtered[nn, ], by_element = TRUE)
+
+
+# res <- sites_sf |> 
+  # dplyr::mutate(
+  #   nearest_mpa   = shape_filtered$SITE_NAME[nn],
+  #   site_id = shape_filtered$SITE_ID[nn],
+  #   dist_to_mpa_km = as.numeric(distances) / 1000)|> 
+dplyr::left_join(unique(dplyr::select(mpa,
+                                      sample_id, year_of_sampling = year, year_of_protection)))|> 
+res <- nn_with_time |> 
+  dplyr::left_join(unique(dplyr::select(full_mpa,
+                                        nearest_feature = site_id, year_est)))
+
+
+# Results
+nearest_mpa <- as.data.frame(res) |> 
+  dplyr::filter(is.na(year_of_protection) | year_of_sampling > year_of_protection)
+
+hist(nearest_mpa$dist_km)
+length(nearest_mpa$dist_km) #774 sites out
+summary(nearest_mpa$dist_km)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 0.00   19.36   86.47  373.23  318.87 3067.77 
+quantile(nearest_mpa$dist_km, 0.01)
+sum(nearest_mpa$dist_km < 1) # 6 sites closest than 1km from a MPA (all types considered)
+sum(nearest_mpa$dist_km < 2) # 16 sites closest than 2km from a MPA (all types considered)
+head(nearest_mpa$dist_km[order(nearest_mpa$dist_km)],40)
+
+
+
+
+
+
+
+
+
+
+
+
+#### Closest distance to any kind of MPAs
+full_mpa <- mpa_PS |> dplyr::filter(removal_of_marine_life_is_prohibited != 1)
+
+shape_in_rls <- shape |>  dplyr::filter(SITE_ID %in% full_mpa$site_id) 
+
+shape_valid <- sf::st_make_valid(shape_in_rls)
+
+bbox_filter <- sf::st_as_sfc(
+  sf::st_bbox(c(
+    xmin = -180, xmax = 180,
+    ymin = -30,  ymax = 30
+  ), crs = 4326)
+)
+
+sel <- sf::st_intersects(shape_valid, bbox_filter, sparse = TRUE)
+shape_filtered <- shape_valid[lengths(sel) > 0, ]
+
+
+#RLS sites outside MPA
+site_out <- mpa  |> 
+  dplyr::filter(site_code %in% covariates_site_final$site_code)|> 
+  dplyr::filter(protection_status == "out") |> 
+  dplyr::select(-survey_id, -survey_date) |> 
+  unique()
+
+
+#Intersect points and MPAs
+sites_sf <- sf::st_as_sf(site_out,
+                         coords = c("longitude", "latitude"),
+                         crs = 4326)
+
+nn <- sf::st_nearest_feature(sites_sf, shape_filtered)
+
+distances <- sf::st_distance(sites_sf, shape_filtered[nn, ], by_element = TRUE)
+
+
+res <- sites_sf |> 
+  dplyr::mutate(
+    nearest_mpa   = shape_filtered$SITE_NAME[nn],
+    site_id = shape_filtered$SITE_ID[nn],
+    dist_to_mpa_km = as.numeric(distances) / 1000
+  ) |> 
+  dplyr::left_join(full_mpa)
+
+
+# Results
+nearest_mpa <- as.data.frame(res) |> 
+  dplyr::filter(is.na(year_est) | !year <= year_est)
+
+hist(nearest_mpa$dist_to_mpa_km)
+length(nearest_mpa$dist_to_mpa_km) #759 sites out
+summary(nearest_mpa$dist_to_mpa_km)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 0.00   19.36   86.47  373.23  318.87 3067.77 
+quantile(nearest_mpa$dist_to_mpa_km, 0.01)
+quantile(nearest_mpa$dist_to_mpa_km, 0.02)
+quantile(nearest_mpa$dist_to_mpa_km, 0.03)
+quantile(nearest_mpa$dist_to_mpa_km, 0.04)
+quantile(nearest_mpa$dist_to_mpa_km, 0.05) #1.545731 km
+sum(nearest_mpa$dist_to_mpa_km < 1) # 33 sites closest than 1km from a MPA (all types considered)
+head(nearest_mpa$dist_to_mpa_km[order(nearest_mpa$dist_to_mpa_km)],40)
+# [1] 0.00000000 0.00000000 0.00000000 0.00000000 0.02708500 0.05244961 0.08469877 0.12741135 0.12741135 0.14088149 0.17782717 0.17782717
+# [13] 0.18261009 0.19509556 0.19509556 0.39070839 0.39070839 0.42152220 0.50384511 0.50384511 0.57909208 0.58768007 0.60540002 0.63345073
+# [25] 0.63345073 0.66610854 0.67348155 0.68662534 0.80542131 0.80542131 0.86737773 0.86737773 0.92316733 1.25485402 1.25485402 1.39420835
+# [37] 1.39742343 1.53267241 1.54573070 1.54573070
+
+
+
+
