@@ -1123,12 +1123,13 @@ plot_interaction(residuals_mpa_features,
                  ylabel = "Model residuals",
                  strip_txt_size = 12,
                  axis_title_size =13)+
-  geom_smooth(method = "lm", aes(x= X, y = Y), color = "grey50", se = T, linewidth = 0.5)+
-  ggpubr::stat_cor(aes(x = X, y = Y), 
-    method = "pearson", label.x.npc = "left", label.y.npc = "top",  
-    size = 3.5)
+  geom_smooth(method = "loess", aes(x= X, y = Y), color = "grey50", se = T, linewidth = 0.5)
+# +
+#   ggpubr::stat_cor(aes(x = X, y = Y), 
+#     method = "pearson", label.x.npc = "left", label.y.npc = "top",  
+#     size = 3.5)
 
-ggsave(filename = here::here("figures/3_sensibility_analysis/MPA_features_residuals_VS_Age.jpg"),
+ggsave(filename = here::here("figures/3_sensibility_analysis/MPA_features_residuals_VS_Age_with_loess.jpg"),
        height = 9, width = 12)
 
 
@@ -1815,8 +1816,8 @@ ggsave(filename = paste0(here::here("figures/3_sensibility_analysis"),
 
 ### 1) Choose models to compare ####
 list_models <- c(
-  "No random levels"= "Sensitivity_NO_random_factors_SITE_SCALE_with_pH_and_HDI_2_chains_1000_thin_200_samples",
-  # "No random levels"= "Sensitivity_NO_random_factors_SITE_SCALE_2_chains_1000_thin_200_samples",
+  "No random effects"= "Sensitivity_NO_random_factors_SITE_SCALE_with_pH_and_HDI_2_chains_1000_thin_200_samples",
+  # "No random effects"= "Sensitivity_NO_random_factors_SITE_SCALE_2_chains_1000_thin_200_samples",
   # "(1|country)"= "Sensitivity_only_country_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",
   "(1|country)"= "Sensitivity_only_country_in_RL_SITE_SCALE_with_pH_and_HDI_2_chains_1000_thin_200_samples",
   "(1|site/country)"="Sensitivity_site&country_in_RL_SITE_SCALE_2_chains_1000_thin_200_samples",                                                    
@@ -1905,7 +1906,7 @@ write.csv(models_sumary, row.names = F,
 
 ### 2) Models R2 ####
 models_pred_power <- models_full_stats |> 
-  dplyr::filter(model %in% c("No random levels",
+  dplyr::filter(model %in% c("No random effects",
                              "(1|country)",
                              "(1|sample_unit/country)",
                              # "(1|site/country)",
@@ -2002,7 +2003,7 @@ ggsave(filename = here::here("figures/3_sensibility_analysis/models_performance/
 ### 3) Covariates importance ####
 
 list_models_cov <- list_models[which(names(list_models) %in%
-                                       c("No random levels",
+                                       c("No random effects",
                                          "(1|country)",
                                          "(1|sample_unit/country)"
                                          # "(1|site/country)",
@@ -2042,7 +2043,7 @@ to_plot <- cov_importance |>
   dplyr::mutate(model = forcats::fct_relevel(model,
                                              "(1|sample_unit/country)",
                                              "(1|country)",
-                                             "No random levels"
+                                             "No random effects"
                                     ))
 
 cov_order <- to_plot |> 
@@ -2116,7 +2117,7 @@ new_titles <- c(
 
 
 list_models_cov <- list_models[which(names(list_models) %in%
-                                       c("No random levels",
+                                       c("No random effects",
                                          "(1|country)",
                                          "(1|sample_unit/country)"
                                          # ,
@@ -2418,31 +2419,30 @@ mpa <- mpa |>
   dplyr::mutate(sample_id = paste0(site_code, "_", survey_date))
 
 mpa_PS <- read.csv(here::here("data/raw_data/ProtectedSeas_Navigator_data_20241212.csv"))
+mpa_year <- read.csv(here::here("data/raw_data/missing_years_MASTER29022024.csv")) |> 
+  dplyr::select(site_id, year_est_added = year_est)
+mpa_PS <- mpa_PS |> 
+  dplyr::left_join(mpa_year) |> 
+  dplyr::mutate(year_est = ifelse(!is.na(year_est_added), year_est_added, year_est))
 
 # MPA shapefile
 shape <- sf::read_sf(here::here("data/raw_data/ProtectedSeas_Navigator_20241212_shp/ProtectedSeas_Navigator_20241212_shp.shp"))
 
+
+#### Closest distance to heavly and fully protected MPAs
 # MPA data
-shape_data <- shape |> 
-  dplyr::select(site_id = SITE_ID, geometry) |> 
-  dplyr::left_join(
-    dplyr::select(mpa_PS, site_id, removal_of_marine_life_is_prohibited, year_est)
-    ) |> 
+mpa_data <- mpa_PS |> 
+  dplyr::select(site_id, country, site_name, removal_of_marine_life_is_prohibited, year_est) |> 
   dplyr::left_join(
     dplyr::select(mpa, site_id = protected_seas_id, year_of_protection, protection_status,
                   sample_id)
-  )
-  
+  )|>
+  dplyr::filter(removal_of_marine_life_is_prohibited >= 4) |>  # full and heavly restricted MPAs
+  dplyr::filter(protection_status != "out" | is.na(protection_status))
 
-#### Closest distance to FULL MPAs
-# full_mpa <- mpa_PS |>
-#   dplyr::filter(removal_of_marine_life_is_prohibited == 5) |>  # only MPA with full protection
-#   dplyr::left_join(dplyr::rename(mpa, site_id = protected_seas_id))|>
-#   dplyr::filter(protection_status == "full" | is.na(protection_status)) # If data from RLS, only high compliance
 
-shape_full_mpa <- shape_data |>
-  dplyr::filter(removal_of_marine_life_is_prohibited == 5) |>  # only MPA with full protection
-  dplyr::filter(protection_status == "full" | is.na(protection_status))
+shape_full_mpa <- shape |> 
+  dplyr::filter(SITE_ID %in% mpa_data$site_id) 
 
 shape_valid <- sf::st_make_valid(shape_full_mpa)
 
@@ -2453,8 +2453,9 @@ bbox_filter <- sf::st_as_sfc(
   ), crs = 4326)
 )
 
+sf::sf_use_s2(FALSE)
 sel <- sf::st_intersects(shape_valid, bbox_filter, sparse = TRUE)
-shape_filtered <- shape_valid[lengths(sel) > 0, ]
+shape_filtered <- shape_valid[lengths(sel) > 0, ] ####################### why it doesn't crop ?
 
 
 #RLS sites outside MPA
@@ -2462,10 +2463,8 @@ site_out <- covariates_site_final  |>
   dplyr::select(-c(protection_status_detailed:Boat_density)) |> 
   tibble::rownames_to_column("sample_id") |> 
   dplyr::filter(protection_status == "out") |> 
-  dplyr::mutate(year = stringr::word(stringr::word(sample_id,2 , sep = "_"),1, sep="-")) |> 
-  dplyr::left_join(
-    dplyr::select(mpa, sample_id, year_of_protection)
-  )
+  dplyr::mutate(year = stringr::word(stringr::word(sample_id,2 , sep = "_"),1, sep="-")) 
+
 
 #Intersect points and MPAs
 sites_sf <- sf::st_as_sf(site_out,
@@ -2481,49 +2480,42 @@ library(purrr)
 
 # Pour chaque site, trouver la feature la plus proche
 
-nn_with_time <- parallel::mclapply(split(sites_sf, sites_sf$sample_id), function(site_row) {
+nn_with_time <- pbmcapply::pbmclapply(split(sites_sf, sites_sf$sample_id), function(site_row) {
+  # site_row =sites_sf[1,]
   site_geom <- st_geometry(site_row)
   site_year <- site_row$year
   
-  candidates <- shape_filtered %>%
-    filter(is.na(year_of_protection) | year_of_protection <= site_year)
+  candidates <- mpa_data  |> 
+    filter(is.na(year_of_protection) | year_of_protection < site_year)|> 
+    filter(is.na(year_est) | year_est < site_year) 
+  
+  shape_candidates <- shape_filtered |> 
+    dplyr::filter(SITE_ID %in% candidates$site_id) 
   
   if (nrow(candidates) == 0) {
     return(site_row %>% mutate(nearest_feature = NA, dist_km = NA))
   }
   
-  dists <- st_distance(site_geom, st_geometry(candidates))
-  i <- which.min(dists)
+  nn <- sf::st_nearest_feature(site_geom, shape_candidates)
+  dists <- sf::st_distance(site_geom, shape_filtered[nn, ])
   
-  site_row %>%
+  # dists <- st_distance(site_geom, st_geometry(shape_candidates))
+  # i <- which.min(dists)
+  
+  as.data.frame(site_row) |>
+    dplyr::select(-geometry) |> 
     mutate(
-      nearest_feature = candidates$site_id[i],
-      dist_km = as.numeric(dists[i]) / 1000
+      nearest_feature = shape_candidates$SITE_ID[nn],
+      dist_km = as.numeric(dists) / 1000
     )
-}, mc.cores = 15) |> dplyr::bind_rows()
+}, mc.cores = 10) |> dplyr::bind_rows()
 
-######
-
-# nn <- sf::st_nearest_feature(sites_sf, shape_filtered)
-# 
-# distances <- sf::st_distance(sites_sf, shape_filtered[nn, ], by_element = TRUE)
-
-
-# res <- sites_sf |> 
-  # dplyr::mutate(
-  #   nearest_mpa   = shape_filtered$SITE_NAME[nn],
-  #   site_id = shape_filtered$SITE_ID[nn],
-  #   dist_to_mpa_km = as.numeric(distances) / 1000)|> 
-dplyr::left_join(unique(dplyr::select(mpa,
-                                      sample_id, year_of_sampling = year, year_of_protection)))|> 
-res <- nn_with_time |> 
-  dplyr::left_join(unique(dplyr::select(full_mpa,
-                                        nearest_feature = site_id, year_est)))
+save(nn_with_time, file = here::here("figures/3_sensibility_analysis/distance_closest_mpa_sites_out.Rdata"))
+######'
 
 
 # Results
-nearest_mpa <- as.data.frame(res) |> 
-  dplyr::filter(is.na(year_of_protection) | year_of_sampling > year_of_protection)
+nearest_mpa <- as.data.frame(nn_with_time) 
 
 hist(nearest_mpa$dist_km)
 length(nearest_mpa$dist_km) #774 sites out
@@ -2531,87 +2523,107 @@ summary(nearest_mpa$dist_km)
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # 0.00   19.36   86.47  373.23  318.87 3067.77 
 quantile(nearest_mpa$dist_km, 0.01)
-sum(nearest_mpa$dist_km < 1) # 6 sites closest than 1km from a MPA (all types considered)
-sum(nearest_mpa$dist_km < 2) # 16 sites closest than 2km from a MPA (all types considered)
+sum(nearest_mpa$dist_km < 1) # 23 sampled reefs closest than 1km from a MPA (all types considered)
+sum(nearest_mpa$dist_km < 2) # 34 sites closest than 2km from a MPA (all types considered)
 head(nearest_mpa$dist_km[order(nearest_mpa$dist_km)],40)
 
 
 
 
 
-
-
-
-
-
-
-
-#### Closest distance to any kind of MPAs
-full_mpa <- mpa_PS |> dplyr::filter(removal_of_marine_life_is_prohibited != 1)
-
-shape_in_rls <- shape |>  dplyr::filter(SITE_ID %in% full_mpa$site_id) 
-
-shape_valid <- sf::st_make_valid(shape_in_rls)
-
-bbox_filter <- sf::st_as_sfc(
-  sf::st_bbox(c(
-    xmin = -180, xmax = 180,
-    ymin = -30,  ymax = 30
-  ), crs = 4326)
-)
-
-sel <- sf::st_intersects(shape_valid, bbox_filter, sparse = TRUE)
-shape_filtered <- shape_valid[lengths(sel) > 0, ]
-
-
-#RLS sites outside MPA
-site_out <- mpa  |> 
-  dplyr::filter(site_code %in% covariates_site_final$site_code)|> 
-  dplyr::filter(protection_status == "out") |> 
-  dplyr::select(-survey_id, -survey_date) |> 
-  unique()
-
-
-#Intersect points and MPAs
-sites_sf <- sf::st_as_sf(site_out,
-                         coords = c("longitude", "latitude"),
-                         crs = 4326)
-
-nn <- sf::st_nearest_feature(sites_sf, shape_filtered)
-
-distances <- sf::st_distance(sites_sf, shape_filtered[nn, ], by_element = TRUE)
-
-
-res <- sites_sf |> 
-  dplyr::mutate(
-    nearest_mpa   = shape_filtered$SITE_NAME[nn],
-    site_id = shape_filtered$SITE_ID[nn],
-    dist_to_mpa_km = as.numeric(distances) / 1000
-  ) |> 
-  dplyr::left_join(full_mpa)
-
-
-# Results
-nearest_mpa <- as.data.frame(res) |> 
-  dplyr::filter(is.na(year_est) | !year <= year_est)
-
-hist(nearest_mpa$dist_to_mpa_km)
-length(nearest_mpa$dist_to_mpa_km) #759 sites out
-summary(nearest_mpa$dist_to_mpa_km)
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 0.00   19.36   86.47  373.23  318.87 3067.77 
-quantile(nearest_mpa$dist_to_mpa_km, 0.01)
-quantile(nearest_mpa$dist_to_mpa_km, 0.02)
-quantile(nearest_mpa$dist_to_mpa_km, 0.03)
-quantile(nearest_mpa$dist_to_mpa_km, 0.04)
-quantile(nearest_mpa$dist_to_mpa_km, 0.05) #1.545731 km
-sum(nearest_mpa$dist_to_mpa_km < 1) # 33 sites closest than 1km from a MPA (all types considered)
-head(nearest_mpa$dist_to_mpa_km[order(nearest_mpa$dist_to_mpa_km)],40)
-# [1] 0.00000000 0.00000000 0.00000000 0.00000000 0.02708500 0.05244961 0.08469877 0.12741135 0.12741135 0.14088149 0.17782717 0.17782717
-# [13] 0.18261009 0.19509556 0.19509556 0.39070839 0.39070839 0.42152220 0.50384511 0.50384511 0.57909208 0.58768007 0.60540002 0.63345073
-# [25] 0.63345073 0.66610854 0.67348155 0.68662534 0.80542131 0.80542131 0.86737773 0.86737773 0.92316733 1.25485402 1.25485402 1.39420835
-# [37] 1.39742343 1.53267241 1.54573070 1.54573070
-
-
-
+# #### Closest distance to FULL MPAs
+# # MPA data
+# mpa_data <- mpa_PS |> 
+#   dplyr::select(site_id, country, site_name, removal_of_marine_life_is_prohibited, year_est) |> 
+#   dplyr::left_join(
+#     dplyr::select(mpa, site_id = protected_seas_id, year_of_protection, protection_status,
+#                   sample_id)
+#   )|>
+#   dplyr::filter(removal_of_marine_life_is_prohibited == 5) |>  # only MPA with full protection
+#   dplyr::filter(protection_status == "full" | is.na(protection_status))
+# 
+# 
+# shape_full_mpa <- shape |> 
+#   dplyr::filter(SITE_ID %in% mpa_data$site_id) 
+# 
+# shape_valid <- sf::st_make_valid(shape_full_mpa)
+# 
+# bbox_filter <- sf::st_as_sfc(
+#   sf::st_bbox(c(
+#     xmin = -180, xmax = 180,
+#     ymin = -30,  ymax = 30
+#   ), crs = 4326)
+# )
+# 
+# sf::sf_use_s2(FALSE)
+# sel <- sf::st_intersects(shape_valid, bbox_filter, sparse = TRUE)
+# shape_filtered <- shape_valid[lengths(sel) > 0, ] ####################### why it doesn't crop ?
+# 
+# 
+# #RLS sites outside MPA
+# site_out <- covariates_site_final  |> 
+#   dplyr::select(-c(protection_status_detailed:Boat_density)) |> 
+#   tibble::rownames_to_column("sample_id") |> 
+#   dplyr::filter(protection_status == "out") |> 
+#   dplyr::mutate(year = stringr::word(stringr::word(sample_id,2 , sep = "_"),1, sep="-")) 
+# 
+# 
+# #Intersect points and MPAs
+# sites_sf <- sf::st_as_sf(site_out,
+#                          coords = c("longitude", "latitude"),
+#                          crs = 4326)
+# 
+# 
+# 
+# ####### Filtrer par date ####"
+# library(sf)
+# library(dplyr)
+# library(purrr)
+# sf::sf_use_s2(F)
+# 
+# # Pour chaque site, trouver la feature la plus proche
+# 
+# nn_with_time <- pbmcapply::pbmclapply(split(sites_sf, sites_sf$sample_id), function(site_row) {
+#   # site_row =sites_sf[1,]
+#   site_geom <- st_geometry(site_row)
+#   site_year <- site_row$year
+#   
+#   candidates <- mpa_data  |> 
+#     filter(is.na(year_of_protection) | year_of_protection < site_year)|> 
+#     filter(is.na(year_est) | year_est < site_year) 
+#   
+#   shape_candidates <- shape_filtered |> 
+#     dplyr::filter(SITE_ID %in% candidates$site_id) 
+# 
+#   if (nrow(candidates) == 0) {
+#     return(site_row %>% mutate(nearest_feature = NA, dist_km = NA))
+#   }
+#   
+#   nn <- sf::st_nearest_feature(site_geom, shape_candidates)
+#   dists <- sf::st_distance(site_geom, shape_filtered[nn, ])
+#   
+#   # dists <- st_distance(site_geom, st_geometry(shape_candidates))
+#   # i <- which.min(dists)
+#   
+#   as.data.frame(site_row) |>
+#     dplyr::select(-geometry) |> 
+#     mutate(
+#       nearest_feature = shape_candidates$SITE_ID[nn],
+#       dist_km = as.numeric(dists) / 1000
+#     )
+# }, mc.cores = 10) |> dplyr::bind_rows()
+# ######'
+# 
+# # Results
+# nearest_mpa <- as.data.frame(nn_with_time) 
+# 
+# hist(nearest_mpa$dist_km)
+# length(nearest_mpa$dist_km) #774 sites out
+# summary(nearest_mpa$dist_km)
+# # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# # 0.00   19.36   86.47  373.23  318.87 3067.77 
+# quantile(nearest_mpa$dist_km, 0.01)
+# sum(nearest_mpa$dist_km < 1) # 2 sites closest than 1km from a MPA (all types considered)
+# sum(nearest_mpa$dist_km < 2) # 5 sites closest than 2km from a MPA (all types considered)
+# head(nearest_mpa$dist_km[order(nearest_mpa$dist_km)],40)
 

@@ -90,7 +90,10 @@ trait_completedness <- dplyr::rename(tropical_species_traits,
   dplyr::select(-phylum, -class, -order, -family, -spec_code, -worms_id)
 
 fb_plot_species_traits_completeness(trait_completedness)
-fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
+
+fb_plot_number_species_by_trait(trait_completedness, threshold_species_proportion = 1)
+ggsave(plot= last_plot(), width = 8, height = 10, 
+       file= here::here("figures","1_species_traits","1_percent_species_per_all_traits_tropical.png"))
 
 
 ################################################################################
@@ -441,5 +444,5 @@ used_traits <- c("fishbase_name", "IUCN_category", "Length", "Importance",
 species_traits <- dplyr::select(inferred_species_traits, all_of(used_traits)) |> 
   tibble::rownames_to_column("species")
 fb_plot_number_species_by_trait(species_traits, threshold_species_proportion = 1)
-ggsave(plot= last_plot(), width = 8, height = 8, 
+ggsave(plot= last_plot(), width = 8, height = 10, 
        file= here::here("figures","1_species_traits","1_percent_species_INFERRED_used_TRAITS_tropical.png"))

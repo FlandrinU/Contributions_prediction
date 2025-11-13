@@ -1156,7 +1156,7 @@ plot_hmsc_result <- function(metadata = metadata,
                       TRUE ~ Response))
     
     
-    ### Plot Figure 1 ####
+    ### Plot VP absolute detailed ####
     VP_plot_absolute <- 
       ggplot(dplyr::filter(VP_long_absolute, !Response %in% c("", "Mean contribution")))+
       aes(x = reorder(Response,-R2), y = Value, fill = Covariate) +
@@ -1299,7 +1299,7 @@ plot_hmsc_result <- function(metadata = metadata,
     
     
     
-    ### Plot Figure 1 stacked ####
+    ### FIGURE 1 ####
     VP_stacked <- VP_long_absolute |> 
       dplyr::filter(!Response %in% c("", "Mean contribution")) |> 
       dplyr::mutate(
@@ -1396,6 +1396,10 @@ plot_hmsc_result <- function(metadata = metadata,
     ggsave(filename =  paste0(path_file,"/Fig1_stacked_values_with_insert_", save_name,".jpg"),
            width = 18, height = 16)
     
+    ggsave(filename =  paste0(path_file,"/Fig1_stacked_values_with_insert_", 
+                              save_name,".pdf"),
+           width = 18, height = 16,
+           device = cairo_pdf)
     ## Choose colors
     # $human
     # [1] "#452C52" "#593F64" "#6E5276" "#826588" "#97799A" "#AB8CAC" "#C09FBE" "#D5B3D1"
@@ -1549,7 +1553,7 @@ plot_hmsc_result <- function(metadata = metadata,
     ##### ridges plot  #####
     effect_size_list <- list()
     for(i in 1:length(drivers_to_plot)){
-      #drivers = drivers_to_plot[[2]]
+      #drivers = drivers_to_plot[[1]]
       drivers = drivers_to_plot[[i]]
       
       drivers_name <- drivers
@@ -1628,8 +1632,9 @@ plot_hmsc_result <- function(metadata = metadata,
       ridges_plot
       
       ggsave(filename = paste0(path_file,"/posterior_distribution_of_estimates_", save_name,
-                               paste(drivers_name, collapse = "-"), ".jpg"),
-             plot = ridges_plot, width = 12, height = 8)
+                               paste(drivers_name, collapse = "-"), ".pdf"),
+             plot = ridges_plot, width = 12, height = 8,
+             device = cairo_pdf)
       
     }
     

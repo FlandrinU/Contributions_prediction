@@ -965,7 +965,7 @@ plot_merged
 title_column <- ggplot() + theme_void() +
   theme(legend.position = "none") +
   geom_text(aes(x = 0, y = 0.1, label = "Restoration \n by MPAs"), size = 3.5,
-           color = "black", hjust = 0.5, vjust = 0.6, fontface = "bold", angle = 50)
+           color = "black", hjust = 0.6, vjust = 0.35, fontface = "bold", angle = 50)
 
 plot_merged_prop <- lolliplot_prop_column +
   theme(plot.margin =unit(c(0,0,1.3,0), 'cm'))+
@@ -1066,6 +1066,11 @@ ggsave(filename =  paste0(path_file,"/Final_panel_Figure_3_mitigation_prop.jpg")
        plot = final_panel,  width = 13, height = 15)
 
 
+### PDF FOR FINAL SUBMISSION ###
+
+ggsave(filename =  paste0(path_file,"/Final_panel_Figure_3_mitigation_prop.pdf"),
+       plot = final_panel,  width = 13, height = 15,
+       device = cairo_pdf)
 
 ##----------------------------- DENSITY PLOTS -----------------------------------
 
@@ -1370,7 +1375,7 @@ density_plot_fct(contribution_to_plot =  c( "Selenium",
 ggsave(filename =  paste0(path_file,"/Supp_Panel_density_plot.jpg"), width = 15, height = 15)
 
 
-### PANEL DENSITY PLOT ####
+### FIGURE 4: PANEL DENSITY PLOT ####
 
 biomass <- cowplot::ggdraw() + 
   cowplot::draw_image(paste0(path_file,"/density_changes_biomass.jpg"))+
@@ -1420,4 +1425,8 @@ final_panel <- cowplot::plot_grid(
 
 ggsave(filename =  paste0(path_file,"/Figure_4_density_plot.jpg"),
        plot = final_panel,  width = 16, height = 12.5)
+
+ggsave(filename =  paste0(path_file,"/Figure_4_density_plot.pdf"),
+       plot = final_panel,  width = 16, height = 12.5,
+       device = cairo_pdf)
 

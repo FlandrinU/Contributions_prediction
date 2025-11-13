@@ -1075,6 +1075,10 @@ obs_vs_cov("Fishing_vessel_density", "`Vitamin_A`")
 obs_vs_cov("Fishing_vessel_density", "Selenium")
 obs_vs_cov("Fishing_vessel_density", "`Trophic_web_robustness`")
 obs_vs_cov("Boat_density", "`Available_biomass`")
+obs_vs_cov("Boat_density", "`Invertivores_biomass`")
+obs_vs_cov("Boat_density", "`Piscivores_biomass`")
+obs_vs_cov("Boat_density", "`Trophic_web_robustness`")
+
 
 obs_vs_cov("GDP", "Calcium")
 

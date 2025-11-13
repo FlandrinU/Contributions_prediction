@@ -135,3 +135,65 @@ save(rls_elasmo_trop, file = here::here("data/derived_data/rls_elasmo_trop.Rdata
 save(tropical_species_traits, file = here::here("data/derived_data/tropical_species_traits.Rdata"))
 
 # load(file = here::here("data/derived_data/tropical_species_traits.Rdata"))
+
+
+##------------- Obs Tanzania data -------------
+
+##Boxplot Tanzania ##
+load(here::here("data", "raw_data", "environmental_covariates", 
+                "all_covariates_benthos_inferred_tropical_surveys.Rdata"))
+
+mpa_csv <- read.csv("data/raw_data/rls_mpa_MASTER_09012025.csv", header = TRUE)
+
+load(file = here::here("data/derived_data/rls_actino_trop.Rdata"))
+load(file = here::here("data/derived_data/rls_elasmo_trop.Rdata"))
+
+fish_data <- rbind(rls_actino_trop |> dplyr::select(-raw_biomass), rls_elasmo_trop)
+
+
+rls_surv_tanzania <- all_covariates_benthos_inferred |> 
+   dplyr::mutate(
+      personal_contrib = dplyr::case_when(
+         (survey_date >= as.Date("2024-08-13") & survey_date <= as.Date("2024-08-22") & country == "Tanzania") ~ "1",
+         TRUE ~ "0")) |> 
+   dplyr::filter(personal_contrib == 1) |> 
+   dplyr::select(-c(year:seagrass)) |> 
+   dplyr::left_join(mpa_csv |> dplyr::select(site_code, level_fishing_protection))
+
+mpa_full <- rls_surv_tanzania |> 
+   dplyr::filter(level_fishing_protection == 5)
+mpa_restricted<- rls_surv_tanzania |> 
+   dplyr::filter(level_fishing_protection != 5 & 
+                    level_fishing_protection != 0)
+
+rls_tanzania <- fish_data |> 
+   dplyr::filter(survey_id %in% rls_surv_tanzania$survey_id) |> 
+   dplyr::mutate(protection_status = dplyr::case_when(
+      survey_id %in% mpa_full$survey_id ~ "no-take MPA",
+       survey_id %in% mpa_restricted$survey_id ~ "restricted",
+      TRUE ~ "fished"))
+
+rls_community <- rls_tanzania |> 
+   dplyr::group_by(survey_id, protection_status) |> 
+   dplyr::summarise(total_biomass = sum(biomass),
+                    total_abudance = sum(total),
+                    taxonomic_richness = length(unique(rls_species_name))) |> 
+   tidyr::pivot_longer(cols = c(total_biomass, total_abudance, taxonomic_richness),
+                       names_to = "metric",
+                       values_to = 'val') |> 
+   dplyr::filter(survey_id != "923404270") |>  # pb at misali ?
+   dplyr::mutate(protection_status = factor(protection_status, levels = c("fished", 
+                                                                             "restricted",
+                                                                             "no-take MPA")))
+
+
+library(ggplot2)
+ggplot(rls_community)+
+   aes(x = protection_status, y = val, fill = protection_status)+
+   geom_boxplot(alpha = 0.6, outliers = F)+
+   geom_jitter(width = 0.1, alpha = 0.4)+
+   labs(y ="")+
+   facet_wrap(~metric, scales = "free")+
+   theme_bw()+
+   theme(legend.position = "none")
+ggsave(filename = here::here("figures", "Bilan_mission_tanzanie.jpg"), width = 10, height = 7)
