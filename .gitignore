@@ -44,5 +44,5 @@ outputs/models/
 outputs/2d_cnpflux_sp_size_sst.csv
 
 #Embargo
-data/raw_data/covariates/social_covariates/rls_mpa_MASTER_09012025.csv
-data/raw_data/covariates/social_covariates/missing_years_MASTER29022024.csv
+#data/raw_data/rls_mpa_MASTER_09012025.csv
+#data/raw_data/missing_years_MASTER29022024.csv
